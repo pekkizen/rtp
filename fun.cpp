@@ -1,7 +1,19 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+// Finding maximum of dbeta(u, K + 1, L - K)
+// f(u) = u ^ K x (1 - u) ^ (L - K - 1) (x constant)
+// g(u) = log(f(u)) = K log(u) + (L - K - 1) log(1 - u)
+// g'(u) = K/u - (L-K-1)/(1-u)
+// =((1 - u)K - u(L - K - 1)) / (u(1 - u))
+// g'(u) = 0 ->
+// (1 - u)K - u(L - K - 1) = 0
+// K - uK - uL + uK + u = 0
+// u(-L + 1) = -K
+// u = K / (L - 1) = mode of Beta(K + 1, L - K)
+
 // Constants in integration
+static double LF;
 static double LC;
 static double LW;
 static double L;
@@ -14,6 +26,7 @@ void initCpp(double lw, double k, double l)
     K = k;
     L = l;
     LC = lgamma(l + 1) - lgamma(k + 1) - lgamma(l - k);
+    LF = lgamma(k);
 
     // exp(LC) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1)
     // See Dudbridge and Koeleman (2003).
@@ -24,31 +37,38 @@ inline static double pgamma(double g, double k)
     return R::pgamma(g, k, 1, 1, 0);
 }
 
-inline static double qbeta(double u, double k, double l)
+inline static double dgammaR(double g, double k)
 {
-    return R::qbeta(u, k, l, 1, 0);
+    return R::dgamma(g, k, 1, 0);
 }
 
-// betaSD returns standard deviation of Beta(a, b).
-// [[Rcpp::export]]
-inline double betaSD(double a, double b)
+inline static double qbeta(double p, double k, double l)
 {
-    double c = a + b;
-    return sqrt(a * b / (c * c * (c + 1)));
+    return R::qbeta(p, k, l, 1, 0);
 }
 
-// dBeta is density function of u ~ Beta(lc, k, l), where lc is
-// logarithm of precalculated factorial coefficient.
+inline static double pbeta(double u, double k, double l)
+{
+    return R::pbeta(u, k, l, 1, 0);
+}
+
+// dgamma is density function of g ~ Gamma(k, 1).
+// lf is precalculated logarithm of (k-1)!.
+inline static double dgamma(double g, double lf, double k)
+{
+    return (g <= 0) ? 0 : exp((k - 1) * log(g) - g - lf);
+}
+
+// dbeta is density function of u ~ Beta(lc, k, l).
+// lc is precalculated logarithm of l! / (k! x l-k-1!).
 inline static double dbeta(double u, double lc, double k, double l)
 {
-    if (u <= 0 || u >= 1)
-        return 0;
-    return exp(lc + (k - 1) * log(u) + (l - 1) * log(1 - u));
+    return (u <= 0 || u >= 1) ? 0 : exp(lc + (k - 1) * log(u) + (l - 1) * log(1 - u));
 }
 
 // gammaSurv = 1 - pgamma
 // [[Rcpp::export]]
-inline static double gammaSurv(double g, double k)
+double gammaSurv(double g, double k)
 {
     double p, q, j;
     if (g <= 0)
@@ -67,10 +87,17 @@ inline static double gammaSurv(double g, double k)
     return p;
 }
 
-// fDensityCpp is integrand by Beta density x Gamma survival. This is
+// betaSD returns standard deviation of Beta(a, b).
+static double betaSD(double a, double b)
+{
+    double c = a + b;
+    return sqrt(a * b / (c * c * (c + 1)));
+}
+
+// fBetaCpp is integrand over Beta density in [0, 1]. This is
 // equivalent to the integrand equation in Dudbridge and Koeleman (2003).
 // [[Rcpp::export]]
-double fDensityCpp(double u)
+double fBetaCpp(double u)
 {
     double g;
     if (u <= 0 || u >= 1)
@@ -80,50 +107,135 @@ double fDensityCpp(double u)
     return dbeta(u, LC, K + 1, L - K) * gammaSurv(g, K);
 }
 
-// fQuantileCpp is integrand by Beta quantile function qbeta.
-// This is the integrand in Vsevolozhskaya et al. (2019)
-double fQuantileCpp(double p)
+// fGamma is integrand over Gamma density in [0, inf).
+static double fGamma(double g)
 {
-    double b, g;
+    double u, dg;
+    u = exp((g + LW) / K);
+    dg = dgamma(g, LF, K);
+    return (u >= 1) ? dg : dg * pbeta(u, K + 1, L - K);
+}
+
+// fBetaQuantile is integrand over Beta probabilities in [0, 1].
+// This is the integrand in Vsevolozhskaya et al. (2019).
+static double fBetaQuantile(double p)
+{
+    double u, g;
     if (p <= 0)
         return 1;
 
-    b = qbeta(p, K + 1, L - K);
-    g = K * log(b) - LW;
+    u = qbeta(p, K + 1, L - K);
+    g = K * log(u) - LW;
     return gammaSurv(g, K);
 }
 
-// riemannCpp integrates fDensityCpp from 0 to 1 by Rieman sum integral.
-// [[Rcpp::export]]
-double riemannCpp(double lw, double k, double l, double tol, double steps)
+// riemannSum integrates f from a to b by Riemann sum.
+// When f -> 0, stepsize h is increased.
+// Integration stops when relative increment is < tol.
+static double riemannSum(double (*f)(double), double a, double b, double h,
+                         double tol, double hlim, double hmul)
 {
-    double I, a, d, width, betaTop, h, start;
+    double I, d;
+
+    I = 0;
+    a += h / 2;
+
+    while (a < b)
+    {
+        d = h * f(a);
+        I += d;
+        a += h;
+
+        if (d < I * tol)
+            return I;
+        if (d < I * hlim)
+            h *= hmul;
+    }
+    return I;
+}
+
+// simpson integrates f from a to inf by Simpson's 1/3 rule.
+// When f -> 0, stepsize h is increased.
+// Integration stops when relative increment is < tol.
+static double simpson(double (*f)(double), double a, double h,
+                      double tol, double hlim, double hmul)
+{
+    double fa, fm, fb, I, d;
+
+    fb = f(a);
+    I = 0;
+    while (true)
+    {
+        fa = fb;
+        fm = f(a + h / 2);
+        fb = f(a + h);
+        d = (fa + 4 * fm + fb) * (h / 6);
+        I += d;
+        a += h;
+
+        if (d < I * tol)
+            return I;
+        if (d < I * hlim)
+            h *= hmul;
+    }
+}
+
+// riemannBetaCpp integrates fBetaCpp from 0 to 1 by Rieman sum integral.
+// [[Rcpp::export]]
+double riemannBetaCpp(double lw, double k, double l,
+                      double tol, double stepscale)
+{
+    double width, betaTop, h, a;
 
     initCpp(lw, k, l);
 
     width = 6 * betaSD(k + 1, l - k);
     betaTop = k / (l - 1);
-    h = fmin(0.05, fmin(width, betaTop) / steps);
+    h = fmin(0.05, fmin(width, betaTop) / 8);
+    h *= stepscale;
+    a = fmax(0, betaTop - 1.5 * width);
 
-    start = fmax(0, betaTop - 1.5 * width);
-    I = 0;
-    a = start + h / 2;
+    return riemannSum(&fBetaCpp, a, 1, h, tol, 0, 1);
+}
 
-    while (a < 1)
-    {
-        d = h * fDensityCpp(a);
-        I += d;
-        if (d < I * tol)
-            return I;
-        a += h;
-    }
-    return I;
+// riemannGammaCpp integrates fGamma from 0 to inf by Rieman sum integral.
+// [[Rcpp::export]]
+double riemannGammaCpp(double lw, double k, double l, double tol, double stepscale)
+{
+    double a, h, hlim = 0.01, hmul = 1.35;
+
+    initCpp(lw, k, l);
+
+    h = fmax(1, (k - 1) / sqrt(k)); // sqrt(k) is Gamma SD
+    h *= stepscale;
+    hlim = (stepscale < 1) ? 0 : hlim;
+
+    a = fmax(0, (k - 1) - 5 * sqrt(k)); // Gamma mode - 5 * SD
+
+    return riemannSum(&fGamma, a, 100 * k, h, tol, hlim, hmul);
+}
+
+// simpsonGammaCpp integrates fGamma from 0 to inf by fixed steps Simpson's 1/3 rule.
+// [[Rcpp::export]]
+double simpsonGammaCpp(double lw, double k, double l, double tol, double stepscale)
+{
+    double a, h, hlim = 0.15, hmul = 2;
+
+    initCpp(lw, k, l);
+
+    h = fmax(1, 1.5 * (k - 1) / sqrt(k)); // sqrt(k) is Gamma SD
+    h *= stepscale;
+    hlim = (stepscale < 1) ? 0 : hlim; // h, hlim and hmul are dependant
+
+    a = fmax(0, (k - 1) - 5 * sqrt(k)); // Gamma mode - 5 * SD
+
+    return simpson(&fGamma, a, h, tol, hlim, hmul);
 }
 
 // Simpson's 1/3 rule adaptive integrator.
-double adaSimp(double (*f)(double), double a, double b,
-               double fa, double fm, double fb, double Iprev,
-               double abstol, double reltol, int depth)
+static double adaSimpson(double (*f)(double), double a, double b,
+                         double fa, double fm, double fb, double Iprev,
+                         double abstol, double reltol, int depth)
 {
     double h, fam, fmb, m, Ia, Ib, Iab, error;
 
@@ -139,25 +251,14 @@ double adaSimp(double (*f)(double), double a, double b,
         return Iab + error;
 
     m = (a + b) / 2;
-    Ia = adaSimp(f, a, m, fa, fam, fm, Ia, abstol / 2, reltol, depth - 1);
-    Ib = adaSimp(f, m, b, fm, fmb, fb, Ib, abstol / 2, reltol, depth - 1);
+    Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol / 2, reltol, depth - 1);
+    Ib = adaSimpson(f, m, b, fm, fmb, fb, Ib, abstol / 2, reltol, depth - 1);
     return Ia + Ib;
 }
 
-// Finding maximum of dbeta(u, K + 1, L - K)
-// f(u) = u ^ K x (1 - u) ^ (L - K - 1) (x constant)
-// g(u) = log(f(u)) = K log(u) + (L - K - 1) log(1 - u)
-// g'(u) = K/u - (L-K-1)/(1-u)
-// =((1 - u)K - u(L - K - 1)) / (u(1 - u))
-// g'(u) = 0 ->
-// (1 - u)K - u(L - K - 1) = 0
-// K - uK - uL + uK + u = 0
-// u(-L + 1) = -K
-// u = K / (L - 1) = mode of Beta(K + 1, L - K)
-
-// fDenTop approximates the location of highest point of fDensity.
+// fBetaTop approximates the location of highest point of fBetaCpp.
 // [[Rcpp::export]]
-double fDenTop(double lw, double k, double l)
+double fBetaTop(double lw, double k, double l)
 {
     double left, right, weight;
 
@@ -167,16 +268,17 @@ double fDenTop(double lw, double k, double l)
     {
         return right;
     }
-    //This weighted mean works, but more accurate formulas surely exist.
-    weight = 0.4 + right * 10;
-    return (left + weight * right) / (weight + 1);
+    //This works, but better formulas surely exist.
+    weight = 0.2 + 3 * left / right + 2 * right;
+    return (left + weight * right) / (1 + weight);
 }
 
-// adaSimpDensityCpp integrates fDensityCpp from 0 to 1.
+// simpsonAdaBetaCpp integrates fBetaCpp from 0 to 1.
 // [[Rcpp::export]]
-double adaSimpDensityCpp(double lw, double k, double l, double tol, double rtol, int depth)
+double simpsonAdaBetaCpp(double lw, double k, double l,
+                         double tol, double rtol, int depth)
 {
-    double top, end, fa, fm, fb, I;
+    double top, right, fa, fm, fb, I;
 
     initCpp(lw, k, l);
 
@@ -189,23 +291,25 @@ double adaSimpDensityCpp(double lw, double k, double l, double tol, double rtol,
     if (tol < 1e-14)
         tol = 1e-14;
 
-    top = fDenTop(lw, k, l);
+    top = fBetaTop(lw, k, l);
     fa = 0;
-    fm = fDensityCpp(top / 2);
-    fb = fDensityCpp(top);
-    I = adaSimp(&fDensityCpp, 0, top, fa, fm, fb, 2, tol / 2, rtol, depth - 1);
+    fm = fBetaCpp(top / 2);
+    fb = fBetaCpp(top);
+    I = adaSimpson(&fBetaCpp, 0, top, fa, fm, fb, 2, tol / 2, rtol, depth - 1);
 
-    end = fmin(1, top + 6 * betaSD(k + 1, l - k));
+    right = top + 6 * betaSD(k + 1, l - k);
+    right = fmin(1, right);
     fa = fb;
-    fm = fDensityCpp((top + end) / 2);
-    fb = fDensityCpp(end);
-    I += adaSimp(&fDensityCpp, top, end, fa, fm, fb, 2, tol / 2, rtol, depth - 1);
+    fm = fBetaCpp((top + right) / 2);
+    fb = fBetaCpp(right);
+    I += adaSimpson(&fBetaCpp, top, right, fa, fm, fb, 2, tol / 2, rtol, depth - 1);
     return I;
 }
 
-// adaSimpQuantileCpp integrates fQuantileCpp from 0 to 1.
+// simpsonAdaBetaQuantileCpp integrates fBetaQuantile from 0 to 1.
 // [[Rcpp::export]]
-double adaSimpQuantileCpp(double lw, double k, double l, double tol, double rtol, int depth)
+double simpsonAdaBetaQuantileCpp(double lw, double k, double l,
+                                 double tol, double rtol, int depth)
 {
     double fa, fm, fb;
 
@@ -219,52 +323,52 @@ double adaSimpQuantileCpp(double lw, double k, double l, double tol, double rtol
         depth = 25;
 
     fa = 1;
-    fm = fQuantileCpp(0.5);
+    fm = fBetaQuantile(0.5);
     fb = 0;
-    return adaSimp(&fQuantileCpp, 0, 1, fa, fm, fb, 2, tol, rtol, depth);
+    return adaSimpson(&fBetaQuantile, 0, 1, fa, fm, fb, 2, tol, rtol, depth);
 }
 
-// pTFisherCpp implements R function p.tfisher for independant p-values.
+// pTFisherCpp implements R function p.tfisher. 10-50 x faster.
 // [[Rcpp::export]]
-double pTFisherCpp(double w, double n, double tau1, double tau2, double tol)
+double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
 {
-    double qTauL, ldeltaB, lbinom, deltaP, prod, sum, gammaCDF, cdf;
+    double qTauL, ldeltaB, lbinom, deltaP, prod, sum, gammaS, cdf;
 
     qTauL = log(tau1 / tau2);
     ldeltaB = log(tau1) - log(1 - tau1);
-    lbinom = n * log(1 - tau1);
+    lbinom = l * log(1 - tau1);
 
-    w /= 2;
+    lw /= 2;
     cdf = 0;
     prod = 0;
     if (tau1 == tau2) // soft TFisher
-        prod = exp(-w);
+        prod = exp(-lw);
     sum = prod;
 
-    for (double k = 1.0; k <= n; k++)
+    for (double k = 1.0; k <= l; k++)
     {
-        lbinom += ldeltaB + log((n + 1 - k) / k);
+        lbinom += ldeltaB + log((l + 1 - k) / k);
 
         if (prod > 0)
         {
-            gammaCDF = 1 - sum;
-            prod *= w / k;
+            gammaS = sum;
+            prod *= lw / k;
             sum += prod;
         }
         else
         {
-            double wk = w + k * qTauL;
+            double wk = lw + k * qTauL;
             if (wk < 0)
                 break; // TPM main exit
 
-            gammaCDF = 1 - gammaSurv(wk, k);
+            gammaS = gammaSurv(wk, k);
         }
-        deltaP = gammaCDF * exp(lbinom);
+        deltaP = (1 - gammaS) * exp(lbinom);
         cdf += deltaP;
 
-        if ((k > tau1 * n) && (deltaP < k * tol * (1 - cdf)))
+        if ((k > tau1 * l) && (deltaP < k * tol * (1 - cdf)))
             break;
     }
-    cdf += pow(1 - tau1, n);
+    cdf += pow(1 - tau1, l);
     return fmax(0, 1 - cdf);
 }

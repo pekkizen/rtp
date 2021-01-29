@@ -1,6 +1,8 @@
 
 # tfisher R-functions are adapted from Zhang et al (2020).
+# Here are R functions and equivalent C/C++ accelerated functions.
 
+# Returns TFisher statistic.
 stat.tfisher <- function(p, tau1, tau2) {
     sum(-2 * log(p[p <= tau1] / tau2))
 }
@@ -13,6 +15,7 @@ p.tfisher <- function(q, L, tau1, tau2) {
     1 - p
 }
 
+# Standard Fisher's method using all p-values.
 p.fisher <- function(p) {
     lw <- sum(log(p))
     L <- length(p)
@@ -25,7 +28,7 @@ p.fisher.R <- function(p) {
     1 - pchisq(-2 * lw, 2 * L)
 }
 
-# Soft thresholding TFisher's method from from Zhang et al (2020).
+# Soft thresholding TFisher's method in Zhang et al (2020).
 p.tfisher.soft <- function(tau, p) {
     lw <- stat.tfisher(p, tau, tau)
     L <- length(p)
@@ -38,7 +41,7 @@ p.tfisher.soft.R <- function(tau, p) {
     p.tfisher(lw, L, tau, tau)
 }
 
-# p.tfisher.tpm is truncated product method in Zaykin et al (2002).
+# Truncated product method (tpm) in Zaykin et al (2002).
 p.tfisher.tpm <- function(tau, p) {
     lw <- stat.tfisher(p, tau, 1)
     L <- length(p)
