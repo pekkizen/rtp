@@ -66,7 +66,7 @@ inline static double dbeta(double u, double lc, double k, double l)
     return (u <= 0 || u >= 1) ? 0 : exp(lc + (k - 1) * log(u) + (l - 1) * log(1 - u));
 }
 
-// gammaSurv = 1 - pgamma
+// gammaSurv is survival function for g ~ Gamma(k, 1).
 // [[Rcpp::export]]
 double gammaSurv(double g, double k)
 {
@@ -87,7 +87,7 @@ double gammaSurv(double g, double k)
     return p;
 }
 
-// betaSD returns standard deviation of Beta(a, b).
+// betaSD returns standard deviation of x ~ Beta(a, b).
 static double betaSD(double a, double b)
 {
     double c = a + b;
@@ -102,7 +102,6 @@ double fBetaCpp(double u)
     double g;
     if (u <= 0 || u >= 1)
         return 0;
-
     g = K * log(u) - LW; // exp(-g) = w/u^k
     return dbeta(u, LC, K + 1, L - K) * gammaSurv(g, K);
 }
@@ -332,14 +331,14 @@ double simpsonAdaBetaQuantileCpp(double lw, double k, double l,
 // [[Rcpp::export]]
 double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
 {
-    double qTauL, ldeltaB, lbinom, deltaP, prod, sum, gammaS, cdf;
+    double lqTau, ldeltaB, lbinom, deltaP, prod, sum, gammaS, cumP;
 
-    qTauL = log(tau1 / tau2);
+    lqTau = log(tau1 / tau2);
     ldeltaB = log(tau1) - log(1 - tau1);
     lbinom = l * log(1 - tau1);
 
     lw /= 2;
-    cdf = 0;
+    cumP = 0;
     prod = 0;
     if (tau1 == tau2) // soft TFisher
         prod = exp(-lw);
@@ -348,6 +347,7 @@ double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
     for (double k = 1.0; k <= l; k++)
     {
         lbinom += ldeltaB + log((l + 1 - k) / k);
+        // lbinom = log(R::dbinom(k, l, tau1, 0));
 
         if (prod > 0)
         {
@@ -357,18 +357,17 @@ double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
         }
         else
         {
-            double wk = lw + k * qTauL;
+            double wk = lw + k * lqTau;
             if (wk < 0)
                 break; // TPM main exit
-
             gammaS = gammaSurv(wk, k);
         }
         deltaP = (1 - gammaS) * exp(lbinom);
-        cdf += deltaP;
+        cumP += deltaP;
 
-        if ((k > tau1 * l) && (deltaP < k * tol * (1 - cdf)))
+        if ((k > tau1 * l) && (deltaP < k * tol * (1 - cumP)))
             break;
     }
-    cdf += pow(1 - tau1, l);
-    return fmax(0, 1 - cdf);
+    cumP += pow(1 - tau1, l);
+    return fmax(0, 1 - cumP);
 }
