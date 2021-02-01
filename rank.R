@@ -13,23 +13,32 @@ p.art <- function(K, p) {
 
 # fBetaQuantile is integrand over Beta probabilities in [0, 1].
 # This is the integrand in Vsevolozhskaya et al. (2019).
-fBetaQuantile <- function(u, lw, K, L) {
-    b <- qbeta(u, K + 1, L - K)
+fBetaQuantile <- function(p, lw, K, L) {
+    b <- qbeta(p, K + 1, L - K)
     g <- log(b) * K - lw
     1 - pgamma(g, K)
 }
 
+# fGammaQuantile is integrand over Gamma probabilities in [0, 1].
+# fGammaQuantile(1-u) is very near to fBetaQuantile(u). Not exactly,
+# but integrates to the same p-value.
+fGammaQuantile <- function(p, lw, K, L) {
+    g <- qgamma(p, K)
+    b <- exp((g + lw) / K)
+    pbeta(b, K + 1, L - K)
+}
+
 # fBetaDensity is integrand over Beta density in [0, 1]. This is
 # equivalent to the integrand equation in Dudbridge and Koeleman (2003).
-fBetaDensity <- function(u, lw, K, L) {
-    g <- K * log(u) - lw
-    dbeta(u, K + 1, L - K) * (1 - pgamma(g, K))
+fBetaDensity <- function(b, lw, K, L) {
+    g <- K * log(b) - lw
+    dbeta(b, K + 1, L - K) * (1 - pgamma(g, K))
 }
 
 # fGammaDensity is integrand over Gamma density in [0, inf).
 fGammaDensity <- function(g, lw, K, L) {
-    u <- exp((g + lw) / K)
-    dgamma(g, K) * pbeta(u, K + 1, L - K)
+    b <- exp((g + lw) / K)
+    dgamma(g, K) * pbeta(b, K + 1, L - K)
 }
 
 # Reference integration by library cubature function pcubature.
@@ -102,7 +111,7 @@ p.rtp.qbeta.integrate <- function(K, p, abstol = 1e-5) {
 }
 
 # RPT p-value by inverse beta CDF and adaptive Cpp Simpson.
-p.rtp.qbeta.simpa <- function(K, p, abstol = 1e-6, reltol = 1e-4) {
+p.rtp.qbeta.simp.a <- function(K, p, abstol = 1e-6, reltol = 1e-4) {
     L <- length(p)
     lw <- sum(log(p[1:K]))
 

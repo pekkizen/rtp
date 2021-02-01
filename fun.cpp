@@ -13,8 +13,8 @@ using namespace Rcpp;
 // u = K / (L - 1) = mode of Beta(K + 1, L - K)
 
 // Constants in integration
-static double LF;
-static double LC;
+static double LK;
+static double LG;
 static double LW;
 static double L;
 static double K;
@@ -25,21 +25,17 @@ void initCpp(double lw, double k, double l)
     LW = lw;
     K = k;
     L = l;
-    LC = lgamma(l + 1) - lgamma(k + 1) - lgamma(l - k);
-    LF = lgamma(k);
+    LG = lgamma(l + 1) - lgamma(k + 1) - lgamma(l - k);
+    LK = lgamma(k);
 
-    // exp(LC) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1)
+    // exp(LK)= (k - 1)!
+    // exp(LG) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1)
     // See Dudbridge and Koeleman (2003).
 }
 
 inline static double pgamma(double g, double k)
 {
     return R::pgamma(g, k, 1, 1, 0);
-}
-
-inline static double dgammaR(double g, double k)
-{
-    return R::dgamma(g, k, 1, 0);
 }
 
 inline static double qbeta(double p, double k, double l)
@@ -53,20 +49,23 @@ inline static double pbeta(double u, double k, double l)
 }
 
 // dgamma is density function of g ~ Gamma(k, 1).
-// lf is precalculated logarithm of (k-1)!.
-inline static double dgamma(double g, double lf, double k)
+// It does same as Rcpp function R::dgamma(g, k, 1, 0).
+// lk is precalculated logarithm of (k-1)!.
+inline static double dgamma(double g, double lk, double k)
 {
-    return (g <= 0) ? 0 : exp((k - 1) * log(g) - g - lf);
+    return (g <= 0) ? 0 : exp((k - 1) * log(g) - g - lk);
 }
 
-// dbeta is density function of u ~ Beta(lc, k, l).
-// lc is precalculated logarithm of l! / (k! x l-k-1!).
-inline static double dbeta(double u, double lc, double k, double l)
+// dbeta is density function of u ~ Beta(lg, k, l).
+// lg is precalculated logarithm of l! / (k! x l-k-1!).
+inline static double
+dbeta(double u, double lg, double k, double l)
 {
-    return (u <= 0 || u >= 1) ? 0 : exp(lc + (k - 1) * log(u) + (l - 1) * log(1 - u));
+    return (u <= 0 || u >= 1) ? 0 : exp(lg + (k - 1) * log(u) + (l - 1) * log(1 - u));
 }
 
 // gammaSurv is survival function for g ~ Gamma(k, 1).
+// It does same as Rcpp function 1 - R::pgamma(g, k, 1, 1, 0).
 // [[Rcpp::export]]
 double gammaSurv(double g, double k)
 {
@@ -87,7 +86,8 @@ double gammaSurv(double g, double k)
     return p;
 }
 
-// betaSD returns standard deviation of x ~ Beta(a, b).
+// betaSD returns the standard deviation of x ~ Beta(a, b).
+// [[Rcpp::export]]
 static double betaSD(double a, double b)
 {
     double c = a + b;
@@ -102,8 +102,9 @@ double fBetaCpp(double u)
     double g;
     if (u <= 0 || u >= 1)
         return 0;
+
     g = K * log(u) - LW; // exp(-g) = w/u^k
-    return dbeta(u, LC, K + 1, L - K) * gammaSurv(g, K);
+    return dbeta(u, LG, K + 1, L - K) * gammaSurv(g, K);
 }
 
 // fGamma is integrand over Gamma density in [0, inf).
@@ -111,7 +112,7 @@ static double fGamma(double g)
 {
     double u, dg;
     u = exp((g + LW) / K);
-    dg = dgamma(g, LF, K);
+    dg = dgamma(g, LK, K);
     return (u >= 1) ? dg : dg * pbeta(u, K + 1, L - K);
 }
 
@@ -123,13 +124,13 @@ static double fBetaQuantile(double p)
     if (p <= 0)
         return 1;
 
-    u = qbeta(p, K + 1, L - K);
+    u = qbeta(p, K + 1, L - K); // Inverse CDF method
     g = K * log(u) - LW;
     return gammaSurv(g, K);
 }
 
 // riemannSum integrates f from a to b by Riemann sum.
-// When f -> 0, stepsize h is increased.
+// When f gets small, stepsize h is increased by hlim and hmul.
 // Integration stops when relative increment is < tol.
 static double riemannSum(double (*f)(double), double a, double b, double h,
                          double tol, double hlim, double hmul)
@@ -154,7 +155,7 @@ static double riemannSum(double (*f)(double), double a, double b, double h,
 }
 
 // simpson integrates f from a to inf by Simpson's 1/3 rule.
-// When f -> 0, stepsize h is increased.
+// When f gets small, stepsize h is increased by hlim and hmul.
 // Integration stops when relative increment is < tol.
 static double simpson(double (*f)(double), double a, double h,
                       double tol, double hlim, double hmul)
@@ -192,7 +193,7 @@ double riemannBetaCpp(double lw, double k, double l,
     betaTop = k / (l - 1);
     h = fmin(0.05, fmin(width, betaTop) / 8);
     h *= stepscale;
-    a = fmax(0, betaTop - 1.5 * width);
+    a = fmax(0, betaTop - width);
 
     return riemannSum(&fBetaCpp, a, 1, h, tol, 0, 1);
 }
@@ -201,34 +202,30 @@ double riemannBetaCpp(double lw, double k, double l,
 // [[Rcpp::export]]
 double riemannGammaCpp(double lw, double k, double l, double tol, double stepscale)
 {
-    double a, h, hlim = 0.01, hmul = 1.35;
+    double h, hlim = 0.01, hmul = 1.5;
 
     initCpp(lw, k, l);
 
-    h = fmax(1, (k - 1) / sqrt(k)); // sqrt(k) is Gamma SD
+    h = (k < 3) ? 0.25 : (k - 1) / sqrt(k); // sqrt(k) is Gamma SD
     h *= stepscale;
-    hlim = (stepscale < 1) ? 0 : hlim;
+    hlim = (stepscale != 0) ? 0 : hlim;
 
-    a = fmax(0, (k - 1) - 5 * sqrt(k)); // Gamma mode - 5 * SD
-
-    return riemannSum(&fGamma, a, 100 * k, h, tol, hlim, hmul);
+    return riemannSum(&fGamma, 0, 100 * k, h, tol, hlim, hmul);
 }
 
 // simpsonGammaCpp integrates fGamma from 0 to inf by fixed steps Simpson's 1/3 rule.
 // [[Rcpp::export]]
 double simpsonGammaCpp(double lw, double k, double l, double tol, double stepscale)
 {
-    double a, h, hlim = 0.15, hmul = 2;
+    double h, hlim = 0.15, hmul = 2;
 
     initCpp(lw, k, l);
 
-    h = fmax(1, 1.5 * (k - 1) / sqrt(k)); // sqrt(k) is Gamma SD
+    h = (k < 3) ? 0.25 : 1.5 * (k - 1) / sqrt(k); // sqrt(k) is Gamma SD
     h *= stepscale;
-    hlim = (stepscale < 1) ? 0 : hlim; // h, hlim and hmul are dependant
+    hlim = (stepscale != 1) ? 0 : hlim; // h, hlim and hmul are dependant
 
-    a = fmax(0, (k - 1) - 5 * sqrt(k)); // Gamma mode - 5 * SD
-
-    return simpson(&fGamma, a, h, tol, hlim, hmul);
+    return simpson(&fGamma, 0, h, tol, hlim, hmul);
 }
 
 // Simpson's 1/3 rule adaptive integrator.
@@ -314,10 +311,6 @@ double simpsonAdaBetaQuantileCpp(double lw, double k, double l,
 
     initCpp(lw, k, l);
 
-    if (tol < 1e-14)
-        tol = 1e-14;
-    if (rtol < 1e-10)
-        rtol = 1e-10;
     if (depth > 25)
         depth = 25;
 
@@ -331,11 +324,11 @@ double simpsonAdaBetaQuantileCpp(double lw, double k, double l,
 // [[Rcpp::export]]
 double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
 {
-    double lqTau, ldeltaB, lbinom, deltaP, prod, sum, gammaS, cumP;
+    double lqTau, ldeltaB, ldbinom, deltaP, prod, sum, gammaS, cumP;
 
     lqTau = log(tau1 / tau2);
     ldeltaB = log(tau1) - log(1 - tau1);
-    lbinom = l * log(1 - tau1);
+    ldbinom = l * log(1 - tau1);
 
     lw /= 2;
     cumP = 0;
@@ -346,8 +339,8 @@ double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
 
     for (double k = 1.0; k <= l; k++)
     {
-        lbinom += ldeltaB + log((l + 1 - k) / k);
-        // lbinom = log(R::dbinom(k, l, tau1, 0));
+        ldbinom += ldeltaB + log((l + 1 - k) / k);
+        // ldbinom = log(R::dbinom(k, l, tau1, 0));
 
         if (prod > 0)
         {
@@ -357,12 +350,12 @@ double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol)
         }
         else
         {
-            double wk = lw + k * lqTau;
+            double wk = lw + k * lqTau; // lqTau=0 for soft TFisher
             if (wk < 0)
                 break; // TPM main exit
             gammaS = gammaSurv(wk, k);
         }
-        deltaP = (1 - gammaS) * exp(lbinom);
+        deltaP = (1 - gammaS) * exp(ldbinom);
         cumP += deltaP;
 
         if ((k > tau1 * l) && (deltaP < k * tol * (1 - cumP)))

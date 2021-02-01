@@ -10,7 +10,7 @@ pvalues <- function(K, L, small, seed) {
     # tol <- defTol
     p <- p.gen(L, small, seed)
     p1 <- p.rtp.qbeta.integrate(K, p)
-    p2 <- p.rtp.qbeta.simpa(K, p)
+    p2 <- p.rtp.qbeta.simp.a(K, p)
     p7 <- p.rtp.dbeta.integrate(K, p)
     p8 <- p.rtp.dbeta.simp.a(K, p)
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
@@ -64,13 +64,13 @@ pvalues <- function(K, L, small, seed) {
     writeLines("                                                   # of correct")
     writeLines("----Function-----------P-value--------Abs error----non zero digits")
     writeLines(paste("p.rtp.qbeta.integrate ", f1, tab, e1, tab, d1))
-    writeLines(paste("p.rtp.qbeta.simpa     ", f2, tab, e2, tab, d2))
+    writeLines(paste("p.rtp.qbeta.simp.a    ", f2, tab, e2, tab, d2))
     writeLines(paste("p.rtp.dbeta.integrate ", f7, tab, e7, tab, d7))
     writeLines(paste("p.rpt.dbeta.cuba      ", f3, tab, e3, tab, d3))
 
     writeLines(paste("p.rtp.dbeta.riema     ", f4, tab, e4, tab, d4))
 
-    writeLines(paste("p.rtp.dbeta.simpa     ", f8, tab, e8, tab, d8))
+    writeLines(paste("p.rtp.dbeta.simp.a    ", f8, tab, e8, tab, d8))
     writeLines(paste("p.rtp.dgamma.simp     ", f13, tab, e13, tab, d13))
     writeLines(paste("p.rtp.dgamma.riema    ", f11, tab, e11, tab, d11))
 
@@ -79,50 +79,70 @@ pvalues <- function(K, L, small, seed) {
     # writeLines(paste("p.art                 ", f10, tab, e10, tab, d10))
 }
 
-# plotQuantile(K=10, L=100, xmax = 1, small=1e-1, seed=0)
+# plotQuantile(K=10, L=100, small=1e-2, seed=0)
 plotQuantile <- function(K, L, xmax = 1, small, seed) {
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     pval <- p.rtp.qbeta.integrate(K, p)
 
-    f <- function(u) fBetaQuantile(u, lw, K, L)
-    plot.new()
-    plot(f,
+    f1 <- function(u) fBetaQuantile(u, lw, K, L)
+    f2 <- function(u) fGammaQuantile(u, lw, K, L)
+
+    plot(f1,
         type = "l", ylab = "", font.main = 1,
         col = "blue", cex.main = 1,
-        xaxp = c(0, xmax, 2), xlim = c(0, xmax),
-        yaxp = c(0, 1, 2), ylim = c(0, 1),
+        xlim = c(0, xmax), ylim = c(0, 1), yaxp = c(0, 1, 2),
+
+        axis(1,
+            at = pretty(c(0, xmax)),
+        ),
         xlab = paste(
-            "Area under the blue integrand is ",
+            "Area under the integrands is ",
             "p = ", format(pval, digits = 2)
         ),
-        main = "Integrand by Beta quantile function"
+        main = c(
+            "Integrand by inverse CDF (quantile function)",
+            "by Beta inverse (blue) and Gamma inverse (red)"
+        )
     )
-    abline(v = 0, lty = 1, col = "#9e9d9d")
-    abline(h = 0, lty = 1, col = "#9e9d9d")
-    abline(v = 0.5, lty = 1, col = "#9e9d9d")
-    abline(h = 0.5, lty = 1, col = "#9e9d9d")
+    par(new = TRUE)
+    plot(f2,
+        type = "l", ylab = "", col = "red",
+        xlim = c(0, xmax), ylim = c(0, 1),
+        axes = FALSE,
+    )
+
+    abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = 1, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = 0.5, lty = 1, col = "#757474", lwd = 0.25)
+    abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(h = 0.5, lty = 1, col = "#757474", lwd = 0.25)
 }
 
-# plotDensity(K=10, L=100, xmax=0.25, small=1e-4, seed=0)
-plotBetaDensity <- function(K, L, xmax, small, seed) {
+# plotBxGintegrand(K=10, L=100, small=1e-2, seed=0)
+plotBxGintegrand <- function(K, L, xmin = -1, xmax = 0, small, seed) {
     p <- p.gen(L, small, seed)
     pval <- p.rpt.dbeta.cuba(K, p)
     lw <- sum(log(p[1:K]))
-    top <- fDenTop(lw, K, L)
+    top <- fBetaTop(lw, K, L)
     left <- exp(lw / K) * 1.5
+    # left <- exp((K - 1 + lw) / K) # Gamma mode
+
+    right <- K / (L - 1)
     hight <- dbeta(K / (L - 1), K + 1, L - K)
-    end <- min(1.0, top + 6 * betaSD(K + 1, L - K))
+
+    sd <- betaSD(K + 1, L - K)
+    if (xmax <= 0) xmax <- min(1.0, top + 8 * sd)
+    if (xmin < 0) xmin <- max(0, top - 6 * sd)
 
     f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
     f2 <- function(u) fBetaDensity(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
-    plot.new()
     plot(f3,
-        type = "l", lwd = 1, col = "#088308",
-        xaxp = c(0, xmax, 10), xlim = c(0, xmax), ylim = c(0, hight),
-        ylab = "", font.main = 1, cex.main = 1,
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "darkgreen",
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        ylab = "", yaxt = "n", xaxt = "n",
         xlab = c(
             paste(
                 "Area under the blue integrand is p = ",
@@ -131,65 +151,80 @@ plotBetaDensity <- function(K, L, xmax, small, seed) {
             "Area under the green Beta density is 1"
         ),
         main = c(
-            paste(
-                "Beta density (green), ",
-                "Gamma survival (red), ",
-                "Beta x Gamma integrand (blue)."
-            ),
+            "BxG integrand (blue) = Beta density (green) x Gamma survival (red)",
             paste(
                 " K = ", format(K, digits = 5),
                 " L = ", format(L, digits = 5)
+            ),
+            paste(
+                " Approx. integrand location = ",
+                format(top, digits = 2)
             )
         )
     )
-    abline(v = left, lty = 2, col = "#f57575", lwd = 0.5)
-    abline(v = K / (L - 1), lty = 2, col = "#0aa50a", lwd = 0.5)
-    abline(v = top, lty = 2, col = "#5454f7", lwd = 0.5)
-    abline(h = 0, lty = 1, col = "#9e9d9d", lwd = 1)
-    abline(h = 1, lty = 1, col = "#9e9d9d", lwd = 1)
+    axis(1,
+        col.ticks = "#3a3939", col.axis = "#3a3939",
+        at = pretty(c(xmin, xmax))
+    )
+    axis(2,
+        col.ticks = "darkgreen", col.axis = "darkgreen",
+    )
+    abline(v = left, lty = 2, col = "red", lwd = 0.5)
+    abline(v = K / (L - 1), lty = 2, col = "darkgreen", lwd = 0.5)
+    abline(v = top, lty = 2, col = "blue", lwd = 0.5)
+    abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
 
     par(new = TRUE)
     plot(f2,
         type = "l", lwd = 1, col = "blue",
-        xlim = c(0, xmax), ylim = c(0, hight),
-        yaxt = "n", xaxt = "n", ylab = "", xlab = ""
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        ylab = "", xlab = "", axes = FALSE,
     )
     par(new = TRUE)
     plot(f1,
         type = "l", lwd = 1, col = "red",
-        xlim = c(0, xmax), ylim = c(0, hight),
-        xaxt = "n", xlab = "", ylab = "",
-        if (L > 15) yaxp <- c(0, 1, 1) # stopped working?
+        xlim = c(xmin, xmax), ylim = c(0, 1),
+        ylab = "", xlab = "", axes = FALSE,
+    )
+    axis(4,
+        col.ticks = "red", col.axis = "red",
+        at = c(0, 0.5, 1)
     )
 }
 
-# plotLocation(K=10, L=100, xmax=0.3, small=1e-1, seed=0)
-plotLocation <- function(K, L, xmax = 1, small, seed) {
+# plotIntegrandLocation(K=10, L=100, small=1e-1, seed=0)
+plotIntegrandLocation <- function(K, L, xmin = -1, xmax = 0, small, seed) {
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     pval <- p.rpt.dbeta.cuba(K, p)
 
-    top <- fDenTop(lw, K, L)
+    top <- fBetaTop(lw, K, L)
     left <- exp(lw / K) * 1.5
     right <- K / (L - 1)
-    end <- min(1.0, top + 6 * betaSD(K + 1, L - K))
-    hwid <- 3 * betaSD(K + 1, L - K)
+    # left <- exp((K - 1 + lw) / K) # Gamma mode
+
+
+    sd <- betaSD(K + 1, L - K)
+    if (xmax <= 0) xmax <- min(1.0, top + 6 * sd)
+    if (xmin < 0) xmin <- max(0.0, top - 6 * sd)
 
     f <- function(u) 1 - pgamma(K * log(u) - lw, K)
     f2 <- function(u) fBetaDensity(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
-    plot.new()
     plot(f,
-        type = "l", font.main = 1, lwd = 1, cex.main = 1,
-        xaxp = c(0, xmax, 10), xlim = c(0, xmax), col = "red",
-        yaxp = c(0, 1, 1),
+        type = "l", font.main = 1, lwd = 1, cex.main = 1, col = "red",
+        xlim = c(xmin, xmax), yaxp = c(0, 1, 1),
+        axis(1,
+            at = c(xmin, xmax),
+        ),
         xlab = "Blue and green curves are vertically not in actual size",
         ylab = "",
         main = c(
             paste(
                 "Gamma survival (red), ", "Beta density (green), ",
-                "Beta x Gamma (blue)"
+                "Beta x Gamma integrand (blue)."
             ),
             paste(
                 "K = ", format(K, digits = 5),
@@ -198,14 +233,13 @@ plotLocation <- function(K, L, xmax = 1, small, seed) {
             ),
             paste(
                 "Left = ", format(left, digits = 2),
-                " Top = ", format(top, digits = 2),
-                " Right = ", format(right, digits = 2),
-                " End = ", format(end, digits = 2)
+                " Integrand = ", format(top, digits = 2),
+                " Right = ", format(right, digits = 2)
             )
         )
     )
     points(
-        x = c(max(0, top - hwid), top + hwid, end),
+        x = c(max(0, top - 3 * sd), top + 3 * sd, xmax),
         y = c(0, 0, 0.02), type = "p",
         pch = c(4, 4, 25), lwd = 2,
         col = c("blue", "blue", "blue"), bg = c("blue")
@@ -216,19 +250,89 @@ plotLocation <- function(K, L, xmax = 1, small, seed) {
     abline(h = 0, lty = 1, col = "gray", lwd = 1)
     par(new = TRUE)
     plot(f3,
-        type = "l", font.main = 1, lwd = 1,
-        xaxp = c(0, xmax, 20), xlim = c(0, xmax),
+        type = "l", lwd = 1, xlim = c(xmin, xmax),
         yaxt = "n", xaxt = "n", xlab = "", ylab = "",
         col = "#088308",
     )
     par(new = TRUE)
     plot(f2,
-        type = "l", font.main = 1, lwd = 1,
-        xaxp = c(0, xmax, 20), xlim = c(0, xmax),
-        yaxt = "n", xaxt = "n", ylab = "", xlab = "",
+        type = "l", lwd = 1, xlim = c(xmin, xmax),
+        yaxt = "n", xaxt = "n", xlab = "", ylab = "",
         col = "blue",
     )
 }
+
+# plotGxBintegrand(K=10, L=100, small=1e-4, seed=0)
+plotGxBintegrand <- function(K, L, xmin = -1, xmax = 0, small = 1e-1, seed = 0) {
+    p <- p.gen(L, small, seed)
+    pval <- p.rpt.dbeta.cuba(K, p, 1e-10)
+    lw <- sum(log(p[1:K]))
+    hight <- dgamma(K - 1, K)
+
+    f3 <- function(g) dgamma(g, K)
+    f2 <- function(g) fGammaDensity(g, lw, K, L)
+    f1 <- function(g) {
+        u <- exp((g + lw) / K)
+        pbeta(u, K + 1, L - K)
+    }
+
+    bTop <- K * log(K / (L - 1)) - lw
+    if (xmax <= 0) xmax <- floor(bTop + 4 * sqrt(K))
+    if (xmin < 0) xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
+    gTop <- K - 1
+    iTop <- (gTop + 2 * bTop) / 3
+
+    plot(f2,
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "blue",
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        ylab = "", yaxt = "n", xaxt = "n",
+        xlab = c(
+            paste(
+                "Area under the blue integrand is p = ",
+                format(pval, digits = 2)
+            ),
+            "Area under the green Gamma density is 1"
+        ),
+        main = c(
+            "GxB integrand (blue) = Gamma density (green) x Beta CDF (red)",
+            paste(
+                " K = ", format(K, digits = 5),
+                " L = ", format(L, digits = 5)
+            )
+        )
+    )
+    axis(1,
+        col.ticks = "#3a3939", col.axis = "#3a3939",
+        at = pretty(c(xmin, xmax))
+    )
+    axis(2,
+        at = pretty(c(0, hight / 2, hight)),
+        col.ticks = "blue", col.axis = "blue",
+    )
+    abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
+    abline(v = iTop, lty = 2, col = "blue", lwd = 0.5)
+    abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
+    abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
+
+    par(new = TRUE)
+    plot(f1,
+        type = "l", lwd = 1, col = "red",
+        xlim = c(xmin, xmax), ylim = c(0, 1),
+        ylab = "", xlab = "", axes = FALSE,
+    )
+    axis(4,
+        at = c(0, 0.5, 1),
+        col.ticks = "red", col.axis = "red",
+    )
+    par(new = TRUE)
+    plot(f3,
+        type = "l", lwd = 1, col = "darkgreen",
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        xlab = "", ylab = "", axes = FALSE,
+    )
+}
+
 
 # bench(K=5, L=100, small=1e-5, seed=0)
 bench <- function(K, L, small, seed) {
@@ -236,24 +340,24 @@ bench <- function(K, L, small, seed) {
     p <- p.gen(L, small, seed)
     Qinteg <- function() p.rtp.qbeta.integrate(K, p)
     Binteg <- function() p.rtp.dbeta.integrate(K, p)
-    Qsimpa <- function() p.rtp.qbeta.simpa(K, p)
-    Bsimpa <- function() p.rtp.dbeta.simp.a(K, p)
+    QsimpA <- function() p.rtp.qbeta.simp.a(K, p)
+    BsimpA <- function() p.rtp.dbeta.simp.a(K, p)
     Briema <- function() p.rtp.dbeta.riema(K, p)
-    Griema <- function() p.rtp.dgamma.riema(K, p, stepscale = 1.0)
-    Gsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1.0)
+    Griema <- function() p.rtp.dgamma.riema(K, p, stepscale = 1)
+    Gsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
     Bcuba <- function() p.rpt.dbeta.cuba(K, p)
-    TFish <- function() p.tfisher.soft(0.05, p)
     # TFish <- function() p.tfisher.soft.R(0.05, p)
+    TFish <- function() p.tfisher.soft(0.05, p)
     Bmutos <- function() ranktruncated(K, p)
-    # Art <- function() p.art(K, p)
+    Art <- function() p.art(K, p)
 
     res <- microbenchmark(
         unit = "us",
         # Bmutos(),
         Qinteg(),
-        Qsimpa(),
+        QsimpA(),
         # Dinteg(),
-        Bsimpa(),
+        BsimpA(),
         Briema(),
         Gsimp(),
         Griema(),
@@ -275,80 +379,5 @@ bench <- function(K, L, small, seed) {
             "(microseconds, logarithmic time)"
         )
     )
-    res
-}
-
-# plotGammaDensity(K=10, L=100, small=1e-4, seed=0)
-plotGammaDensity <- function(K, L, xmin = -1, xmax = 0, small = 1e-1, seed = 0) {
-    p <- p.gen(L, small, seed)
-    pval <- p.rtp.dgamma.cuba(K, p, 1e-10)
-    lw <- sum(log(p[1:K]))
-
-
-    scale <- 1 / dgamma(K - 1, K)
-
-    f3 <- function(g) dgamma(g, K) * scale
-    f2 <- function(g) fGammaDensity(g, lw, K, L) * scale
-    f1 <- function(g) {
-        u <- exp((g + lw) / K)
-        pbeta(u, K + 1, L - K)
-    }
-    hight <- 1
-    bTop <- K * log(K / (L - 1)) - lw
-    if (xmax <= 0) {
-        xmax <- bTop + floor(3 * sqrt(K)) # + 4 SD
-    }
-    if (xmin < 0) {
-        xmin <- max(0, K - 1 - floor(3 * sqrt(K)))
-    }
-    # start <- K * log(K / (L - 1) - 3 * betaSD(K + 1, L - K)) - lw
-    # start <- max(0, start)
-
-    gTop <- K - 1
-    iTop <- (gTop + 2 * bTop) / 3
-
-
-    plot.new()
-    plot(f3,
-        type = "l", lwd = 1, col = "#088308",
-        xaxp = c(xmin, xmax, 10), xlim = c(xmin, xmax), ylim = c(0, hight),
-        ylab = "", font.main = 1, cex.main = 1,
-        xlab = c(
-            paste(
-                "Area under the blue integrand is p = ",
-                format(pval, digits = 2)
-            ),
-            "Area under the green Gamma density is 1"
-        ),
-        main = c(
-            paste(
-                "Beta CDF (red), ",
-                "Gamma density (green), ",
-                "Beta x Gamma integrand (blue)."
-            ),
-            paste(
-                " K = ", format(K, digits = 5),
-                " L = ", format(L, digits = 5)
-            ),
-            "Green and blue are scaled up vertically"
-        )
-    )
-    par(new = TRUE)
-    plot(f2,
-        type = "l", lwd = 1, col = "blue",
-        xlim = c(xmin, xmax), ylim = c(0, hight),
-        yaxt = "n", xaxt = "n", ylab = "", xlab = ""
-    )
-    abline(v = gTop, lty = 2, col = "#0aa50a", lwd = 0.5)
-    abline(v = iTop, lty = 2, col = "blue", lwd = 0.5)
-    abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
-
-
-    par(new = TRUE)
-    plot(f1,
-        type = "l", lwd = 1, col = "red",
-        xlim = c(xmin, xmax), ylim = c(0, hight),
-        xaxt = "n", xlab = "", ylab = "",
-    )
-    abline(h = 0, lty = 1, col = "#9e9d9d", lwd = 0.5)
+    print(res, "us", signif = 3)
 }
