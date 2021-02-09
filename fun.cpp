@@ -20,6 +20,7 @@ static double fNull(double a) {
 // See Dudbridge and Koeleman (2003).
 static double lbetaC(double a, double b) {
     return lgamma(a + b) - lgamma(a) - lgamma(b);
+    // return -R::lbeta(a, b);
 }
 
 // [[Rcpp::export]]
@@ -61,13 +62,20 @@ inline static double pbeta(double x, double a, double b) {
     return R::pbeta(x, a, b, 1, 0);
 }
 
-// Beta distribution function by binomial distribution.
-// Equation 8.17.5 in https://dlmf.nist.gov/8.17.
-// [[Rcpp::export]]
-inline static double pbetaBinom(double k, double l, double x) {
-    if (x >= 1) return 1;
+// Beta distribution function as binomial cdf.
+// pbeta(x, k + 1, l - k) = 1 - pbinom(k, l, x)
+// e.g. equation 8.17.5 in https://dlmf.nist.gov/8.17.
+
+// Binomial distribution function (right tail).
+// 1 - left tail loses much accuracy.
+inline static double pbinomRT(double k, double l, double x) {
+    if (x >= 1) return 1; // NaNs and inf loops otherwise
     return R::pbinom(k, l, x, 0, 0);
 }
+
+// Density of the k+1 th order statistic is
+// l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1) =
+// Beta density(x, k+1, l-k)
 
 // Beta density function.
 // lg is precalculated logarithm of l! / (k! * l-k-1!).
@@ -89,9 +97,9 @@ inline static double gammaMean(double k) {
     return k;
 }
 
-// Gamma distribution function.
-inline static double pgamma(double g, double k) {
-    return R::pgamma(g, k, 1, 1, 0);
+// Gamma distribution function (right tail).
+inline static double pgammaRT(double g, double k) {
+    return R::pgamma(g, k, 1, 0, 0);
 }
 
 // Gamma survival function.
@@ -101,7 +109,7 @@ double gammaSurv(double g, double k) {
     if (g <= 0) return 1;
 
     if (g > 700 || k > 100)
-        return 1 - pgamma(g, k);
+        return pgammaRT(g, k);
 
     q = exp(-g); // q > 0
     p = q;
@@ -141,8 +149,12 @@ static double fGamma(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, LK, K) * pbeta(b, K + 1, L - K);
-    // return dgamma(g, LK, K) * pbetaBinom(K, L, b);
+    double dg = dgamma(g, LK, K);
+    if (b >= 1) return dg;
+    return dg * pbeta(b, K + 1, L - K);
+
+    // Same results and speed:
+    // return dg * pbinomRT(K, L, b);
 }
 
 // fBetaQuantile is integrand over Beta probabilities in [0, 1].
@@ -171,6 +183,7 @@ double fGammaQuantile(double p) {
 // riemann integrates f from a to inf by Riemann sum. Integration
 // stops when relative integral value on SD distance is < tol.
 // Assumed unimodal f(x) -> 0 when x -> inf.
+// Functions in f(x) must give a value, 0 or 1, for x > 1, not NaNs.
 static double riemann(double (*f)(double), double a,
                       double h, double tol, double SD) {
     double fa, fsum = 0;
