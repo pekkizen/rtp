@@ -23,7 +23,7 @@ pvalues <- function(K, L, small, seed) {
     p7 <- p.rtp.dbeta.integrate(K, p)
     p8 <- p.rtp.dbeta.simp.a(K, p)
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
-    p3 <- p.rpt.dbeta.cuba(K, p, tol = 1e-6)
+    # p3 <- p.rpt.dbeta.cuba(K, p, tol = 1e-6)
     p10 <- p.art(K, p)
     p9 <- p.tfisher.soft((K + 1) / (L + 1), p)
     p6 <- ranktruncated(K, p)
@@ -42,14 +42,15 @@ pvalues <- function(K, L, small, seed) {
     ferr <- function(p) {
         format(-log10(abs(p - pe) / pe), digits = d)
     }
-    d <- 6
+    d <- 8
     wi <- 10
     nsmall <- 8
     droptrail <- FALSE
 
     f1 <- fmt(p1)
     f2 <- fmt(p2)
-    f3 <- fmt(p3)
+    # f3 <- fmt(p3)
+    fe <- fmt(pe)
     f4 <- fmt(p4)
     f6 <- fmt(p6)
     f7 <- fmt(p7)
@@ -62,7 +63,7 @@ pvalues <- function(K, L, small, seed) {
     d <- 1
     e1 <- format(abs(p1 - pe), digits = d)
     e2 <- format(abs(p2 - pe), digits = d)
-    e3 <- format(abs(p3 - pe), digits = d)
+    # e3 <- format(abs(p3 - pe), digits = d)
     e4 <- format(abs(p4 - pe), digits = d)
     e6 <- format(abs(p6 - pe), digits = d)
     e7 <- format(abs(p7 - pe), digits = d)
@@ -75,7 +76,7 @@ pvalues <- function(K, L, small, seed) {
     d <- 2
     d1 <- ferr(p1)
     d2 <- ferr(p2)
-    d3 <- ferr(p3)
+    # d3 <- ferr(p3)
     d4 <- ferr(p4)
     d6 <- ferr(p6)
     d7 <- ferr(p7)
@@ -93,7 +94,7 @@ pvalues <- function(K, L, small, seed) {
     w(paste("p.rtp.qbeta.simp.a ", f2, tab, e2, "  ", d2))
     w(paste("p.rtp.qgamm.simp.a ", f12, tab, e12, "  ", d12))
     w(paste("p.rtp.dbeta.integ  ", f7, tab, e7, "  ", d7))
-    w(paste("p.rpt.dbeta.cuba   ", f3, tab, e3, "  ", d3))
+    w(paste("p.rpt.dbeta.cuba   ", fe, tab, "0 ref.   12-16"))
     # w(paste("mutoss/ranktrunca  ", f6, tab, e6, "  ", d6))
     w("")
     w(paste("p.rtp.dbeta.simp.a ", f8, tab, e8, "  ", d8))
@@ -382,8 +383,8 @@ bench <- function(K, L, small, seed) {
     res <- microbenchmark(
         unit = "us",
         # DBmutos(),
-        # QBinte(),
-        QBsimA(),
+        QBinte(),
+        # QBsimA(),
         QGsimA(),
         # DBinte(),
         DBsimA(),

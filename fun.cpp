@@ -1,25 +1,33 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// Constants in integration
-static double LG;
-static double LB;
-static double LW;
-static double L;
-static double K;
+// https://en.wikipedia.org/wiki/Gamma_distribution
+// Characterization using shape α and rate β
 
-// For benchmark.
+// https://en.wikipedia.org/wiki/Beta_distribution
+// Probability density function
+
+// https://en.wikipedia.org/wiki/Order_statistic
+// Order statistics sampled from a uniform distribution
+
+// Global "constants" in integration
+static double K;
+static double L;
+static double LB;
+static double LF;
+static double LW;
+
+// Benchmark reference.
 // [[Rcpp::export]]
 static double fNull(double a) {
     return a;
 }
 
-// lbeta returns logarithm of the Beta(a, b) coefficient.
+// lbeta returns logarithm of Beta(a, b) = Gamma(a) * Gamma(b) / Gamma(a+b).
 // exp(-lbeta(K+1, L-K)) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1).
 // See Dudbridge and Koeleman (2003).
 inline static double lbeta(double a, double b) {
     return lgamma(a) + lgamma(b) - lgamma(a + b);
-    // return R::lbeta(a, b);
 }
 
 // [[Rcpp::export]]
@@ -31,7 +39,7 @@ double init(double k, NumericVector p) {
     K = k;
     L = p.length();
     LB = -lbeta(K + 1, L - K);
-    LG = lgamma(K);
+    LF = lgamma(K);
     return L;
 }
 
@@ -56,12 +64,12 @@ inline static double betaMean(double a, double b) {
 // Beta quantile/inverse CDF function.
 inline static double qbeta(double p, double a, double b) {
     if (p >= 1) return 1;
+    if (p <= 0) return 0;
     return R::qbeta(p, a, b, 1, 0);
 }
 
 // Beta distribution function.
 inline static double pbeta(double x, double a, double b) {
-    if (x >= 1) return 1;
     return R::pbeta(x, a, b, 1, 0);
 }
 
@@ -72,7 +80,8 @@ inline static double pbeta(double x, double a, double b) {
 // Binomial distribution function (right tail, survival).
 // 1 - left tail loses much accuracy.
 inline static double pbinomRT(double k, double l, double x) {
-    if (x >= 1) return 1; // NaNs and inf loops otherwise
+    if (x <= 0) x = 0;
+    if (x >= 1) x = 1;
     return R::pbinom(k, l, x, 0, 0);
 }
 
@@ -88,8 +97,7 @@ inline static double dbeta(double x, double lg, double a, double b) {
     return exp(lg + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
-// Gamma functions are for g ~ Gamma(k, 1),
-// where k is positive integer.
+// Gamma functions are for g ~ Gamma(k, 1), where k is positive integer.
 
 inline static double gammaSD(double k) {
     return sqrt(k);
@@ -105,7 +113,7 @@ inline static double gammaMean(double k) {
 
 // Gamma survival function by pgamma.
 inline static double sgamma(double g, double k) {
-    return R::pgamma(g, k, 1, 0, 0);
+    return R::pgamma(g, k, 1, 0, 0); // right tail
 }
 
 // Gamma survival function.
@@ -127,15 +135,16 @@ static double gammaSurv(double g, double k) {
 
 // Gamma density function.
 // lk is precalculated logarithm of (k-1)!.
-inline static double dgamma(double g, double lk, double k) {
+inline static double dgamma(double g, double lf, double k) {
     if (g <= 0) return 0;
 
-    return exp((k - 1) * log(g) - g - lk);
+    return exp((k - 1) * log(g) - g - lf);
 }
 
 // Gamma quantile/inverse CDF function.
 inline static double qgamma(double p, double k) {
     if (p <= 0) return 0;
+    if (p > 1) p = 1;
     return R::qgamma(p, k, 1, 1, 0);
 }
 
@@ -155,10 +164,10 @@ static double fGamma(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, LG, K) * pbeta(b, K + 1, L - K);
+    return dgamma(g, LF, K) * pbeta(b, K + 1, L - K);
 
     // Same results and speed:
-    // return dgamma(g, LG, K) * pbinomRT(K, L, b);
+    // return dgamma(g, LF, K) * pbinomRT(K, L, b);
 }
 
 // fBetaQuantile is integrand over Beta probabilities in [0, 1].
@@ -188,8 +197,7 @@ double fGammaQuantile(double p) {
 
 // riemann integrates f from a to inf by Riemann sum. Integration
 // stops when relative integral value on SD distance is < tol.
-// Assumed unimodal f(x) -> 0 when x -> inf.
-// Functions in f(x) must give a value, 0 or 1, for x > 1, not NaNs.
+// Assumed unimodal f(x) -> 0 when x -> inf. Or f(x) = 0, when x > b > 0.
 static double riemann(double (*f)(double), double a,
                       double h, double tol, double SD) {
     double fa, fsum = 0;
@@ -376,23 +384,23 @@ double simpsonAdaBetaQuantile(double k, NumericVector p, double abstol = 1e-7,
     return adaSimpson(&fBetaQuantile, 0, 1, fa, fm, fb, 2, abstol, reltol, depth);
 }
 
-// pTFisherCpp implements R function p.tfisher. 10-50 x faster.
+// pTFisherCpp implements R function p.tfisher from Zhang et al (2020).
 // [[Rcpp::export]]
-double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol) {
+double pTFisher(double lw, double L, double tau1, double tau2, double tol) {
     double lqTau, ldeltaB, ldbinom, deltaP, sum, gammaS;
     double prod = 0, cumP = 0;
 
     lqTau = log(tau1 / tau2);
     ldeltaB = log(tau1) - log(1 - tau1);
-    ldbinom = l * log(1 - tau1);
+    ldbinom = L * log(1 - tau1);
     lw /= 2;
 
     if (tau1 == tau2) prod = exp(-lw); // soft TFisher
     sum = prod;
 
-    for (double k = 1.0; k <= l; k++) {
+    for (double k = 1.0; k <= L; k++) {
 
-        ldbinom += ldeltaB + log((l + 1 - k) / k);
+        ldbinom += ldeltaB + log((L + 1 - k) / k);
         // ldbinom = log(R::dbinom(k, l, tau1, 0));
 
         if (prod > 0) {
@@ -408,9 +416,9 @@ double pTFisherCpp(double lw, double l, double tau1, double tau2, double tol) {
         deltaP = (1 - gammaS) * exp(ldbinom);
         cumP += deltaP;
 
-        if ((k > tau1 * l) && (deltaP < k * tol * (1 - cumP)))
+        if ((k > tau1 * L) && (deltaP < k * tol * (1 - cumP)))
             break;
     }
-    cumP += pow(1 - tau1, l);
+    cumP += pow(1 - tau1, L);
     return fmax(0, 1 - cumP);
 }

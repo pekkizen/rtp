@@ -71,7 +71,7 @@ p.rtp.dgamma.riema <- function(K, p, tol = 1e-8, stepscale = 1) {
 }
 
 # RPT p-value by beta density and R integrate function.
-p.rtp.dbeta.integrate <- function(K, p, abstol = 1e-5) {
+p.rtp.dbeta.integrate <- function(K, p, abstol = 1e-4) {
     L <- length(p)
     lw <- sum(log(p[1:K]))
     f <- function(u) fBeta.R(u, lw, K, L)
