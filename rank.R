@@ -37,8 +37,8 @@ fBeta.R <- function(b, lw, K, L) {
 # fGamma.R is integrand over Gamma density in [0, inf).
 fGamma.R <- function(g, lw, K, L) {
     b <- exp((g + lw) / K)
-    # dgamma(g, K) * pbeta(b, K + 1, L - K)
-    dgamma(g, K) * (1 - pbinom(K, L, b))
+    dgamma(g, K) * pbeta(b, K + 1, L - K)
+    # dgamma(g, K) * (1 - pbinom(K, L, b))
 }
 
 # Reference integration by library cubature function pcubature.

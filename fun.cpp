@@ -2,8 +2,8 @@
 using namespace Rcpp;
 
 // Constants in integration
-static double LK;
 static double LG;
+static double LB;
 static double LW;
 static double L;
 static double K;
@@ -14,13 +14,12 @@ static double fNull(double a) {
     return a;
 }
 
-// lbetaC returns logarithm of the Beta(a, b) factorial coefficient.
-// lbetaC(k + 1, l - k) gives lgamma(l + 1) - lgamma(k + 1) - lgamma(l - k),
-// which exponentiates to L! / (K! * L-K-1!) = (L choose K+1)*(K+1).
+// lbeta returns logarithm of the Beta(a, b) coefficient.
+// exp(-lbeta(K+1, L-K)) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1).
 // See Dudbridge and Koeleman (2003).
-static double lbetaC(double a, double b) {
-    return lgamma(a + b) - lgamma(a) - lgamma(b);
-    // return -R::lbeta(a, b);
+inline static double lbeta(double a, double b) {
+    return lgamma(a) + lgamma(b) - lgamma(a + b);
+    // return R::lbeta(a, b);
 }
 
 // [[Rcpp::export]]
@@ -31,10 +30,13 @@ double init(double k, NumericVector p) {
 
     K = k;
     L = p.length();
-    LG = lbetaC(K + 1, L - K);
-    LK = lgamma(K);
+    LB = -lbeta(K + 1, L - K);
+    LG = lgamma(K);
     return L;
 }
+
+// All beta functions are for x ~ Beta(a, b),
+// where a and b are positive integers.
 
 // Beta standard deviation.
 // [[Rcpp::export]]
@@ -53,6 +55,7 @@ inline static double betaMean(double a, double b) {
 
 // Beta quantile/inverse CDF function.
 inline static double qbeta(double p, double a, double b) {
+    if (p >= 1) return 1;
     return R::qbeta(p, a, b, 1, 0);
 }
 
@@ -66,16 +69,16 @@ inline static double pbeta(double x, double a, double b) {
 // pbeta(x, k + 1, l - k) = 1 - pbinom(k, l, x)
 // e.g. equation 8.17.5 in https://dlmf.nist.gov/8.17.
 
-// Binomial distribution function (right tail).
+// Binomial distribution function (right tail, survival).
 // 1 - left tail loses much accuracy.
 inline static double pbinomRT(double k, double l, double x) {
     if (x >= 1) return 1; // NaNs and inf loops otherwise
     return R::pbinom(k, l, x, 0, 0);
 }
 
-// Density of the k+1 th order statistic is
-// l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1) =
-// Beta density(x, k+1, l-k)
+// Density of the k+1'th order statistic is
+// Beta density(x, k+1, l-k) =
+// l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1)
 
 // Beta density function.
 // lg is precalculated logarithm of l! / (k! * l-k-1!).
@@ -84,6 +87,9 @@ inline static double dbeta(double x, double lg, double a, double b) {
 
     return exp(lg + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
+
+// Gamma functions are for g ~ Gamma(k, 1),
+// where k is positive integer.
 
 inline static double gammaSD(double k) {
     return sqrt(k);
@@ -97,19 +103,18 @@ inline static double gammaMean(double k) {
     return k;
 }
 
-// Gamma distribution function (right tail).
-inline static double pgammaRT(double g, double k) {
+// Gamma survival function by pgamma.
+inline static double sgamma(double g, double k) {
     return R::pgamma(g, k, 1, 0, 0);
 }
 
 // Gamma survival function.
-// [[Rcpp::export]]
-double gammaSurv(double g, double k) {
+static double gammaSurv(double g, double k) {
     double p, q, j;
     if (g <= 0) return 1;
 
     if (g > 700 || k > 100)
-        return pgammaRT(g, k);
+        return sgamma(g, k);
 
     q = exp(-g); // q > 0
     p = q;
@@ -130,6 +135,7 @@ inline static double dgamma(double g, double lk, double k) {
 
 // Gamma quantile/inverse CDF function.
 inline static double qgamma(double p, double k) {
+    if (p <= 0) return 0;
     return R::qgamma(p, k, 1, 1, 0);
 }
 
@@ -140,7 +146,7 @@ double fBeta(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
-    return dbeta(b, LG, K + 1, L - K) * gammaSurv(g, K);
+    return dbeta(b, LB, K + 1, L - K) * gammaSurv(g, K);
 }
 
 // fGamma is integrand over Gamma density in [0, inf).
@@ -149,12 +155,10 @@ static double fGamma(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    double dg = dgamma(g, LK, K);
-    if (b >= 1) return dg;
-    return dg * pbeta(b, K + 1, L - K);
+    return dgamma(g, LG, K) * pbeta(b, K + 1, L - K);
 
     // Same results and speed:
-    // return dg * pbinomRT(K, L, b);
+    // return dgamma(g, LG, K) * pbinomRT(K, L, b);
 }
 
 // fBetaQuantile is integrand over Beta probabilities in [0, 1].
@@ -162,6 +166,7 @@ static double fGamma(double g) {
 // [[Rcpp::export]]
 static double fBetaQuantile(double p) {
     if (p <= 0) return 1;
+    if (p > 1) return 0;
 
     double b = qbeta(p, K + 1, L - K); // Inverse CDF method
     double g = K * log(b) - LW;
@@ -170,10 +175,11 @@ static double fBetaQuantile(double p) {
 
 // fGammaQuantile is integrand over Gamma probabilities in[0, 1].
 // fGammaQuantile(1 - u) is very close to fBetaQuantile(u).
-// It is ~2 x faster than fBetaQuantile.
+// It is ~2.5 x faster than fBetaQuantile.
 // [[Rcpp::export]]
 double fGammaQuantile(double p) {
     if (p >= 1) return 1;
+    if (p < 0) return 0;
 
     double g = qgamma(p, K);
     double b = exp((g + LW) / K);

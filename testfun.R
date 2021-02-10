@@ -27,7 +27,7 @@ pvalues <- function(K, L, small, seed) {
     p10 <- p.art(K, p)
     p9 <- p.tfisher.soft((K + 1) / (L + 1), p)
     p6 <- ranktruncated(K, p)
-    p11 <- p.rtp.dgamma.riema(K, p, tol = 1e-14, stepscale = 0.1)
+    p11 <- p.rtp.dgamma.riema(K, p, stepscale = 1)
     p13 <- p.rtp.dgamma.simp(K, p, stepscale = 1)
     pe <- p.rpt.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
 
@@ -134,6 +134,7 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
     plot(f2,
         type = "l", ylab = "", col = "red",
         xlim = c(0, xmax), ylim = c(0, 1),
+        xlab = "",
         axes = FALSE,
     )
 
@@ -381,9 +382,9 @@ bench <- function(K, L, small, seed) {
     res <- microbenchmark(
         unit = "us",
         # DBmutos(),
-        QBinte(),
+        # QBinte(),
         QBsimA(),
-        # QGsimA(),
+        QGsimA(),
         # DBinte(),
         DBsimA(),
         DBriem(),
@@ -413,7 +414,7 @@ bench <- function(K, L, small, seed) {
     print(res, "us", signif = 3)
 }
 
-# benchIntegrands(K=5, L=100, small=1e-5, seed=0, unit="us")
+# benchIntegrands(K=1, L=100, small=1e-5, seed=0, unit="us")
 # R adds ~900 ns baseline cost (fNull) for these C-functions.
 benchIntegrands <- function(K, L, small, seed, unit = "us") {
     library(microbenchmark)
@@ -430,7 +431,8 @@ benchIntegrands <- function(K, L, small, seed, unit = "us") {
     Qbeta <- function(u) fBetaQuantile(u)
     QgammaR <- function(u) fGammaQuantile.R(u, lw, K, L)
     QbetaR <- function(u) fBetaQuantile.R(u, lw, K, L)
-    GammaS <- function(g) gammaSurv(g, K)
+    pgamm <- function(g) pgamma(g, K)
+    fBetaR <- function(u) fBeta.R(u, lw, K, L)
 
     title <- "Microseconds, logarithmic time"
     if (unit == "ns") title <- "nanoseconds, logarithmic time"
@@ -444,13 +446,14 @@ benchIntegrands <- function(K, L, small, seed, unit = "us") {
         Qbeta(u),
         Qgamma(u),
         fGamma(g),
+        # fBetaR(u),
         fBeta(u),
         fNull(u),
 
         # QgammaR(u),
         # QbetaR(u),
-        # GammaS(g),
-        times = 1000
+        # pgamm(g),
+        times = 5000
     )
     boxplot(res,
         font.main = 1, cex.main = 1,
