@@ -43,7 +43,7 @@ double init(double k, NumericVector p) {
     return L;
 }
 
-// All beta functions are for x ~ Beta(a, b),
+// Most beta functions are for x ~ Beta(a, b),
 // where a and b are positive integers.
 
 // Beta standard deviation.
@@ -70,22 +70,22 @@ inline static double qbeta(double p, double a, double b) {
 
 // Beta distribution function.
 inline static double pbeta(double x, double a, double b) {
-    return R::pbeta(x, a, b, 1, 0);
+    return R::pbeta(x, a, b, 1, 0); // (x >= 1 || x <= 0) returns 0
 }
 
-// Beta distribution function as binomial cdf.
+// Beta distribution function by binomial cdf.
 // pbeta(x, k + 1, l - k) = 1 - pbinom(k, l, x)
 // e.g. equation 8.17.5 in https://dlmf.nist.gov/8.17.
 
 // Binomial distribution function (right tail, survival).
 // 1 - left tail loses much accuracy.
-inline static double pbinomRT(double k, double l, double x) {
-    if (x <= 0) x = 0;
-    if (x >= 1) x = 1;
-    return R::pbinom(k, l, x, 0, 0);
+inline static double pbinomRT(double k, double l, double p) {
+    if (p <= 0) p = 0;
+    if (p >= 1) p = 1;
+    return R::pbinom(k, l, p, 0, 0);
 }
 
-// Density of the k+1'th order statistic is
+// Density of the k+1'th Uni(0, 1) order statistic is
 // Beta density(x, k+1, l-k) =
 // l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1)
 
@@ -95,6 +95,12 @@ inline static double dbeta(double x, double lg, double a, double b) {
     if (x <= 0 || x >= 1) return 0;
 
     return exp(lg + (a - 1) * log(x) + (b - 1) * log(1 - x));
+}
+
+// Hight of Beta density function. Function value at mode.
+// [[Rcpp::export]]
+double dbetaHight(double a, double b) {
+    return dbeta(betaMode(a, b), -lbeta(a, b), a, b);
 }
 
 // Gamma functions are for g ~ Gamma(k, 1), where k is positive integer.
@@ -133,7 +139,7 @@ static double gammaSurv(double g, double k) {
     return p;
 }
 
-// Gamma density function.
+// Gamma density function (g,k) = e^-g * g^(k-1) / (k-1)!
 // lk is precalculated logarithm of (k-1)!.
 inline static double dgamma(double g, double lf, double k) {
     if (g <= 0) return 0;
@@ -144,23 +150,23 @@ inline static double dgamma(double g, double lf, double k) {
 // Gamma quantile/inverse CDF function.
 inline static double qgamma(double p, double k) {
     if (p <= 0) return 0;
-    if (p > 1) p = 1;
+    if (p >= 1) return R_PosInf;
     return R::qgamma(p, k, 1, 1, 0);
 }
 
-// fBeta is integrand over Beta density in [0, 1]. This is equivalent
+// fBetaD is integrand over Beta density in [0, 1]. This is equivalent
 // to the integrand equation in Dudbridge and Koeleman (2003).
 // [[Rcpp::export]]
-double fBeta(double b) {
+double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
     return dbeta(b, LB, K + 1, L - K) * gammaSurv(g, K);
 }
 
-// fGamma is integrand over Gamma density in [0, inf).
+// fGammaD is integrand over Gamma density in [0, inf).
 // [[Rcpp::export]]
-static double fGamma(double g) {
+double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
@@ -170,10 +176,10 @@ static double fGamma(double g) {
     // return dgamma(g, LF, K) * pbinomRT(K, L, b);
 }
 
-// fBetaQuantile is integrand over Beta probabilities in [0, 1].
+// fBetaQ is integrand over Beta probabilities in [0, 1].
 // This is the integrand in Vsevolozhskaya et al. (2019).
 // [[Rcpp::export]]
-static double fBetaQuantile(double p) {
+double fBetaQ(double p) {
     if (p <= 0) return 1;
     if (p > 1) return 0;
 
@@ -182,11 +188,11 @@ static double fBetaQuantile(double p) {
     return gammaSurv(g, K);
 }
 
-// fGammaQuantile is integrand over Gamma probabilities in[0, 1].
-// fGammaQuantile(1 - u) is very close to fBetaQuantile(u).
-// It is ~2.5 x faster than fBetaQuantile.
+// fGammaQ is integrand over Gamma probabilities in[0, 1].
+// fGammaQ(1 - u) is very close to fBetaQ(u).
+// It is ~2.5 x faster than fBetaQ.
 // [[Rcpp::export]]
-double fGammaQuantile(double p) {
+double fGammaQ(double p) {
     if (p >= 1) return 1;
     if (p < 0) return 0;
 
@@ -263,7 +269,7 @@ static double adaSimpson(double (*f)(double), double a, double b,
     return Ia + Ib;
 }
 
-// riemannBeta integrates fBeta from 0 to 1 by Riemann sum integral.
+// riemannBeta integrates fBetaD from 0 to 1 by Riemann sum integral.
 // [[Rcpp::export]]
 double riemannBeta(double k, NumericVector p, double tol = 1e-8, double stepscale = 1) {
     const double steps = 8.0, minstep = 0.05;
@@ -278,10 +284,10 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-8, double stepscal
     a = fmax(0, bTop - 6 * SD);
     SD = fmax(h, SD);
 
-    return riemann(&fBeta, a, h, tol, SD); // x >= 1 -> fBeta(x) = 0.
+    return riemann(&fBetaD, a, h, tol, SD); // x >= 1 -> fBetaD(x) = 0.
 }
 
-// riemannGamma integrates fGamma from 0 to inf by Rieman sum integral.
+// riemannGamma integrates fGammaD from 0 to inf by Rieman sum integral.
 // [[Rcpp::export]]
 double riemannGamma(double k, NumericVector p, double tol = 1e-8, double stepscale = 1) {
     const double cSD = 1.25;
@@ -294,10 +300,10 @@ double riemannGamma(double k, NumericVector p, double tol = 1e-8, double stepsca
     h *= stepscale;
     SD = fmax(h, SD);
 
-    return riemann(&fGamma, 0, h, tol, SD);
+    return riemann(&fGammaD, 0, h, tol, SD);
 }
 
-// simpsonGamma integrates fGamma from 0 to inf by fixed steps Simpson's 1/3 rule.
+// simpsonGamma integrates fGammaD from 0 to inf by fixed steps Simpson's 1/3 rule.
 // Tolerance tol is adjusted for Gamma density standard deviation.
 // [[Rcpp::export]]
 double simpsonGamma(double k, NumericVector p, double tol = 1e-8, double stepscale = 1) {
@@ -313,26 +319,25 @@ double simpsonGamma(double k, NumericVector p, double tol = 1e-8, double stepsca
     h *= stepscale;
     SD = fmax(h, SD);
 
-    return simpson(&fGamma, 0, h, tol, SD, hlim, hmul);
+    return simpson(&fGammaD, 0, h, tol, SD, hlim, hmul);
 }
 
-// fBetaTop approximates the location of highest point of fBeta.
+// fBetaDtop approximates the location of highest point of fBetaD.
+// This manually fitted model from hat works quite well.
+// Solving maximun from equations goes complicated.
 // [[Rcpp::export]]
-double fBetaTop() {
+double fBetaDtop() {
     double left, right, weight;
 
     right = betaMode(K + 1, L - K);
     left = exp(LW / K) * 1.5;
     if (left > right)
         return right;
-
-    //This manually fitted model from hat works quite well.
-    //Solving maximun from equations goes complicated.
     weight = 0.2 + 3 * left / right + 2 * right;
     return (left + weight * right) / (1 + weight);
 }
 
-// simpsonAdaBeta integrates fBeta from 0 to 1.
+// simpsonAdaBeta integrates fBetaD from 0 to 1.
 // [[Rcpp::export]]
 double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7,
                       double reltol = 1e-3, int depth = 25) {
@@ -343,45 +348,57 @@ double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7,
     if (abstol < 1e-14) abstol = 1e-14;
     abstol /= 2;
 
-    top = fBetaTop();
+    top = fBetaDtop();
     fa = 0;
-    fm = fBeta(top / 2);
-    fb = fBeta(top);
-    I = adaSimpson(&fBeta, 0, top, fa, fm, fb, 2, abstol, reltol, depth);
+    fm = fBetaD(top / 2);
+    fb = fBetaD(top);
+    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol, reltol, depth);
 
     right = top + 6 * betaSD(k + 1, l - k);
     right = fmin(1, right);
     fa = fb;
-    fm = fBeta((top + right) / 2);
-    fb = fBeta(right);
-    I += adaSimpson(&fBeta, top, right, fa, fm, fb, 2, abstol, reltol, depth);
+    fm = fBetaD((top + right) / 2);
+    fb = fBetaD(right);
+    I += adaSimpson(&fBetaD, top, right, fa, fm, fb, 2, abstol, reltol, depth);
     return I;
 }
-
-// simpsonAdaGammaQuantile integrates fGammaQuantile from 0 to 1.
 // [[Rcpp::export]]
-double simpsonAdaGammaQuantile(double k, NumericVector p, double abstol = 1e-7,
-                               double reltol = 1e-3, int depth = 25) {
+double simpsonAdaGamma(double k, NumericVector p, double abstol = 1e-7,
+                       double reltol = 1e-3, int depth = 25) {
+    double end, fa, fm, fb;
+
+    init(k, p);
+    end = k + 20 * sqrt(k);
+    fa = 0;
+    fm = fGammaD(end / 2);
+    fb = fGammaD(end);
+    return adaSimpson(&fGammaD, 0, end, fa, fm, fb, 2, abstol, reltol, depth);
+}
+
+// simpsonAdaGammaQuantile integrates fGammaQ from 0 to 1.
+// [[Rcpp::export]]
+double simpsonAdaGammaQ(double k, NumericVector p, double abstol = 1e-7,
+                        double reltol = 1e-3, int depth = 25) {
     double fa, fm, fb;
     init(k, p);
 
-    fa = fGammaQuantile(0);
-    fm = fGammaQuantile(0.5);
+    fa = fGammaQ(0);
+    fm = fGammaQ(0.5);
     fb = 1;
-    return adaSimpson(&fGammaQuantile, 0, 1, fa, fm, fb, 2, abstol, reltol, depth);
+    return adaSimpson(&fGammaQ, 0, 1, fa, fm, fb, 2, abstol, reltol, depth);
 }
 
-// simpsonAdaBetaQuantile integrates fBetaQuantile from 0 to 1.
+// simpsonAdaBetaQuantile integrates fBetaQ from 0 to 1.
 // [[Rcpp::export]]
-double simpsonAdaBetaQuantile(double k, NumericVector p, double abstol = 1e-7,
-                              double reltol = 1e-3, int depth = 25) {
+double simpsonAdaBetaQ(double k, NumericVector p, double abstol = 1e-7,
+                       double reltol = 1e-3, int depth = 25) {
     double fa, fm, fb;
     init(k, p);
 
     fa = 1;
-    fm = fBetaQuantile(0.5);
-    fb = fBetaQuantile(1);
-    return adaSimpson(&fBetaQuantile, 0, 1, fa, fm, fb, 2, abstol, reltol, depth);
+    fm = fBetaQ(0.5);
+    fb = fBetaQ(1);
+    return adaSimpson(&fBetaQ, 0, 1, fa, fm, fb, 2, abstol, reltol, depth);
 }
 
 // pTFisherCpp implements R function p.tfisher from Zhang et al (2020).

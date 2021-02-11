@@ -19,6 +19,7 @@ pvalues <- function(K, L, small, seed) {
     p <- p.gen(L, small, seed)
     p1 <- p.rtp.qbeta.integrate(K, p)
     p2 <- p.rtp.qbeta.simp.a(K, p)
+    p3 <- p.rtp.dgamma.integrate(K, p)
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
     p6 <- ranktruncated(K, p)
     p7 <- p.rtp.dbeta.integrate(K, p)
@@ -45,6 +46,7 @@ pvalues <- function(K, L, small, seed) {
 
     f1 <- fpv(p1)
     f2 <- fpv(p2)
+    f3 <- fpv(p3)
     f4 <- fpv(p4)
     f6 <- fpv(p6)
     f7 <- fpv(p7)
@@ -59,6 +61,7 @@ pvalues <- function(K, L, small, seed) {
 
     e1 <- ferr(p1)
     e2 <- ferr(p2)
+    e3 <- ferr(p3)
     e4 <- ferr(p4)
     e6 <- ferr(p6)
     e7 <- ferr(p7)
@@ -71,6 +74,7 @@ pvalues <- function(K, L, small, seed) {
 
     d1 <- fdig(p1)
     d2 <- fdig(p2)
+    d3 <- fdig(p3)
     d4 <- fdig(p4)
     d6 <- fdig(p6)
     d7 <- fdig(p7)
@@ -88,7 +92,8 @@ pvalues <- function(K, L, small, seed) {
     wl("p.rtp.qbeta.integ  ", f1, e1, d1)
 
     wl("p.rtp.dbeta.integ  ", f7, e7, d7)
-    wl("p.rtp.qbeta.simp.a ", f2, e2, d2)
+    # wl("p.rtp.qbeta.simp.a ", f2, e2, d2)
+    wl("p.rtp.dgamm.integ  ", f3, e3, d3)
     # wl("p.rtp.qgamm.simp.a ", f12, e12, d12)
     # wl("mutoss/ranktrunca  ", f6, e6, d6)
     w("")
@@ -108,14 +113,13 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
     lw <- sum(log(p[1:K]))
     pval <- p.rtp.qbeta.integrate(K, p)
 
-    f1 <- function(u) fBetaQuantile.R(u, lw, K, L)
-    f2 <- function(u) fGammaQuantile.R(u, lw, K, L)
+    f1 <- function(u) fBetaQ.R(u, lw, K, L)
+    f2 <- function(u) fGammaQ.R(u, lw, K, L)
 
     plot(f1,
         type = "l", ylab = "", font.main = 1,
         col = "blue", cex.main = 1,
         xlim = c(0, xmax), ylim = c(0, 1), yaxp = c(0, 1, 2),
-
         axis(1,
             at = pretty(c(0, xmax)),
         ),
@@ -148,19 +152,18 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     p <- p.gen(L, small, seed)
     pval <- p.rpt.dbeta.cuba(K, p)
     init(K, p)
-    top <- fBetaTop()
+    top <- fBetaDtop()
     lw <- sum(log(p[1:K]))
     left <- exp(lw / K) * 1.5
-
     right <- K / (L - 1)
-    hight <- dbeta(K / (L - 1), K + 1, L - K)
+    hight <- dbetaHight(K + 1, L - K)
 
     sd <- betaSD(K + 1, L - K)
     if (xmax <= 0) xmax <- min(1.0, top + 8 * sd)
     if (xmin < 0) xmin <- max(0, top - 6 * sd)
 
     f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
-    f2 <- function(u) fBeta.R(u, lw, K, L)
+    f2 <- function(u) fBetaD.R(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
     plot(f3,
@@ -194,7 +197,7 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
         col.ticks = "darkgreen", col.axis = "darkgreen",
     )
     abline(v = left, lty = 2, col = "red", lwd = 0.5)
-    abline(v = K / (L - 1), lty = 2, col = "darkgreen", lwd = 0.5)
+    abline(v = right, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = top, lty = 2, col = "blue", lwd = 0.5)
     abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
     abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
@@ -223,7 +226,7 @@ plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     lw <- sum(log(p[1:K]))
     init(K, p)
     pval <- p.rpt.dbeta.cuba(K, p)
-    iTop <- fBetaTop()
+    iTop <- fBetaDtop()
     bTop <- K / (L - 1)
     bSD <- betaSD(K + 1, L - K)
     gTop <- exp((K - 1 + lw) / K)
@@ -233,7 +236,7 @@ plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     if (xmin < 0) xmin <- max(0.0, iTop - 6 * bSD)
 
     f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
-    f2 <- function(u) fBeta.R(u, lw, K, L)
+    f2 <- function(u) fBetaD.R(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
     plot(f1,
@@ -283,12 +286,11 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
     hight <- dgamma(K - 1, K)
 
     f3 <- function(g) dgamma(g, K)
-    f2 <- function(g) fGamma.R(g, lw, K, L)
+    f2 <- function(g) fGammaD.R(g, lw, K, L)
     f1 <- function(g) {
         b <- exp((g + lw) / K)
         pbeta(b, K + 1, L - K)
     }
-
     bTop <- K * log(K / (L - 1)) - lw
     if (xmax <= 0) xmax <- floor(bTop + 4 * sqrt(K))
     if (xmin < 0) xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
@@ -326,8 +328,6 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
     abline(v = iTop, lty = 2, col = "blue", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
     abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
-    # abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
-
     par(new = TRUE)
     plot(f1,
         type = "l", lwd = 1, col = "red",
@@ -355,9 +355,10 @@ bench <- function(K, L, small, seed) {
     QBinte <- function() p.rtp.qbeta.integrate(K, p)
     QGinte <- function() p.rtp.qgamma.integrate(K, p)
     DBinte <- function() p.rtp.dbeta.integrate(K, p)
-
+    DGinte <- function() p.rtp.dgamma.integrate(K, p)
     QBsimA <- function() p.rtp.qbeta.simp.a(K, p)
     QGsimA <- function() p.rtp.qgamma.simp.a(K, p)
+    DGsimA <- function() p.rtp.dgamma.simp.a(K, p)
 
     DBsimA <- function() simpsonAdaBeta(K, p)
     #  DBsimA <- function() p.rtp.dbeta.simp.a(K, p)
@@ -368,8 +369,8 @@ bench <- function(K, L, small, seed) {
     DGriem <- function() riemannGamma(K, p, stepscale = 1)
     # DGriema <- function() p.rtp.dgamma.riema(K, p, stepscale = 1)
 
-    # DGsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
     DGsimp <- function() simpsonGamma(K, p, stepscale = 1)
+    # DGsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
 
     DBcuba <- function() p.rpt.dbeta.cuba(K, p)
     # TFish <- function() p.tfisher.soft.R(0.05, p)
@@ -382,7 +383,9 @@ bench <- function(K, L, small, seed) {
         # DBmutos(),
         QBinte(),
         # QBsimA(),
-        QGsimA(),
+        # QGsimA(),
+        DGinte(),
+        # DGsimA(),
         # DBinte(),
         DBsimA(),
         DBriem(),
@@ -393,16 +396,11 @@ bench <- function(K, L, small, seed) {
         # Art(),
         times = 500
     )
-    # plotQuantile(K, L, small, seed)
     boxplot(res,
         unit = "us",
         font.main = 1, cex.main = 1,
         xlab = "XXyyyy = Integrand function and integrating function",
         font.xlab = 1,
-        # names = c(
-        #     "Qinteg", "Qsimpa", "Dinteg", "Dcuba",
-        #     "Dsimpa", "Driema"
-        # ),
         main = paste(
             "Rank truncated p-value integrating time\n",
             "microseconds, logarithmic time",
@@ -412,25 +410,20 @@ bench <- function(K, L, small, seed) {
     print(res, "us", signif = 3)
 }
 
-# benchIntegrands(K=1, L=100, small=1e-5, seed=0, unit="us")
+# benchIntegrands(K=5, L=100, small=1e-3, seed=0, unit="us")
 # R adds ~900 ns baseline cost (fNull) for these C-functions.
 benchIntegrands <- function(K, L, small, seed, unit = "us") {
     library(microbenchmark)
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
-    # initCpp(lw, K, L)
     init(K, p)
-    # a <- 10
-    # b <- 100
-    # u <- runif(1)
-    # g <- K * log(u) - lw
 
-    Qgamma <- function(u) fGammaQuantile(u)
-    Qbeta <- function(u) fBetaQuantile(u)
-    QgammaR <- function(u) fGammaQuantile.R(u, lw, K, L)
-    QbetaR <- function(u) fBetaQuantile.R(u, lw, K, L)
+    Qgamma <- function(u) fGammaQ(u)
+    Qbeta <- function(u) fBetaQ(u)
+    QgammaR <- function(u) fGammaQ.R(u, lw, K, L)
+    QbetaR <- function(u) fBetaQ.R(u, lw, K, L)
     pgamm <- function(g) pgamma(g, K)
-    fBetaR <- function(u) fBeta.R(u, lw, K, L)
+    fBetaR <- function(u) fBetaD.R(u, lw, K, L)
 
     title <- "Microseconds, logarithmic time"
     if (unit == "ns") title <- "nanoseconds, logarithmic time"
@@ -443,11 +436,10 @@ benchIntegrands <- function(K, L, small, seed, unit = "us") {
         },
         Qbeta(u),
         Qgamma(u),
-        fGamma(g),
+        fGammaD(g),
         # fBetaR(u),
-        fBeta(u),
+        fBetaD(u),
         fNull(u),
-
         # QgammaR(u),
         # QbetaR(u),
         # pgamm(g),
