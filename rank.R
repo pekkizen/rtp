@@ -1,4 +1,12 @@
 
+# Gamma functions use default rate = 1.
+
+# Standard Fisher's method using all p-values.
+p.fisher <- function(p) {
+    lw <- sum(log(p))
+    L <- length(p)
+    pgamma(-lw, L, lower.tail = FALSE)
+}
 
 # p.art is Augmented RTP function from Vsevolozhskaya et al (2019).
 p.art <- function(K, p) {
@@ -17,6 +25,7 @@ fBetaQ.R <- function(p, lw, K, L) {
     b <- qbeta(p, K + 1, L - K)
     g <- log(b) * K - lw
     1 - pgamma(g, K)
+    # pgamma(g, K, lower.tail = FALSE)
 }
 
 # fGammaQ.R is integrand over Gamma probabilities in [0, 1].
@@ -32,23 +41,25 @@ fGammaQ.R <- function(p, lw, K, L) {
 fBetaD.R <- function(b, lw, K, L) {
     g <- K * log(b) - lw
     dbeta(b, K + 1, L - K) * pgamma(g, K, lower.tail = FALSE)
-    #                      * (1 - pgamma(g, K)) # loose much accuracy
 }
 
 # fGammaD.R is integrand over Gamma density in [0, inf).
 fGammaD.R <- function(g, lw, K, L) {
     b <- exp((g + lw) / K)
     dgamma(g, K) * pbeta(b, K + 1, L - K)
-    # dgamma(g, K) * (1 - pbinom(K, L, b))
 }
 
+# DBETA ----------------------------------------- DBETA
+
 # Reference integration by library cubature function pcubature.
-p.rpt.dbeta.cuba <- function(K, p, tol = 1e-14) {
-    init(K, p)
+p.rpt.dbeta.cuba <- function(K, p, tol = 1e-15) {
+    if (init(K, p) < 0) {
+        return(-1)
+    }
     top <- fBetaDtop()
 
-    I <- pcubature(fBetaD, 0, top, tol = tol / 2)$integral
-    I + pcubature(fBetaD, top, 1, tol = tol / 2)$integral
+    pcubature(fBetaD, 0, top, tol = tol)$integral +
+        pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 
 # RPT p-value by Beta density and adaptive Simpson's 1/3.
@@ -56,27 +67,13 @@ p.rtp.dbeta.simp.a <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
     simpsonAdaBeta(K, p, abstol, reltol, depth = 25)
 }
 
-p.rtp.dgamma.simp.a <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
-    simpsonAdaGamma(K, p, abstol, reltol, depth = 25)
-}
-
-# RPT p-value by Gamma density and fixed step Simpson's 1/3.
-p.rtp.dgamma.simp <- function(K, p, tol = 1e-8, stepscale = 1) {
-    simpsonGamma(K, p, tol, stepscale)
-}
-
 # RPT p-value by Beta density and Riemann sum integration.
-p.rtp.dbeta.riema <- function(K, p, tol = 1e-8, stepscale = 1) {
+p.rtp.dbeta.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
     riemannBeta(K, p, tol, stepscale)
 }
 
-# RPT p-value by Gamma density and Riemann sum integration.
-p.rtp.dgamma.riema <- function(K, p, tol = 1e-8, stepscale = 1) {
-    riemannGamma(K, p, tol, stepscale)
-}
-
 # RPT p-value by Beta density and R integrate function.
-p.rtp.dbeta.integrate <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
+p.rtp.dbeta.integrate <- function(K, p, abstol = 1e-3, reltol = 1e-2) {
     L <- length(p)
     lw <- sum(log(p[1:K]))
     f <- function(u) fBetaD.R(u, lw, K, L)
@@ -88,25 +85,51 @@ p.rtp.dbeta.integrate <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
         integrate(f, top, 1, abs.tol = abstol, rel.tol = reltol)$value
 }
 
+#  DGAMMA --------------------------------------- DGAMM
+
+# RPT p-value by Gamma density and fixed step Simpson's 1/3.
+p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
+    simpsonGamma(K, p, tol, stepscale)
+}
+
+# RPT p-value by Gamma density and Riemann sum integration.
+p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
+    riemannGamma(K, p, tol, stepscale)
+}
+
 # RPT p-value by Gamma density and R integrate function.
-p.rtp.dgamma.integrate <- function(K, p, abstol = 1e-3, reltol = 1e-2) {
+p.rtp.dgamma.integrate <- function(K, p, abstol = 1e-2, reltol = 1e-2) {
     L <- length(p)
     lw <- sum(log(p[1:K]))
     f <- function(u) fGammaD.R(u, lw, K, L)
-    end <- K + 25 * sqrt(K)
-    # Integrating to Inf is slower and much less accurate.
+    end <- K + 25 * sqrt(K) # mean + 25 x SD
+    # integrate(f, 0, Inf, ..)  is slower and less accurate.
 
     integrate(f, 0, end, abs.tol = abstol, rel.tol = reltol)$value
 }
 
+# QBETA ----------------------------------------- QBETA
+
+# RPT p-value by inverse beta CDF and adaptive Simpson's 1/3.
+p.rtp.qbeta.simp.a <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
+    simpsonAdaBetaQ(K, p, abstol, reltol, depth = 25)
+}
+
 # RPT p-value by inverse Beta CDF and R integrate function.
-# Inverse betaCDF/Quantile function method from Vsevolozhskaya et al (2019).
+# Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 p.rtp.qbeta.integrate <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
     L <- length(p)
     lw <- sum(log(p[1:K]))
     f <- function(u) fBetaQ.R(u, lw, K, L)
 
     integrate(f, 0, 1, abs.tol = abstol, rel.tol = reltol)$value
+}
+
+# QGAMMA ---------------------------------------- QGAMMA
+
+# RPT p-value by inverse Gamma CDF and adaptive Simpson's 1/3.
+p.rtp.qgamma.simp.a <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
+    simpsonAdaGammaQ(K, p, abstol, reltol, depth = 25)
 }
 
 # RPT p-value by inverse Gamma CDF and R integrate function.
@@ -116,14 +139,4 @@ p.rtp.qgamma.integrate <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
     f <- function(u) fGammaQ.R(u, lw, K, L)
 
     integrate(f, 0, 1, abs.tol = abstol, rel.tol = reltol)$value
-}
-
-# RPT p-value by inverse beta CDF and adaptive Simpson's 1/3.
-p.rtp.qbeta.simp.a <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
-    simpsonAdaBetaQ(K, p, abstol, reltol, depth = 25)
-}
-
-# RPT p-value by inverse Gamma CDF and adaptive Simpson's 1/3.
-p.rtp.qgamma.simp.a <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
-    simpsonAdaGammaQ(K, p, abstol, reltol, depth = 25)
 }

@@ -1,20 +1,39 @@
 
+library(microbenchmark)
+
 # p <- p.gen(L = 100, small = 1e-4, seed = 0)
 p.gen <- function(L, small, seed = 0) {
     if (seed > 0) set.seed(seed)
     sort(c(small, runif(L - 1)))
 }
 
-# pvalues(K=10, L=100, small=1e-6, seed=0)
-pvalues <- function(K, L, small, seed) {
+check <- function(K, L, small) {
     if (small < 1e-300) {
         return("Invalid: small < 1e-300")
     }
     if (K >= L) {
         return("Invalid: K >= L")
     }
+    if (L <= 1) {
+        return("Invalid: L <= 1")
+    }
     if (K > 5000) {
         return("Invalid: K > 5000")
+    }
+    if (L > 1E+7) {
+        return("Invalid: L > 1E+7")
+    }
+    if (K * L > 1E+8) {
+        return("Invalid: K * L > 1E+8")
+    }
+    return("")
+}
+
+# pvalues(K=10, L=100, small=1e-6, seed=0)
+pvalues <- function(K, L, small, seed) {
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
     }
     p <- p.gen(L, small, seed)
     p1 <- p.rtp.qbeta.integrate(K, p)
@@ -28,18 +47,19 @@ pvalues <- function(K, L, small, seed) {
     p10 <- p.art(K, p)
     p11 <- p.rtp.dgamma.riema(K, p, stepscale = 1)
     p12 <- p.rtp.qgamma.simp.a(K, p)
-    p13 <- p.rtp.dgamma.simp(K, p, stepscale = 1)
+    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
 
     pe <- p.rpt.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
 
     w <- function(s) writeLines(s)
     wl <- function(s, f, e, d) writeLines(paste(s, f, "  ", e, "   ", d))
     fpv <- function(p) {
-        if (p > 0.00001) {
-            sprintf("%1.10f", p)
-        } else {
-            sprintf("%1.6e", p)
+        if (is.na(p)) {
+            return("NaN")
         }
+        f <- "%1.10f"
+        if (p < 0.00001) f <- "%1.6e"
+        sprintf(f, p)
     }
     fdig <- function(p) format(-log10(abs(p - pe) / pe), digits = 2)
     ferr <- function(p) format(abs(p - pe), digits = 1)
@@ -85,30 +105,31 @@ pvalues <- function(K, L, small, seed) {
     d12 <- fdig(p12)
     d13 <- fdig(p13)
 
-    w("")
-    w("                                           # nonzero")
+    w("\n                                           # nonzero")
     w("                                     Abs     digits")
     w("----Function----------P-value-------error----right")
     wl("p.rtp.qbeta.integ  ", f1, e1, d1)
-
     wl("p.rtp.dbeta.integ  ", f7, e7, d7)
     # wl("p.rtp.qbeta.simp.a ", f2, e2, d2)
     wl("p.rtp.dgamm.integ  ", f3, e3, d3)
     # wl("p.rtp.qgamm.simp.a ", f12, e12, d12)
     # wl("mutoss/ranktrunca  ", f6, e6, d6)
-    w("")
-    wl("p.rpt.dbeta.cuba   ", fe, "0 (ref)   ~15", "")
-    w("")
+    wl("\np.rpt.dbeta.cuba   ", fe, "0 (ref)   ~14", "\n")
     wl("p.rtp.dbeta.simp.a ", f8, e8, d8)
     wl("p.rtp.dbeta.riema  ", f4, e4, d4)
     wl("p.rtp.dgamma.simp  ", f13, e13, d13)
     wl("p.rtp.dgamma.riema ", f11, e11, d11)
     # wl("p.tfisher.soft     ", f9, e9, d9)
     # wl("p.art              ", f10, e10, d10)
+    # w(paste("p.fisher           ", fpv(p.fisher(p))))
 }
 
 # plotQuantile(K=10, L=100, small=1e-4, seed=0)
 plotQuantile <- function(K, L, small, seed, xmax = 1) {
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     pval <- p.rtp.qbeta.integrate(K, p)
@@ -149,6 +170,10 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
 
 # plotBxGintegrand(K=10, L=100, small=1e-4, seed=0)
 plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     pval <- p.rpt.dbeta.cuba(K, p)
     init(K, p)
@@ -222,6 +247,10 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
 
 # plotIntegrandLocation(K=10, L=100, small=1e-4, seed=0)
 plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     init(K, p)
@@ -279,6 +308,10 @@ plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
 
 # plotGxBintegrand(K=10, L=100, small=1e-4, seed=0)
 plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) {
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     pval <- p.rpt.dbeta.cuba(K, p, 1e-10)
     lw <- sum(log(p[1:K]))
@@ -348,7 +381,10 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
 
 # bench(K=10, L=100, small=1e-5, seed=0)
 bench <- function(K, L, small, seed) {
-    library(microbenchmark)
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     pval <- p.rpt.dbeta.cuba(K, p, 1e-10)
 
@@ -358,7 +394,6 @@ bench <- function(K, L, small, seed) {
     DGinte <- function() p.rtp.dgamma.integrate(K, p)
     QBsimA <- function() p.rtp.qbeta.simp.a(K, p)
     QGsimA <- function() p.rtp.qgamma.simp.a(K, p)
-    DGsimA <- function() p.rtp.dgamma.simp.a(K, p)
 
     DBsimA <- function() simpsonAdaBeta(K, p)
     #  DBsimA <- function() p.rtp.dbeta.simp.a(K, p)
@@ -373,7 +408,7 @@ bench <- function(K, L, small, seed) {
     # DGsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
 
     DBcuba <- function() p.rpt.dbeta.cuba(K, p)
-    # TFish <- function() p.tfisher.soft.R(0.05, p)
+    # TFish <- function() p.tfisher.softR(0.05, p)
     TFish <- function() p.tfisher.soft(0.05, p)
     DBmutos <- function() ranktruncated(K, p)
     Art <- function() p.art(K, p)
@@ -384,15 +419,17 @@ bench <- function(K, L, small, seed) {
         QBinte(),
         # QBsimA(),
         # QGsimA(),
-        DGinte(),
+        DBinte(),
         # DGsimA(),
-        # DBinte(),
+        # DGinte(),
+
         DBsimA(),
         DBriem(),
         DGsimp(),
-        DGriem(),
+        # DGriem(),
+
         # DBcuba(),
-        # TFish(),
+        TFish(),
         # Art(),
         times = 500
     )
@@ -413,7 +450,10 @@ bench <- function(K, L, small, seed) {
 # benchIntegrands(K=5, L=100, small=1e-3, seed=0, unit="us")
 # R adds ~900 ns baseline cost (fNull) for these C-functions.
 benchIntegrands <- function(K, L, small, seed, unit = "us") {
-    library(microbenchmark)
+    err <- check(K, L, small)
+    if (err != "") {
+        return(err)
+    }
     p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     init(K, p)
