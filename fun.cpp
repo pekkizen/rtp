@@ -51,14 +51,15 @@ double init(double k, NumericVector p) {
 // Most Beta and Gamma functions here are for distributions,
 // where parameters are positive integers.
 
-// Beta standard deviation. ~sqrt(K) / L
+// Beta standard deviation.
+// betaMode(K+1, L-K) = ~sqrt(K) / L, for small K and big L.
 // [[Rcpp::export]]
 static double betaSD(double a, double b) {
     double c = a + b;
     return sqrt(a * b / (c * c * (c + 1)));
 }
 
-// betaMode(K+1, L-K) -> sqrt(K) / L, when L -> Inf.
+// betaMode(K+1, L-K) = K/ (L-1).
 inline static double betaMode(double a, double b) {
     return (a - 1) / (a + b - 2);
 }
@@ -134,7 +135,7 @@ static double sgamma(double g, double k) {
     double p, q, j;
     if (g <= 0) return 1;
 
-    if (g > 700 || k > 50)
+    if (g > 700 || k > 100)
         return pgammaRT(g, k);
 
     q = exp(-g); // q > 0
@@ -146,7 +147,7 @@ static double sgamma(double g, double k) {
     return p;
 }
 
-// Gamma density function dgamma(g,k) = e^-g * g^(k-1) / (k-1)!
+// Gamma density function. dgamma(g,k) = e^-g * g^(k-1) / (k-1)!
 // lf is precalculated logarithm of (k-1)!.
 inline static double dgamma(double g, double lf, double k) {
     if (g <= 0) return 0;
@@ -268,7 +269,7 @@ static double adaSimpson(double (*f)(double), double a, double b,
 
     m = (a + b) / 2;
     abstol /= 2;
-    if (Ia > abstol && Ia > Iab * reltol) // > 0/tolerances
+    if (Ia > abstol && Ia > Iab * reltol)
         Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
 
     if (Ib > abstol && Ib > Iab * reltol)
@@ -277,7 +278,6 @@ static double adaSimpson(double (*f)(double), double a, double b,
 }
 
 // fBetaDtop approximates the location of highest point of fBetaD.
-// This manually fitted model from hat works quite well.
 // Maximum from equations has no closed form solution (?).
 // [[Rcpp::export]]
 double fBetaDtop() {
@@ -313,26 +313,23 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepsca
 // simpsonAdaBeta integrates fBetaD from 0 to 1.
 // [[Rcpp::export]]
 double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7,
-                      double reltol = 1e-3, int depth = 25) {
-    double top, right, fa, fm, fb, I, l;
+                      double reltol = 1e-3) {
+    double top, fa, fm, fb, I, l;
     l = init(k, p);
     if (l < 0) return ERR;
-
     if (l > 1e3) abstol *= 1e6 / (l * l);
-    if (abstol < 1e-14) abstol = 1e-14;
     abstol /= 2;
 
     top = fBetaDtop();
     fa = 0;
     fm = fBetaD(top / 2);
     fb = fBetaD(top);
-    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol, reltol, depth);
+    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol, reltol, 25);
 
-    right = fmin(1, top + 6 * betaSD(k + 1, l - k));
     fa = fb;
-    fm = fBetaD((top + right) / 2);
-    fb = fBetaD(right);
-    I += adaSimpson(&fBetaD, top, right, fa, fm, fb, 2, abstol, reltol, depth);
+    fm = fBetaD((top + 1) / 2);
+    fb = 0;
+    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol, reltol, 25);
     return I;
 }
 
@@ -435,7 +432,7 @@ double pTFisher(double lw, double L, double tau1, double tau2, double tol = 1e-1
             prod *= lw / k;
             sum += prod;
         } else {
-            gSurv = pgammaRT(lw + k * lqTau, k); // lqTau=0 for soft TFisher
+            gSurv = sgamma(lw + k * lqTau, k); // lqTau=0 for soft TFisher
         }
         deltaP = (1 - gSurv) * exp(ldbinom);
         cumP += deltaP;

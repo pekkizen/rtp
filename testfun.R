@@ -42,14 +42,14 @@ pvalues <- function(K, L, small, seed) {
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
     p6 <- ranktruncated(K, p)
     p7 <- p.rtp.dbeta.integrate(K, p)
-    p8 <- p.rtp.dbeta.simp.a(K, p)
+    p8 <- p.rtp.dbeta.simp.a(K, p, abstol = 1e-7, reltol = 1e-3)
     p9 <- p.tfisher.soft((K + 1) / (L + 1), p)
     p10 <- p.art(K, p)
-    p11 <- p.rtp.dgamma.riema(K, p, stepscale = 1)
+    p11 <- p.rtp.dgamma.riema(K, p, tol = 1e-10, stepscale = 1)
     p12 <- p.rtp.qgamma.simp.a(K, p)
-    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
+    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-19, stepscale = 0.25)
 
-    pe <- p.rpt.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
+    pe <- p.rtp.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
 
     w <- function(s) writeLines(s)
     wl <- function(s, f, e, d) writeLines(paste(s, f, "  ", e, "   ", d))
@@ -175,7 +175,7 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
         return(err)
     }
     p <- p.gen(L, small, seed)
-    pval <- p.rpt.dbeta.cuba(K, p)
+    pval <- p.rtp.dbeta.cuba(K, p)
     init(K, p)
     top <- fBetaDtop()
     lw <- sum(log(p[1:K]))
@@ -313,7 +313,7 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
         return(err)
     }
     p <- p.gen(L, small, seed)
-    pval <- p.rpt.dbeta.cuba(K, p, 1e-10)
+    pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
     lw <- sum(log(p[1:K]))
     init(K, p)
     hight <- dgamma(K - 1, K)
@@ -395,8 +395,8 @@ bench <- function(K, L, small, seed) {
     QBsimA <- function() p.rtp.qbeta.simp.a(K, p)
     QGsimA <- function() p.rtp.qgamma.simp.a(K, p)
 
-    DBsimA <- function() simpsonAdaBeta(K, p)
-    #  DBsimA <- function() p.rtp.dbeta.simp.a(K, p)
+    DBsimA <- function() simpsonAdaBeta(K, p, abstol = 1e-7, reltol = 1e-3)
+    # DBsimA <- function() p.rtp.dbeta.simp.a(K, p)
 
     DBriem <- function() riemannBeta(K, p)
     # DBriem <- function() p.rtp.dbeta.riema(K, p)
@@ -426,10 +426,10 @@ bench <- function(K, L, small, seed) {
         DBsimA(),
         DBriem(),
         DGsimp(),
-        # DGriem(),
+        DGriem(),
 
         # DBcuba(),
-        TFish(),
+        # TFish(),
         # Art(),
         times = 500
     )

@@ -10,7 +10,7 @@ stat.tfisher <- function(p, tau1, tau2) {
 
 # Package TFisher p.tfisher for independant p-values.
 # This returns the right tail.
-# Equivalent (~14 digits) to function fun.cpp/pTFisher (~14 digits).
+# Equivalent (~14 digits) to function fun.cpp/pTFisher.
 p.tfisherR <- function(q, L, tau1, tau2) {
     lt <- log(tau1 / tau2)
     p <- sum(pchisq(q + 2 * (1:L) * lt, 2 * (1:L)) * dbinom(1:L, L, tau1))
