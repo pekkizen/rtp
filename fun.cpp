@@ -9,14 +9,22 @@ using namespace Rcpp;
 
 // https://en.wikipedia.org/wiki/Order_statistic
 // Order statistics sampled from a uniform distribution
+// en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function
 
-static int ERR = 0;
+// Density function of the k + 1'th Uni(0, 1) order statistic is
+// Beta(x, k+1, l-k) = l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1)
+//
+// Beta distribution's relation to Binomial distribution.
+// pbeta(x, k+1, l-k) = 1 - pbinom(k, l, x)
+// dbeta(x, k+1, l-k) = (l-k) / (1-x) * dbinom(k, l, x)
+
 // Global "constants" in integration
 static double K;
 static double L;
 static double LB;
 static double LF;
 static double LW;
+static int ERR = 0;
 
 // Benchmark reference.
 // [[Rcpp::export]]
@@ -76,22 +84,12 @@ inline static double qbeta(double p, double a, double b) {
 }
 
 // Binomial distribution function (right tail, survival).
-// 1 - left tail loses much accuracy.
+// 1 - left tail loses accuracy.
 inline static double pbinomRT(double k, double l, double p) {
     if (p <= 0) p = 0;
     if (p >= 1) p = 1;
     return R::pbinom(k, l, p, 0, 0);
 }
-
-// Density function of the k + 1'th Uni(0, 1) order statistic is
-// Beta density(x, k+1, l-k) = l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1)
-// https://en.wikipedia.org/wiki/Order_statistic
-
-// Beta distribution's relation to Binomial distribution.
-// pbeta(x, k+1, l-k) = 1 - pbinom(k, l, x)
-// en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function
-// equation 8.17.5 in https://dlmf.nist.gov/8.17.
-// dbeta(x, k+1, l-k) = (l-k) / (1-x) * dbinom(k, l, x)
 
 // Beta distribution function.
 inline static double pbeta(double x, double a, double b) {

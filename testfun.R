@@ -386,7 +386,7 @@ bench <- function(K, L, small, seed) {
         return(err)
     }
     p <- p.gen(L, small, seed)
-    pval <- p.rpt.dbeta.cuba(K, p, 1e-10)
+    pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
 
     QBinte <- function() p.rtp.qbeta.integrate(K, p)
     QGinte <- function() p.rtp.qgamma.integrate(K, p)
@@ -407,7 +407,7 @@ bench <- function(K, L, small, seed) {
     DGsimp <- function() simpsonGamma(K, p, stepscale = 1)
     # DGsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
 
-    DBcuba <- function() p.rpt.dbeta.cuba(K, p)
+    DBcuba <- function() p.rtp.dbeta.cuba(K, p)
     # TFish <- function() p.tfisher.softR(0.05, p)
     TFish <- function() p.tfisher.soft(0.05, p)
     DBmutos <- function() ranktruncated(K, p)
