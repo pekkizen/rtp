@@ -1,9 +1,9 @@
 # rtp
 
-Standard Fisher's method using all p-values.
+Standard Fisher's method using all p-values.  
 p.fisher <- function(p)
  
-p.art is Augmented RTP function from Vsevolozhskaya et al (2019).
+p.art is Augmented RTP function from Vsevolozhskaya et al (2019).  
 p.art <- function(K, p)
 
 Soft thresholding TFisher method from Zhang et al (2020)
