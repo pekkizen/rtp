@@ -1,15 +1,15 @@
 # rtp
 
-p.fisher(p)
+p.fisher(p)  
 Standard Fisher's method using all p-values.  
 
-p.art(K, p)
+p.art(K, p)  
 p.art is Augmented RTP function from Vsevolozhskaya et al (2019).  
 
-p.tfisher.soft(tau, p)
+p.tfisher.soft(tau, p)  
 Soft thresholding TFisher method from Zhang et al (2020)  
 
-p.tfisher.tpm(tau, p)
+p.tfisher.tpm(tau, p)  
 runcated product method (tpm) from Zaykin et al (2002) by TFisfer.  
 Solved by TFisfer algorithm  
 
