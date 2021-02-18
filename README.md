@@ -2,7 +2,7 @@
 
 ### P-value functions
 
-*p.fisher(p)  
+p.fisher(p)  
 Standard Fisher's method using all p-values.  
 
 p.art(K, p)  
@@ -16,7 +16,8 @@ Truncated product method (tpm) from Zaykin et al (2002) by TFisfer.
 Solved by TFisfer algorithm  
 
 
-p.rtp returns Rank Truncated Product p-value.  
+p.rtp(K, p)  
+Returns Rank Truncated Product p-value.  
 This is a fast and robust function selected from  
 the other functions presented here. The other  
 functions are not worse in any significant way.  
