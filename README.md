@@ -5,8 +5,8 @@
 **p.fisher(p)**  
 Standard Fisher's method using all p-values.  
 
-**p.art(K, p)** 
-p.art is Augmented RTP function from Vsevolozhskaya et al (2019).  
+**p.art(K, p)**   
+Augmented RTP function from Vsevolozhskaya et al (2019).  
 
 **p.tfisher.soft(tau, p)**   
 Soft thresholding TFisher method from Zhang et al (2020)  
