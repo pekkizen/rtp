@@ -22,6 +22,14 @@ This is a fast and robust function selected from
 the other functions presented here. The other  
 functions are not worse in any significant way.  
 
+ranktruncated(K, p) 
+Rank Truncated Product p-value 
+rdrr.io/cran/mutoss/src/R/Rank_Truncated.R 
+
+p.rtp.qbeta.integrate(K, p, abstol = 1e-4, reltol = 1e-2)  
+Rank Truncated Product p-value  
+Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
+
 ### References  
 [1] Zaykin DV, Zhivotovsky LA, Westfall PH, and Weir BS. (2002).   
 Truncated product method for combining p-values.   
