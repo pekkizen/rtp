@@ -2,7 +2,7 @@
 
 ### P-value functions
 
-p.fisher(p)  
+*p.fisher(p)  
 Standard Fisher's method using all p-values.  
 
 p.art(K, p)  
