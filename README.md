@@ -1,5 +1,7 @@
 # rtp
 
+## P.value functions
+
 p.fisher(p)  
 Standard Fisher's method using all p-values.  
 
