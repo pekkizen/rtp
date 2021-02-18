@@ -55,11 +55,8 @@ projecteuclid.org/euclid.aoas/1587002670
 Supplement: projecteuclid.org/euclid.aoas/1587002670#supplemental  
 R code: CRAN.R-project.org/package=TFisher  
 
-https://en.wikipedia.org/wiki/Gamma_distribution  
-Characterization using shape α and rate β  
+https://en.wikipedia.org/wiki/Gamma_distribution. Characterization using shape α and rate β  
 
-https://en.wikipedia.org/wiki/Beta_distribution 
-Probability density function 
+https://en.wikipedia.org/wiki/Beta_distribution. Probability density function 
 
-https://en.wikipedia.org/wiki/Order_statistic   
-Order statistics sampled from a uniform distribution  
+https://en.wikipedia.org/wiki/Order_statistic. Order statistics sampled from a uniform distribution  
