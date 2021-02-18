@@ -5,32 +5,32 @@
 **p.fisher(p)**  
 Standard Fisher's method using all p-values.  
 
-#### p.art(K, p)  
+**p.art(K, p)** 
 p.art is Augmented RTP function from Vsevolozhskaya et al (2019).  
 
-#### p.tfisher.soft(tau, p)  
+**p.tfisher.soft(tau, p)**   
 Soft thresholding TFisher method from Zhang et al (2020)  
 
-#### p.tfisher.tpm(tau, p)  
+**p.tfisher.tpm(tau, p)**   
 Truncated product method (tpm) from Zaykin et al (2002).    
 Solved by TFisfer algorithm  
 
 
-#### p.rtp(K, p)  
+**p.rtp(K, p)**   
 Rank Truncated Product p-value.  
 This is a fast and robust function selected from  
 the other functions presented here. The other  
 functions are not worse in any significant way.  
 
-#### ranktruncated(K, p)  
+**ranktruncated(K, p)**   
 Rank Truncated Product p-value  
 rdrr.io/cran/mutoss/src/R/Rank_Truncated.R  
 
-#### p.rtp.qbeta.integrate(K, p)  
+**p.rtp.qbeta.integrate(K, p)**    
 Rank Truncated Product p-value  
 Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 
-### References  
+## References  
 [1] Zaykin DV, Zhivotovsky LA, Westfall PH, and Weir BS. (2002).   
 Truncated product method for combining p-values.   
 Genetic Epidemiology 22: 170-185  .
