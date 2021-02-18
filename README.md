@@ -26,7 +26,7 @@ functions are not worse in any significant way.
 Rank Truncated Product p-value  
 rdrr.io/cran/mutoss/src/R/Rank_Truncated.R  
 
-#### p.rtp.qbeta.integrate(K, p, abstol = 1e-4, reltol = 1e-2)  
+#### p.rtp.qbeta.integrate(K, p)  
 Rank Truncated Product p-value  
 Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 
