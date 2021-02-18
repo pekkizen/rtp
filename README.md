@@ -33,7 +33,7 @@ Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 ## References  
 [1] Zaykin DV, Zhivotovsky LA, Westfall PH, and Weir BS. (2002).   
 Truncated product method for combining p-values.   
-Genetic Epidemiology 22: 170-185  .
+Genetic Epidemiology 22: 170-185  
 ftp://statgen.ncsu.edu/pub/zaykin/tpm  
 
 [2] Dudbridge, F., and Koeleman, B. P. (2003).   
@@ -43,17 +43,14 @@ Genet. Epidemiol. 25, 360–366. doi: 10.1002/gepi.10264
 [3] Olga A. Vsevolozhskaya, Fengjiao Hu and Dmitri V. Zaykin. (2019).  
 Detecting Weak Signals by Combining Small P-Values in Genetic Association Studies.  
 Front. Genet. 10:1051. doi: 10.3389/fgene.2019.01051.  
-www.frontiersin.org/articles/10.3389/fgene.2019.01051/full  
-Supplementary Material:  
-www.frontiersin.org/articles/10.3389/fgene.2019.01051/full#supplementary-material  
-R code: github.com/dmitri-zaykin/Total_Decor  
+PLus Supplementary Material.  
+R: github.com/dmitri-zaykin/Total_Decor. 
 
 [4] Zhang, Hong; Tong, Tiejun; Landers, John; Wu, Zheyang.  
 TFisher: A powerful truncation and weighting procedure for combining p-values.  
 Ann. Appl. Stat. 14 (2020), no. 1, 178--201. doi:10.1214/19-AOAS1302.  
-projecteuclid.org/euclid.aoas/1587002670  
-Supplement: projecteuclid.org/euclid.aoas/1587002670#supplemental  
-R code: CRAN.R-project.org/package=TFisher  
+Plus Supplement to TFisher.  
+R: CRAN.R-project.org/package=TFisher.  
 
 https://en.wikipedia.org/wiki/Gamma_distribution. Characterization using shape α and rate β  
 
