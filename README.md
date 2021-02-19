@@ -43,7 +43,7 @@ Genet. Epidemiol. 25, 360–366. doi: 10.1002/gepi.10264
 [3] Olga A. Vsevolozhskaya, Fengjiao Hu and Dmitri V. Zaykin. (2019).  
 Detecting Weak Signals by Combining Small P-Values in Genetic Association Studies.  
 Front. Genet. 10:1051. doi: 10.3389/fgene.2019.01051.  
-PLus Supplementary Material.  
+Plus Supplementary Material.  
 R: github.com/dmitri-zaykin/Total_Decor. 
 
 [4] Zhang, Hong; Tong, Tiejun; Landers, John; Wu, Zheyang.  
