@@ -1,5 +1,5 @@
 
-library(microbenchmark)
+
 
 # p <- p.gen(L = 100, small = 1e-4, seed = 0)
 p.gen <- function(L, small, seed = 0) {
@@ -47,7 +47,7 @@ pvalues <- function(K, L, small, seed) {
     p10 <- p.art(K, p)
     p11 <- p.rtp.dgamma.riema(K, p, tol = 1e-10, stepscale = 1)
     p12 <- p.rtp.qgamma.simp.a(K, p)
-    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-19, stepscale = 0.25)
+    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
 
     pe <- p.rtp.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
 
@@ -322,6 +322,7 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
     f2 <- function(g) fGammaD.R(g, lw, K, L)
     f1 <- function(g) {
         b <- exp((g + lw) / K)
+        # pbinom(K, L, b, 0)
         pbeta(b, K + 1, L - K)
     }
     bTop <- K * log(K / (L - 1)) - lw

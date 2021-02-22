@@ -12,18 +12,18 @@ https://en.wikipedia.org/wiki/Order_statistic
 Order statistics sampled from a uniform distribution
 en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function
 
-Density function of the k + 1'th Uni(0, 1) order statistic is
-Beta(x, k+1, l-k) = l! / (k! * l-k-1!) * x^k * (1-x)^(l-k-1)
-
+Density function of the K + 1'th Uni(0, 1) order statistic is
+dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
+                   = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
 Beta distribution's relation to Binomial distribution.
-pbeta(x, k+1, l-k) = 1 - pbinom(k, l, x)
-dbeta(x, k+1, l-k) = (l-k) / (1-x) * dbinom(k, l, x)
+pbeta(x, K+1, L-K) = 1 - pbinom(K, L, x)
+dbeta(x, K+1, L-K) = (L-K) / (1-x) * dbinom(K, L, x)
 */
 
 // Global "constants" in integration
 static double K;
 static double L;
-static double LB;
+static double LBeta;
 static double LF;
 static double LW;
 static int ERR = 0;
@@ -35,8 +35,7 @@ static double fNull(double a) {
 }
 
 // lbeta returns logarithm of Beta(a, b) = Gamma(a) * Gamma(b) / Gamma(a+b).
-// exp(-lbeta(K+1, L-K)) = L! / (K! * L-K-1!) = (L choose K+1)*(K+1).
-// See Dudbridge and Koeleman (2003).
+// exp(-lbeta(K+1, L-K)) = L! / (K! * L-K-1!).
 inline static double lbeta(double a, double b) {
     return lgamma(a) + lgamma(b) - lgamma(a + b);
 }
@@ -53,13 +52,10 @@ double init(double k, NumericVector p) {
     LW = 0;
     for (int i = 0; i < k; i++)
         LW += log(p[i]);
-    LB = -lbeta(K + 1, L - K);
+    LBeta = -lbeta(K + 1, L - K);
     LF = lgamma(K);
     return L;
 }
-
-// Most Beta and Gamma functions here are for distributions,
-// where parameters are positive integers.
 
 // Beta standard deviation.
 // betaSD(K+1, L-K) = ~sqrt(K) / L, for small K and big L.
@@ -86,21 +82,33 @@ inline static double qbeta(double p, double a, double b) {
     return R::qbeta(p, a, b, 1, 0);
 }
 
-// Binomial distribution function (right tail, survival).
-// 1 - left tail loses accuracy.
-inline static double pbinomRT(double k, double l, double p) {
-    if (p <= 0) p = 0;
-    if (p >= 1) p = 1;
-    return R::pbinom(k, l, p, 0, 0);
-}
-
 // Beta distribution function.
 inline static double pbeta(double x, double a, double b) {
     return R::pbeta(x, a, b, 1, 0); // (x >= 1 || x <= 0) returns 0
 }
 
+// Binomial survival function.
+// sbinom(K, L, b) = pbeta(b, K+1, L-K) = 1-pbinom(K, L, b)
+static double sbinom(double k, double n, double p) {
+    double prob, cdf, j, q;
+    if (p <= 0) return 0;
+    if (p >= 1) return 1;
+
+    q = 1 - p;
+    prob = pow(q, n);
+    cdf = prob;
+
+    for (j = 1; j <= k; j++) {
+        prob *= p * (n + 1 - j) / (q * j);
+        cdf += prob;
+    }
+    if (cdf > 0.999999 || cdf == 0)
+        return R::pbinom(k, n, p, 0, 0);
+    return 1 - cdf;
+}
+
 // Beta density function.
-// lg is -logarithm of (a+b-1)! / ((a-1)! * (b-1)!) = -lbeta(a, b).
+// lg is -log((a+b-1)! / ((a-1)! * (b-1)!)) = -lbeta(a, b).
 inline static double dbeta(double x, double lg, double a, double b) {
     if (x <= 0 || x >= 1) return 0;
 
@@ -131,7 +139,7 @@ inline static double pgammaRT(double g, double k) {
     return R::pgamma(g, k, 1, 0, 0); // right tail
 }
 
-// Gamma survival function for positive integers k.
+// Gamma survival function for positive integers shape=k.
 static double sgamma(double g, double k) {
     double p, q, j;
     if (g <= 0) return 1;
@@ -170,7 +178,7 @@ double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
-    return dbeta(b, LB, K + 1, L - K) * sgamma(g, K);
+    return dbeta(b, LBeta, K + 1, L - K) * sgamma(g, K);
 }
 
 // fGammaD is integrand over Gamma density in [0, inf).
@@ -179,10 +187,8 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, LF, K) * pbeta(b, K + 1, L - K);
-
-    // Same results and speed:
-    // return dgamma(g, LF, K) * pbinomRT(K, L, b);
+    return dgamma(g, LF, K) * sbinom(K, L, b);
+    // return dgamma(g, LF, K) * pbeta(b, K + 1, L - K);
 }
 
 // fBetaQ is integrand over Beta probabilities in [0, 1].
@@ -271,7 +277,7 @@ static double adaSimpson(double (*f)(double), double a, double b,
     m = (a + b) / 2;
     abstol /= 2;
 
-    // bisect only if Ia differs enough from 0 by tolerances.
+    // bisect only if Ia differs enough from 0.
     if (Ia > abstol && Ia > Iab * reltol)
         Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
 
@@ -318,22 +324,19 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepsca
 // [[Rcpp::export]]
 double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7,
                       double reltol = 1e-3) {
-    double top, fa, fm, fb, I, l;
-    l = init(k, p);
-    if (l < 0) return ERR;
-    if (l > 1e3) abstol *= 1e6 / (l * l);
-    abstol /= 2;
+    double top, fa, fm, fb, I;
+    if (init(k, p) < 0) return ERR;
 
     top = fBetaDtop();
     fa = 0;
     fm = fBetaD(top / 2);
     fb = fBetaD(top);
-    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol, reltol, 25);
+    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol / 2, reltol, 25);
 
     fa = fb;
     fm = fBetaD((top + 1) / 2);
     fb = 0;
-    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol, reltol, 25);
+    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol / 2, reltol, 25);
     return I;
 }
 
@@ -348,7 +351,6 @@ double riemannGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
     h = cSD * SD;
     if (k < 6) h *= k / 6;
     h *= stepscale;
-    SD = fmax(h, SD);
 
     return riemann(&fGammaD, 0, h, tol, SD);
 }
@@ -421,7 +423,7 @@ double pTFisher(double lw, double L, double tau1, double tau2, double tol = 1e-1
     lqTau = log(tau1 / tau2);
     ldeltaB = log(tau1) - log(1 - tau1);
     ldbinom = L * log(1 - tau1);
-    lw /= 2;
+    lw /= 2; // Chisq(lw, 2*L) to Gamma(lw, L) distrubuted.
 
     if (tau1 == tau2) prod = exp(-lw); // soft TFisher
     sum = prod;
