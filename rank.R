@@ -19,10 +19,13 @@ p.art <- function(K, p) {
     1 - pgamma(ak, shape = K + d - 1)
 }
 
-# p.rtp is a robust and fast function for practically
-# accurate Rank Truncated Product p-value.
+# p.rtp returns Rank Truncated Product p-value.
+# This is a fast and robust function selected from
+# the other functions presented here. The three+ other
+# functions are not worse in any significant way.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
     L <- length(p)
+
     if (K > L) {
         return(-1)
     }
@@ -41,7 +44,7 @@ fBetaQ.R <- function(p, lw, K, L) {
     b <- qbeta(p, K + 1, L - K)
     g <- log(b) * K - lw
     1 - pgamma(g, K)
-    # pgamma(g, K, lower.tail = FALSE)
+    # pgamma(g, K, lower.tail = FALSE) // better accuracy
 }
 
 # fGammaQ.R is integrand over Gamma probabilities in [0, 1].

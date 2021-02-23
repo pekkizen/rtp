@@ -37,11 +37,15 @@ pvalues <- function(K, L, small, seed) {
     }
     p <- p.gen(L, small, seed)
     p1 <- p.rtp.qbeta.integrate(K, p)
-    p2 <- p.rtp.qbeta.simp.a(K, p)
-    p3 <- p.rtp.dgamma.integrate(K, p)
+    # p2 <- p.rtp.qbeta.simp.a(K, p)
+    # p2 <- p.rtp.qgamma.integrate(K, p)
+    p2 <- 0.1
+    # p3 <- p.rtp.dgamma.integrate(K, p)
+    p3 <- 0.1
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
     p6 <- ranktruncated(K, p)
-    p7 <- p.rtp.dbeta.integrate(K, p)
+    # p7 <- p.rtp.dbeta.integrate(K, p)
+    p7 <- 0.1
     p8 <- p.rtp.dbeta.simp.a(K, p, abstol = 1e-7, reltol = 1e-3)
     p9 <- p.tfisher.soft((K + 1) / (L + 1), p)
     p10 <- p.art(K, p)
@@ -49,7 +53,7 @@ pvalues <- function(K, L, small, seed) {
     p12 <- p.rtp.qgamma.simp.a(K, p)
     p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
 
-    pe <- p.rtp.dbeta.cuba(K, p, tol = 1e-14) # "exact" reference
+    pe <- p.rtp.dbeta.cuba(K, p, tol = 1e-15) # "exact" reference
 
     w <- function(s) writeLines(s)
     wl <- function(s, f, e, d) writeLines(paste(s, f, "  ", e, "   ", d))
@@ -109,11 +113,11 @@ pvalues <- function(K, L, small, seed) {
     w("                                     Abs     digits")
     w("----Function----------P-value-------error----right")
     wl("p.rtp.qbeta.integ  ", f1, e1, d1)
-    wl("p.rtp.dbeta.integ  ", f7, e7, d7)
-    # wl("p.rtp.qbeta.simp.a ", f2, e2, d2)
-    wl("p.rtp.dgamm.integ  ", f3, e3, d3)
+    # wl("p.rtp.dbeta.integ  ", f7, e7, d7)
+    # wl("p.rtp.qgamma.integ ", f2, e2, d2)
+    # wl("p.rtp.dgamma.integ ", f3, e3, d3)
     # wl("p.rtp.qgamm.simp.a ", f12, e12, d12)
-    # wl("mutoss/ranktrunca  ", f6, e6, d6)
+    wl("mutoss/ranktrunc   ", f6, e6, d6)
     wl("\np.rpt.dbeta.cuba   ", fe, "0 (ref)   ~14", "\n")
     wl("p.rtp.dbeta.simp.a ", f8, e8, d8)
     wl("p.rtp.dbeta.riema  ", f4, e4, d4)
@@ -420,7 +424,7 @@ bench <- function(K, L, small, seed) {
         QBinte(),
         # QBsimA(),
         # QGsimA(),
-        DBinte(),
+        QGinte(),
         # DGsimA(),
         # DGinte(),
 
