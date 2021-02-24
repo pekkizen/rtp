@@ -384,13 +384,14 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
     )
 }
 
-# bench(K=10, L=100, small=1e-5, seed=0)
-bench <- function(K, L, small, seed) {
+# bench(K=10, L=100, small=1e-5, seed=0, tau=0.05)
+bench <- function(K, L, small, seed, tau = 0.05) {
     err <- check(K, L, small)
     if (err != "") {
         return(err)
     }
     p <- p.gen(L, small, seed)
+    lw <- stat.tfisher(p, tau, tau)
     pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
 
     QBinte <- function() p.rtp.qbeta.integrate(K, p)
@@ -413,8 +414,9 @@ bench <- function(K, L, small, seed) {
     # DGsimp <- function() p.rtp.dgamma.simp(K, p, stepscale = 1)
 
     DBcuba <- function() p.rtp.dbeta.cuba(K, p)
-    # TFish <- function() p.tfisher.softR(0.05, p)
-    TFish <- function() p.tfisher.soft(0.05, p)
+    TFish <- function() p.tfisher.softR(tau, p)
+    # TFish <- function() p.tfisher.soft(tau, p)
+    # TFish <- function() pTFisher(lw, L, tau, tau)
     DBmutos <- function() ranktruncated(K, p)
     Art <- function() p.art(K, p)
 
@@ -431,10 +433,10 @@ bench <- function(K, L, small, seed) {
         DBsimA(),
         DBriem(),
         DGsimp(),
-        DGriem(),
+        # DGriem(),
 
         # DBcuba(),
-        # TFish(),
+        TFish(),
         # Art(),
         times = 500
     )
