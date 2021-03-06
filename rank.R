@@ -6,7 +6,7 @@ p.fisher <- function(p) {
     pgamma(-lw, L, lower.tail = FALSE)
 }
 
-# p.art is Augmented RTP function from Vsevolozhskaya et al (2019).
+# p.art is the augmented RTP function from Vsevolozhskaya et al (2019).
 p.art <- function(K, p) {
     L <- length(p)
     lw <- sum(log(p[1:K - 1]))
@@ -16,20 +16,6 @@ p.art <- function(K, p) {
     ak <- (K - 1) * log(pk) - lw + q
     1 - pgamma(ak, shape = K + d - 1)
 }
-
-# p.specialCases <- function(K, p) {
-#     L <- length(p)
-#     if (K > L) {
-#         return(-1)
-#     }
-#     if (K == L) {
-#         return(p.fisher(p))
-#     }
-#     if (K == 1) {
-#         return(1 - (1 - p[1])^L)
-#     }
-#     return(0)
-# }
 
 # p.rtp returns Rank Truncated Product p-value.
 # This is a fast and reliable function selected from
@@ -50,7 +36,7 @@ fBetaQ.R <- function(p, lw, K, L) {
 }
 
 # fGammaQ.R is integrand over Gamma probabilities in [0, 1].
-# fGammaQ(1 - u) is close to fBetaQ(u).
+# fGammaQ.R(1 - p, ) is close to fBetaQ.R(p, ).
 fGammaQ.R <- function(p, lw, K, L) {
     g <- qgamma(p, K)
     b <- exp((g + lw) / K)
@@ -75,7 +61,7 @@ fGammaD.R <- function(g, lw, K, L) {
 # Reference integration by library cubature function pcubature.
 p.rtp.dbeta.cuba <- function(K, p, tol = 1e-15) {
     if (K == 1) {
-        return(smallest(p))
+        return(probSmallest(p))
     }
     if (K == length(p)) {
         return(fisher(p))
@@ -108,7 +94,7 @@ p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
 }
 
 # RPT p-value by Gamma density and Riemann sum integration.
-# This is p.rtp.
+# This is same as p.rtp.
 p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
     riemannGamma(K, p, tol, stepscale)
 }

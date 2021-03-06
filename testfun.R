@@ -29,6 +29,31 @@ check <- function(K, L, small) {
     return("")
 }
 
+# testSelect(100, 1000, 1, 123)
+# This tests unifSelect(K, p) vs. R sort(p, partial = c(1:K))
+testSelect <- function(kmax, lmax, kstep, seed) {
+    if (seed > 0) set.seed(seed)
+    K <- 2
+    rounds <- 0
+    while (K <= kmax) {
+        L <- 2 * K
+        while (L <= lmax) {
+            rounds <- rounds + 1
+            p <- c(runif(L))
+            psp <- sort(p, partial = c(1:K))[1:K]
+            # p[1] <- 1e-10
+            init(K, p) # calls unifSelect(K, p)
+            pus <- sort(p[1:K])
+            if (!identical(psp, pus)) {
+                return(writeLines(paste("Round = ", format(rounds), " not same")))
+            }
+            L <- L + 5
+        }
+        K <- K + kstep
+    }
+    writeLines(paste("Rounds = ", format(rounds), " all same"))
+}
+
 
 # pvalues(K=10, L=100, small=1e-6, seed=0)
 pvalues <- function(K, L, small, seed) {
@@ -40,7 +65,7 @@ pvalues <- function(K, L, small, seed) {
     p <- c(small, runif(L - 1))
     q <- sort(p)
 
-    p1 <- p.rtp.qbeta.integrate(K, q, abstol = 1e-3, reltol = 1e-2)
+    p1 <- p.rtp.qbeta.integrate(K, q, abstol = 1e-10, reltol = 1e-8)
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
     p6 <- ranktruncated(K, q)
     p8 <- p.rtp.dbeta.simp.a(K, p, abstol = 1e-7, reltol = 1e-3)
@@ -500,7 +525,7 @@ benchIntegrands <- function(K, L, small, seed, unit = "us") {
     print(res, unit, signif = 3)
 }
 
-# benchSelect(K=5, L=100, seed=0)
+# benchSelect(K=10, L=1000, small=1e-10, seed=0)
 benchSelect <- function(K, L, small = 1e-1, seed = 0, unit = "us") {
     if (seed > 0) set.seed(seed)
     scale <- 1
@@ -508,18 +533,26 @@ benchSelect <- function(K, L, small = 1e-1, seed = 0, unit = "us") {
     # q <- sort(c(small, runif(L - 1)), decreasing = TRUE)
     # q <- sort(c(small, runif(L - 1)), partial = c(1:K))
     # q <- sort(c(small, runif(L - 1)))
+    fNullR <- function(x) x
     res <- microbenchmark(
         setup = {
             # p <- c(runif(L) * 1.0)
             p <- c(runif(L) + 0.0)
+            # p <- sort(p, decreasing = TRUE)
             # p <- sort(p)
+            q <- p
+            # r <- p
         },
+        unifSel(K, q),
+        # nth_elem(K, p),
+        # simpleSel(K, p),
 
-        selectBench(K, p),
         # sort(p, partial = c(1:K)),
         # sort(p),
-        fNull(1),
-        times = 5000
+        # fNull(1),
+        # fNullR(1),
+        # control = list(warmup = 100),
+        times = 20000
     )
     print(res, unit, signif = 4)
 }

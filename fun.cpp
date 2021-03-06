@@ -1,3 +1,4 @@
+
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -38,7 +39,7 @@ inline static double lbeta(double a, double b) {
     return lgamma(a) + lgamma(b) - lgamma(a + b);
 }
 
-static void uniSelect(int k, NumericVector p);
+static void unifSelect(int k, NumericVector p);
 
 // [[Rcpp::export]]
 double init(double k, NumericVector p) {
@@ -49,7 +50,7 @@ double init(double k, NumericVector p) {
         return ERR;
     }
     LW = 0;
-    uniSelect(K, p);
+    unifSelect(K, p);
     for (int i = 0; i < k; i++)
         LW += log(p[i]);
     LBeta = -lbeta(K + 1, L - K);
@@ -296,7 +297,7 @@ double fBetaDtop() {
 
 // Smallest p-value method. K == 1.
 // [[Rcpp::export]]
-static double smallest(NumericVector p) {
+static double probSmallest(NumericVector p) {
     int l = p.size();
     double minp = p[0];
 
@@ -322,7 +323,7 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepsca
     const double steps = 8.0, maxstep = 0.05;
     double betaTop, h, SD, l;
 
-    if (k == 1) return smallest(p);
+    if (k == 1) return probSmallest(p);
     if (k == p.size()) return fisher(p);
     l = init(k, p);
     if (l < 0) return ERR;
@@ -340,7 +341,7 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepsca
 double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
     double top, fa, fm, fb, I;
 
-    if (k == 1) return smallest(p);
+    if (k == 1) return probSmallest(p);
     if (k == p.size()) return fisher(p);
     if (init(k, p) < 0) return ERR;
 
@@ -363,7 +364,7 @@ double riemannGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
     const double cSD = 1.25;
     double h, SD;
 
-    if (k == 1) return smallest(p);
+    if (k == 1) return probSmallest(p);
     if (k == p.size()) return fisher(p);
     if (init(k, p) < 0) return ERR;
 
@@ -381,7 +382,7 @@ double simpsonGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
     const double cSD = 1.5;
     double h, SD, hlim = 0.15, hmul = 1.5;
 
-    if (k == 1) return smallest(p);
+    if (k == 1) return probSmallest(p);
     if (k == p.size()) return fisher(p);
     if (init(k, p) < 0) return ERR;
 
@@ -394,9 +395,9 @@ double simpsonGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
     return simpson(&fGammaD, 0, h, tol, SD, hlim, hmul);
 }
 
-// pTFisher implements R function p.tfisher from Zhang et al (2020).
+// tfisher implements R function p.tfisher from Zhang et al (2020).
 // [[Rcpp::export]]
-double pTFisher(double lw, double n, double tau1, double tau2, double tol = 1e-14) {
+double tfisher(double lw, double n, double tau1, double tau2, double tol = 1e-14) {
     double lqTau, p, probBin, deltaP, survG, cumP;
     double prod = 0, fastBin = false;
 
@@ -449,21 +450,21 @@ double pTFisher(double lw, double n, double tau1, double tau2, double tol = 1e-1
 static void selectSmall(int k, int lo, int hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
-    int max = lo;
+    int imax = lo;
     k += lo;
     for (int j = lo + 1; j < k; j++)
-        if (p[max] < p[j]) max = j;
-    double pmax = p[max];
+        if (p[imax] < p[j]) imax = j;
+    double pmax = p[imax];
 
     for (int i = k; i <= hi; i++) {
         if (pmax > p[i]) {
-            p[max] = p[i];
+            p[imax] = p[i];
             p[i] = pmax;
 
-            max = lo;
+            imax = lo;
             for (int j = lo + 1; j < k; j++)
-                if (p[max] < p[j]) max = j;
-            pmax = p[max];
+                if (p[imax] < p[j]) imax = j;
+            pmax = p[imax];
         }
     }
 }
@@ -474,25 +475,25 @@ static void selectBig(int k, int lo, int hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
     int hilo = hi - k + 1;
-    int min = hilo;
+    int imin = hilo;
     for (int j = hilo + 1; j <= hi; j++)
-        if (p[min] > p[j]) min = j;
-    double pmin = p[min];
+        if (p[imin] > p[j]) imin = j;
+    double pmin = p[imin];
 
     for (int i = lo; i < hilo; i++) {
         if (pmin < p[i]) {
-            p[min] = p[i];
+            p[imin] = p[i];
             p[i] = pmin;
 
-            min = hilo;
+            imin = hilo;
             for (int j = hilo + 1; j <= hi; j++)
-                if (p[min] > p[j]) min = j;
-            pmin = p[min];
+                if (p[imin] > p[j]) imin = j;
+            pmin = p[imin];
         }
     }
 }
 
-// For small k and large n this is O(n) operation.
+// For fixed (small) k and large n this is O(n) operation.
 inline static void select(int k, int lo, int hi, NumericVector p) {
 
     double b = hi - lo + 1 - k;
@@ -503,6 +504,9 @@ inline static void select(int k, int lo, int hi, NumericVector p) {
 }
 
 // This is Hoare's quicksort partition with external pivot value.
+// partition returns index j and permutation of p for which
+// i <= j -> p[i] <= pivot  and i > j -> p[i] > pivot.
+// If j = lo, p[lo] can be > pivot.
 static int partition(int lo, int hi, double pivot, NumericVector p) {
     int i = lo - 1, j = hi + 1;
 
@@ -520,52 +524,75 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
     }
 }
 
+// Bechmark functions
 // [[Rcpp::export]]
-int selectBench(int k, NumericVector p) {
-    uniSelect(k, p);
-    // std::nth_element(p.begin(), p.begin() + k, p.end());
+int unifSel(int k, NumericVector p) {
+    unifSelect(k, p);
+    return k;
+}
+// [[Rcpp::export]]
+int simpleSel(int k, NumericVector p) {
+    select(k, 0, p.size() - 1, p);
+    return k;
+}
+// [[Rcpp::export]]
+int nth_elem(int k, NumericVector p) {
+    std::nth_element(p.begin(), p.begin() + k, p.end());
     return k;
 }
 
-// uniSelect picks k smallest numbers in p
-// and swaps them to p[0], ... , p[k-1], unordered.
-// This is very efficient if numbers are near uniform(0, 1) distributed.
-static void uniSelect(int k, NumericVector p) {
+// unifSelect picks k smallest numbers in p and swaps
+// them to p[0], ... , p[k-1], unordered.
+// This is very efficient if numbers are near unif(0, 1) distributed.
+// The k'th smallest of n unif(0, 1) numbers ~Beta(k, n-k+1).
+static void unifSelect(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
-    if (n < 20 || k < 5) {
+    if (n < 50 || k < 5) {
         select(k, 0, n - 1, p);
         return;
     }
-
-    // The k'th smallest of n unif(0, 1) numbers ~Beta(k, n-k+1).
     double K = k, N = n + 1;
     double SD = sqrt(K * (N - K) / (N * N * (N + 1)));
-    double mean = K / (n + 1); // k / (n+1), sic
-    double pivot = mean + 3 * SD;
+    double mean = K / N; // k / (n+1)
+    double pivot = mean + 1.0 * SD;
 
     int pi, lo = 0, hi = n - 1;
+
     pi = partition(0, hi, pivot, p);
 
-    if (pi <= 0 || pi >= hi || pi + 1 < k) {
-        std::nth_element(p.begin(), p.begin() + k, p.end());
+    if (pi <= 0 || pi >= hi) {
+        select(k, 0, hi, p);
         return;
     }
-    hi = pi; // 0.994% of cases, k=10, n=200.
 
-    if (pi + 1 >= k + 2) {
-        pivot *= K / (pi + 1); // interpolate to k numbers
-        pi = partition(0, hi, pivot, p);
-    }
     if (pi + 1 >= k)
         hi = pi;
     else {
-        k = k - pi - 1; // append k-pi-1 numbers
-        lo = pi + 1;    // to pi+1,..
+        lo = pi + 1;
+        k -= lo;
+    }
+    if (abs(pi - lo + 1 - k) <= 3) { // missed 3 or less
+        select(k, lo, hi, p);
+        return;
+    }
+    pivot *= K / (pi + 1); // inter/extrapolate to k numbers
+    pi = partition(lo, hi, pivot, p);
+
+    if (p[pi] > pivot) { // pivot too small, very rare
+        select(k, lo, hi, p);
+        return;
+    }
+
+    if (pi - lo + 1 >= k)
+        hi = pi;
+    else {
+        k -= pi - lo + 1;
+        lo = pi + 1;
     }
     select(k, lo, hi, p);
 
-    // Nth Element Algorith's compatible
-    selectBig(1, 0, k - 1, p); // k'th smallest to p[k-1]
+    // Make nth element algorithm's compatible
+    // selectBig(1, 0, k - 1, p); // k'th smallest to p[k-1]
 }
