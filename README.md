@@ -1,8 +1,9 @@
 
-# rtp
+# rtp  
 
-### P-value functions
+Methods for combining p-values.
 
+## P-value functions
 
 **p.fisher(p)**  
 Standard Fisher's method using all p-values.  
