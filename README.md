@@ -18,7 +18,7 @@ Soft thresholding TFisher method from Zhang et al (2020).
 Truncated product method (tpm) from Zaykin et al (2002).
 Solved by TFisfer algorithm.  
 
-**p.rtp(K, p)**  
+**p.rtp(K, p, stepscale = 1)**  
 Rank Truncated Product p-value.  
 This is a fast and robust function selected from  
 the other functions presented here.
@@ -27,9 +27,26 @@ the other functions presented here.
 Rank Truncated Product p-value from
 rdrr.io/cran/mutoss/src/R/Rank_Truncated.R.
 
-**p.rtp.qbeta.integrate(K, p)**  
+**p.rtp.qbeta.integrate(K, p, abstol = 1e-4, reltol = 1e-2)**  
 Rank Truncated Product p-value.  
 Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
+
+## Example
+
+Generate 100 p-values with one small value 1e-6 and calculate
+combined p-value by different methods.
+
+```R
+K <- 10
+L <- 100
+p <- c(1e-6, runif(L - 1))
+tau <- K / L
+p.art(K, p)
+p.rtp(K, p)
+p.tfisher.soft(tau, p)
+p.tfisher.tpm(tau, p)
+p.fisher(p)
+```
 
 ## References
 
@@ -47,8 +64,7 @@ Front. Genet. 10:1051. doi: 10.3389/fgene.2019.01051.
 www.frontiersin.org/articles/10.3389/fgene.2019.01051/full. www.frontiersin.org/articles/10.3389/fgene.2019.01051/full#supplementary-material.
 R code: github.com/dmitri-zaykin/Total_Decor.  
 
-[4] Zhang, Hong; Tong, Tiejun; Landers, John; Wu, Zheyang.  
-TFisher: A powerful truncation and weighting procedure for combining p-values. Ann. Appl. Stat. 14 (2020), no. 1, 178--201. doi:10.1214/19-AOAS1302.  
+[4] Zhang, Hong; Tong, Tiejun; Landers, John; Wu, Zheyang. TFisher: A powerful truncation and weighting procedure for combining p-values. Ann. Appl. Stat. 14 (2020), no. 1, 178--201. doi:10.1214/19-AOAS1302.  
 projecteuclid.org/euclid.aoas/1587002670  
 projecteuclid.org/euclid.aoas/1587002670#supplemental.  
 R code: CRAN.R-project.org/package=TFisher
