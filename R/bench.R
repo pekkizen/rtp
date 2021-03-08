@@ -6,10 +6,7 @@ benchIntegrals <- function(K, L, small, tau = 0.05) {
     if (err != "") {
         return(err)
     }
-    # p <- p.gen(K, L, small, seed)
     p <- c(small, runif(L - 1))
-    q <- sort(p)
-    lw <- stat.tfisher(p, tau, tau)
     pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
 
     res <- microbenchmark(
@@ -28,7 +25,6 @@ benchIntegrals <- function(K, L, small, tau = 0.05) {
         # DBcuba = p.rtp.dbeta.cuba(K, p),
         # TFish = p.tfisher.softR(tau, p),
         # TFish = p.tfisher.soft(tau, p),
-        # TFish = tfisher(lw, L, tau, tau),
         # Art = p.art(K, p),
         times = 500
     )
@@ -53,7 +49,7 @@ benchIntegrands <- function(K, L, small, unit = "us") {
     if (err != "") {
         return(err)
     }
-    p <- p.gen(K, L, small, 0)
+    p <- p.gen(L, small, 0)
     init(K, p)
     lw <- sum(log(p[1:K]))
 
@@ -70,7 +66,6 @@ benchIntegrands <- function(K, L, small, unit = "us") {
         DGamma = fGammaD(g),
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
-        fNull = fNull(u),
         times = 5000
     )
     boxplot(res,
@@ -80,6 +75,7 @@ benchIntegrands <- function(K, L, small, unit = "us") {
         unit = unit,
         main = c("Integrands", title)
     )
+
     print(res, unit, signif = 3)
 }
 
@@ -93,9 +89,9 @@ benchSelect <- function(K, L, small = 1e-1, unit = "us", times = 2000) {
         },
         uniSel = uniSel(K, p),
         simpleSel = simpleSel(K, p),
-        nth_element = nth_element(K, p),
-        sortPart = sort(p, partial = c(1:K)),
-        sortFull = sort(p),
+        # nth_element = nth_element(K, p),
+        # sortPart = sort(p, partial = c(1:K)),
+        # sortFull = sort(p),
         times = times
     )
     print(res, unit, signif = 4)
