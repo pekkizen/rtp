@@ -1,6 +1,6 @@
 
 
-check <- function(K, L, small) {
+checkPar <- function(K, L, small) {
     if (small < 1e-300) {
         return("Invalid: small < 1e-300")
     }
@@ -24,7 +24,7 @@ check <- function(K, L, small) {
 
 # pvaluesRTP(K=10, L=100, small=1e-6, seed=0)
 pvaluesRTP <- function(K, L, small, seed) {
-    err <- check(K, L, small)
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
@@ -33,7 +33,7 @@ pvaluesRTP <- function(K, L, small, seed) {
     q <- sort(p)
     tau <- (K + 1) / (L + 1)
 
-    p1 <- p.rtp.qbeta.integrate(K, q)
+    p1 <- p.rtp.qbeta(K, q)
     p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
     p6 <- ranktruncated(K, q)
     p8 <- p.rtp.dbeta.simp.a(K, p, abstol = 1e-7, reltol = 1e-3)
@@ -108,13 +108,12 @@ pvaluesRTP <- function(K, L, small, seed) {
 
 # pvaluesMethods(K=10, L=100, small=1e-6, seed=0)
 pvaluesMethods <- function(K, L, small, seed) {
-    err <- check(K, L, small)
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
-    q <- sort(p)
     tau <- (K + 1) / (L + 1)
 
     rtp <- p.rtp.dbeta.cuba(K, p)
