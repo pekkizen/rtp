@@ -5,17 +5,6 @@
 
 using namespace Rcpp;
 
-// fNull
-static double fNull(double a);
-RcppExport SEXP _rtp_fNull(SEXP aSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    rcpp_result_gen = Rcpp::wrap(fNull(a));
-    return rcpp_result_gen;
-END_RCPP
-}
 // init
 double init(double k, NumericVector p);
 RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP) {
@@ -29,7 +18,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // betaSD
-static double betaSD(double a, double b);
+double betaSD(double a, double b);
 RcppExport SEXP _rtp_betaSD(SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -107,7 +96,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // probSmallest
-static double probSmallest(NumericVector p);
+double probSmallest(NumericVector p);
 RcppExport SEXP _rtp_probSmallest(SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -118,7 +107,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // fisher
-static double fisher(NumericVector p);
+double fisher(NumericVector p);
 RcppExport SEXP _rtp_fisher(SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -237,7 +226,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rtp_fNull", (DL_FUNC) &_rtp_fNull, 1},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
     {"_rtp_dbetaHight", (DL_FUNC) &_rtp_dbetaHight, 2},
