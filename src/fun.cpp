@@ -1,7 +1,5 @@
 
 #include <Rcpp.h>
-// [[Rcpp::depends(RcppNumerical)]]
-// #include <RcppNumerical.h>
 using namespace Rcpp;
 
 /*
@@ -28,12 +26,6 @@ static double LBeta;
 static double LF;
 static double LW;
 static int ERR = -1;
-
-// Benchmark baseline reference.
-// [[Rcpp::export]]
-static double fNull(double a) {
-    return a;
-}
 
 // lbeta returns logarithm of Beta(a, b) = Gamma(a) * Gamma(b) / Gamma(a+b).
 // exp(-lbeta(K+1, L-K)) = L! / (K! * L-K-1!).
@@ -63,7 +55,7 @@ double init(double k, NumericVector p) {
 // Beta standard deviation.
 // betaSD(K+1, L-K) = ~sqrt(K) / L, for small K and big L.
 // [[Rcpp::export]]
-static double betaSD(double a, double b) {
+double betaSD(double a, double b) {
     double c = a + b;
     return sqrt(a * b / (c * c * (c + 1)));
 }
@@ -299,7 +291,7 @@ double fBetaDtop() {
 
 // Smallest p-value method. K == 1.
 // [[Rcpp::export]]
-static double probSmallest(NumericVector p) {
+double probSmallest(NumericVector p) {
     int l = p.size();
     double pmin = p[0];
 
@@ -311,7 +303,7 @@ static double probSmallest(NumericVector p) {
 
 // Standard Fisher's method using all p-values.
 // [[Rcpp::export]]
-static double fisher(NumericVector p) {
+double fisher(NumericVector p) {
     int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
@@ -465,7 +457,7 @@ static void selectSmall(int k, int lo, int hi, NumericVector p) {
             p[imax] = p[i];
             p[i] = pmax;
 
-            // if (lo < k - 1) // Rcpp, not faster or slower
+            // if (lo < k - 1) // Rcpp, not faster
             //     imax = which_max(p[Range(lo, k - 1)]) + lo;
 
             imax = lo;
@@ -555,10 +547,11 @@ static void uniSelect(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
-    if (n < 50 || k < 5) {
+    if (n < 51 || k < 6) {
         select(k, 0, n - 1, p);
         return;
     }
+
     double K = k, N = n + 1;
     double SD = sqrt(K * (N - K) / (N * N * (N + 1)));
     double mean = K / N; // k / (n+1)
