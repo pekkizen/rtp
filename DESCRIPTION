@@ -4,7 +4,7 @@ Title: Methods for combining p-values
 Version: 0.9
 Date: 2021-03-05
 Author: Pekkizen
-Maintainer: Pekkizen Pekkizen@gmail.com
+Maintainer: Pekkizen <pekkizen@gmail.com>
 Description: Methods for combining p-values. Rank Truncated product and other methods.
 License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.5)
