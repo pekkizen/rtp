@@ -2,7 +2,7 @@ Package: rtp
 Type: Package
 Title: Methods for combining p-values
 Version: 0.9
-Date: 2021-03-05
+Date: 2021-03-08
 Author: Pekkizen
 Maintainer: Pekkizen <pekkizen@gmail.com>
 Description: Methods for combining p-values. Rank Truncated product and other methods.
