@@ -73,8 +73,8 @@ p.rtp.dbeta.cuba <- function(K, p, tol = 1e-15) {
     }
     top <- fBetaDtop()
 
-    pcubature(fBetaD, 0, top, tol = tol)$integral +
-        pcubature(fBetaD, top, 1, tol = tol)$integral
+    cubature::pcubature(fBetaD, 0, top, tol = tol)$integral +
+        cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 
 # RPT p-value by Beta density and adaptive Simpson's 1/3.
@@ -114,7 +114,7 @@ stat.rpt <- function(K, p) {
 
 # RPT p-value by inverse Beta CDF and R integrate function.
 # Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
-p.rtp.qbeta.integrate <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
+p.rtp.qbeta <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
     L <- length(p)
     lw <- stat.rpt(K, p)
     f <- function(u) fBetaQ.R(u, lw, K, L)

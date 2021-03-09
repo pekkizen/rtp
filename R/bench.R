@@ -1,8 +1,8 @@
 
 
-# bench(K=10, L=100, small=1e-5, seed=0, tau=0.05)
-benchIntegrals <- function(K, L, small, tau = 0.05) {
-    err <- check(K, L, small)
+# bench.integrals(K=10, L=100, small=1e-5, seed=0)
+bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
@@ -12,22 +12,23 @@ benchIntegrals <- function(K, L, small, tau = 0.05) {
     res <- microbenchmark(
         setup = {
             p <- c(small, runif(L - 1))
-            # p <- sort(c(small, runif(L - 1)))
         },
         unit = "us",
-        # DBmutos = function() ranktruncated(K, p),
-        QBinte = p.rtp.qbeta.integrate(K, p),
-        DBsimA = simpsonAdaBeta(K, p),
+        DBmutos = p.rtp.mutoss(K, p),
+        QBinte = p.rtp.qbeta(K, p),
+        # DBsimA = simpsonAdaBeta(K, p),
         DBriem = riemannBeta(K, p),
         DGsimp = simpsonGamma(K, p, stepscale = 1),
         DGriem = riemannGamma(K, p, stepscale = 1),
 
         # DBcuba = p.rtp.dbeta.cuba(K, p),
+        # tau <- K / L
         # TFish = p.tfisher.softR(tau, p),
         # TFish = p.tfisher.soft(tau, p),
         # Art = p.art(K, p),
         times = 500
     )
+    plot.new()
     boxplot(res,
         unit = "us",
         font.main = 1, cex.main = 1,
@@ -42,10 +43,10 @@ benchIntegrals <- function(K, L, small, tau = 0.05) {
     print(res, "us", signif = 3)
 }
 
-# benchIntegrands(K=5, L=100, small=1e-3)
+# bench.integrands(K=5, L=100, small=1e-3)
 # R adds ~900 ns baseline cost (fNull) for these C-functions.
-benchIntegrands <- function(K, L, small, unit = "us") {
-    err <- check(K, L, small)
+bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
@@ -63,11 +64,13 @@ benchIntegrands <- function(K, L, small, unit = "us") {
         },
         Qbeta = fBetaQ(u),
         QbetaR = fBetaQ.R(u, lw, K, L),
+        QGamma = fGammaQ(u),
         DGamma = fGammaD(g),
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
         times = 5000
     )
+    print(res, unit, signif = 3)
     boxplot(res,
         font.main = 1, cex.main = 1,
         xlab = "",
@@ -75,22 +78,20 @@ benchIntegrands <- function(K, L, small, unit = "us") {
         unit = unit,
         main = c("Integrands", title)
     )
-
-    print(res, unit, signif = 3)
 }
 
-# benchSelect(K=25, L=1000, times=2000)
-benchSelect <- function(K, L, small = 1e-1, unit = "us", times = 2000) {
+# bench.select(K=25, L=1000, times=2000)
+bench.select <- function(K, L, unit = "us", times = 2000) {
     res <- microbenchmark(
         setup = {
             p <- c(runif(L) * 1.0)
             # p <- sort(p, decreasing = TRUE)
             # p <- sort(p)
         },
-        uniSel = uniSel(K, p),
-        simpleSel = simpleSel(K, p),
-        # nth_element = nth_element(K, p),
-        # sortPart = sort(p, partial = c(1:K)),
+        uniSelect = uniSel(K, p),
+        simpleSelect = simpleSel(K, p),
+        nth_element = nth_element(K, p),
+        sortPartial = sort(p, partial = c(1:K)),
         # sortFull = sort(p),
         times = times
     )

@@ -1,13 +1,13 @@
 
-# plotQuantile(K=10, L=100, small=1e-4, seed=0)
-plotQuantile <- function(K, L, small, seed, xmax = 1) {
-    err <- check(K, L, small)
+# plot.quantile.integrands(K=10, L=100, small=1e-4, seed=0)
+plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
-    p <- p.gen(K, L, small, seed)
+    p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
-    pval <- p.rtp.qbeta.integrate(K, p)
+    pval <- p.rtp.qbeta(K, p)
 
     f1 <- function(u) fBetaQ.R(u, lw, K, L)
     f2 <- function(u) fGammaQ.R(1 - u, lw, K, L)
@@ -16,9 +16,9 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
     plot(f1,
         type = "l", ylab = "", font.main = 1,
         col = "blue", cex.main = 1,
-        xlim = c(0, xmax), ylim = c(0, 1), yaxp = c(0, 1, 2),
+        xlim = c(0, 1), ylim = c(0, 1), yaxp = c(0, 1, 2),
         axis(1,
-            at = pretty(c(0, xmax)),
+            at = pretty(c(0, 1)),
         ),
         xlab = paste(
             "Area under the integrands is ",
@@ -32,11 +32,10 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
     par(new = TRUE)
     plot(f2,
         type = "l", ylab = "", col = "red",
-        xlim = c(0, xmax), ylim = c(0, 1),
+        xlim = c(0, 1), ylim = c(0, 1),
         xlab = "",
         axes = FALSE,
     )
-
     abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
     abline(v = 1, lty = 1, col = "#757474", lwd = 0.25)
     abline(v = 0.5, lty = 1, col = "#757474", lwd = 0.25)
@@ -44,13 +43,13 @@ plotQuantile <- function(K, L, small, seed, xmax = 1) {
     abline(h = 0.5, lty = 1, col = "#757474", lwd = 0.25)
 }
 
-# plotBxGintegrand(K=10, L=100, small=1e-4, seed=0)
-plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
-    err <- check(K, L, small)
+# plot.BxG.integrand(K=10, L=100, small=1e-4, seed=0)
+plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
-    p <- p.gen(K, L, small, seed)
+    p <- p.gen(L, small, seed)
     pval <- p.rtp.dbeta.cuba(K, p)
     init(K, p)
     top <- fBetaDtop()
@@ -60,8 +59,8 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     hight <- dbetaHight(K + 1, L - K)
 
     sd <- betaSD(K + 1, L - K)
-    if (xmax <= 0) xmax <- min(1.0, top + 8 * sd)
-    if (xmin < 0) xmin <- max(0, top - 6 * sd)
+    xmax <- min(1.0, top + 8 * sd)
+    xmin <- max(0, top - 6 * sd)
 
     f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
     f2 <- function(u) fBetaD.R(u, lw, K, L)
@@ -123,12 +122,12 @@ plotBxGintegrand <- function(K, L, small, seed, xmin = -1, xmax = 0) {
 }
 
 # plotIntegrandLocation(K=10, L=100, small=1e-4, seed=0)
-plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
-    err <- check(K, L, small)
+plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
-    p <- p.gen(K, L, small, seed)
+    p <- p.gen(L, small, seed)
     lw <- sum(log(p[1:K]))
     init(K, p)
     pval <- p.rtp.dbeta.cuba(K, p)
@@ -138,8 +137,8 @@ plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     gTop <- exp((K - 1 + lw) / K)
     gSD <- exp((sqrt(K) + lw) / K)
 
-    if (xmax <= 0) xmax <- min(1.0, iTop + 6 * bSD)
-    if (xmin < 0) xmin <- max(0.0, iTop - 6 * bSD)
+    xmax <- min(1.0, iTop + 6 * bSD)
+    xmin <- max(0.0, iTop - 6 * bSD)
 
     f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
     f2 <- function(u) fBetaD.R(u, lw, K, L)
@@ -184,13 +183,13 @@ plotIntegrandLocation <- function(K, L, small, seed, xmin = -1, xmax = 0) {
     )
 }
 
-# plotGxBintegrand(K=10, L=100, small=1e-4, seed=0)
-plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) {
-    err <- check(K, L, small)
+# plot.GxB.integrand(K=10, L=100, small=1e-4, seed=0)
+plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
+    err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
-    p <- p.gen(K, L, small, seed)
+    p <- p.gen(L, small, seed)
     pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
     lw <- sum(log(p[1:K]))
     init(K, p)
@@ -204,8 +203,8 @@ plotGxBintegrand <- function(K, L, small = 1e-1, seed = 0, xmin = -1, xmax = 0) 
         pbeta(b, K + 1, L - K)
     }
     bTop <- K * log(K / (L - 1)) - lw
-    if (xmax <= 0) xmax <- floor(bTop + 4 * sqrt(K))
-    if (xmin < 0) xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
+    xmax <- floor(bTop + 4 * sqrt(K))
+    xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
     gTop <- K - 1
     iTop <- (gTop + 2 * bTop) / 3
 
