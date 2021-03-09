@@ -15,8 +15,8 @@ Augmented RTP function from Vsevolozhskaya et al (2019).
 Soft thresholding TFisher method from Zhang et al (2020).  
 
 **p.tfisher.tpm(tau, p)**  
-Truncated product method (tpm) from Zaykin et al (2002).
-Solved by TFisfer algorithm.  
+Truncated product method (tpm) from Zaykin et al (2002)
+solved by TFisher algorithm.  
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank Truncated Product method implemented by gamma PDF x beta CDF
@@ -30,8 +30,8 @@ rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This uses exactly equations
 from Dudbridge and Koeleman (2003).
 
 **p.rtp.qbeta(K, p, abstol = 1e-4, reltol = 1e-2)**  
-Rank Truncated Product p-value.  
-Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
+Rank Truncated Product p-value by
+inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 
 ## Installation
 
