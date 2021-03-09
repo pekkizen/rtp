@@ -7,5 +7,6 @@ Author: Pekkizen
 Maintainer: Pekkizen <pekkizen@gmail.com>
 Description: Methods for combining p-values. Rank Truncated product and other methods.
 License: GPL (>= 2)
-Imports: Rcpp (>= 1.0.5)
+Imports: Rcpp (>= 1.0.5), cubature
 LinkingTo: Rcpp
+
