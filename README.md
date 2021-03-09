@@ -26,8 +26,8 @@ the other functions presented in R/C++ code.
 
 **p.rtp.mutoss(K, p)**  
 Rank truncated product p-value from
-rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This uses exactly equations
-from Dudbridge and Koeleman (2003).
+rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This implements 
+exactly equations from Dudbridge and Koeleman (2003).
 
 **p.rtp.qbeta(K, p, abstol = 1e-4, reltol = 1e-2)**  
 Rank truncated product p-value by
@@ -55,10 +55,10 @@ Generate 199 random p-values plus one small value 1e-6 and calculate combined p-
 
 ```R
 library(rtp)
-K <- 10
-L <- 199
+K <- 10       # 10 smallest p-values
+L <- 200
 p <- c(1e-6, runif(L - 1))
-tau <- K / L
+tau <- K / L  # p-values less than 0.05
 p.art(K, p)
 p.rtp(K, p)
 p.tfisher.soft(tau, p)
