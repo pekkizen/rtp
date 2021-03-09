@@ -9,7 +9,7 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
     p <- c(small, runif(L - 1))
     pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
 
-    res <- microbenchmark(
+    res <- microbenchmark::microbenchmark(
         setup = {
             p <- c(small, runif(L - 1))
         },
@@ -57,7 +57,7 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
     title <- "Microseconds, logarithmic time"
     if (unit == "ns") title <- "nanoseconds, logarithmic time"
 
-    res <- microbenchmark(
+    res <- microbenchmark::microbenchmark(
         setup = {
             u <- runif(1)
             g <- K * log(u) - lw
@@ -82,7 +82,7 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
 
 # bench.select(K=25, L=1000, times=2000)
 bench.select <- function(K, L, unit = "us", times = 2000) {
-    res <- microbenchmark(
+    res <- microbenchmark::microbenchmark(
         setup = {
             p <- c(runif(L) * 1.0)
             # p <- sort(p, decreasing = TRUE)
