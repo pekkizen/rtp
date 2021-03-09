@@ -40,6 +40,9 @@ are somewhat commented in the program code.
 
 ## Installation
 
+Package rtp is build and tested by Rcpp version 1.0.6, R version 4.0.3 and g++
+compiler in Rtools 4.0 on Windows system.
+
 ```R
 install.packages("devtools") # if not installed
 library(devtools)
