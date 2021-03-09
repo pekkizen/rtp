@@ -19,24 +19,35 @@ Truncated product method (tpm) from Zaykin et al (2002).
 Solved by TFisfer algorithm.  
 
 **p.rtp(K, p, stepscale = 1)**  
-Rank Truncated Product p-value.  
-This is a fast and robust function selected from  
-the other functions presented here.
+Rank Truncated Product method implemented by gamma PDF x beta CDF
+integrated by Riemann sums.
+This is a fast and robust function selected from
+the other functions presented in R/C++ code.
 
-**ranktruncated(K, p)**  
+**p.rtp.mutoss(K, p)**  
 Rank Truncated Product p-value from
-rdrr.io/cran/mutoss/src/R/Rank_Truncated.R.
+rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This uses exactly equations
+from Dudbridge and Koeleman (2003).
 
 **p.rtp.qbeta(K, p, abstol = 1e-4, reltol = 1e-2)**  
 Rank Truncated Product p-value.  
 Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 
+## Installation
+
+```R
+install.packages("devtools") # if not installed
+library(devtools)
+install_github("pekkizen/rtp")
+```
+
 ## Example
 
-Generate 100 p-values with one small value 1e-6 and calculate
+Generate 100 random p-values with one small value 1e-6 and calculate
 combined p-value by different methods.
 
 ```R
+library(rtp)
 K <- 10
 L <- 100
 p <- c(1e-6, runif(L - 1))
