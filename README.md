@@ -33,6 +33,11 @@ from Dudbridge and Koeleman (2003).
 Rank Truncated Product p-value by
 inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
 
+## Documentation
+
+R-style documentation is coming soon or later. Statistical and computational methods
+are somewhat commented in the program code.
+
 ## Installation
 
 ```R
