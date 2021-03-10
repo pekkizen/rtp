@@ -21,8 +21,7 @@ solved by TFisher function.
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank truncated product p-value by integrand gamma PDF x beta CDF integrated by Riemann sum.
-This is a fast and reliable function selected from
-all functions in C++ source code.
+This is a fast, reliable and accurate, enough or more,  function selected from all functions in C++ source code.
 
 ### Reference implementations of p.rtp
 
@@ -36,8 +35,7 @@ Rank truncated product p-value by inverse beta CDF method
 from Vsevolozhskaya et al.
 
 **p.rtp.dbeta.cuba(K, p)**  
-Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF)
-integrated by library cubature function pcubature.
+Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by library cubature function pcubature.
 The integrand implements Dudbridge and Koeleman equations.
 This gives high accuracy "exact" reference values quite reliable, but quite slow.
 
