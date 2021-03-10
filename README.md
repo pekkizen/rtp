@@ -37,7 +37,7 @@ from Vsevolozhskaya et al.
 **p.rtp.dbeta.cuba(K, p)**  
 Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by library cubature function pcubature.
 The integrand implements Dudbridge and Koeleman equations.
-This gives high accuracy "exact" reference values quite reliable, but quite slow.
+This gives high accuracy "exact" reference values quite reliably, but quite slow.
 
 ## Documentation
 
@@ -100,5 +100,3 @@ Characterization using shape α and rate β.
 
 https://en.wikipedia.org/wiki/Beta_distribution  
 Probability density function.
-
-
