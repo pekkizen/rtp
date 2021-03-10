@@ -21,7 +21,7 @@ solved by TFisher function.
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank truncated product p-value by integrand gamma PDF x beta CDF integrated by Riemann sum.
-This is a fast, reliable and accurate, enough or more,  function selected from all functions in C++ source code.
+This is a fast, reliable and accurate, enough or more,  function selected from all functions in the C++ source code.
 
 ### Reference implementations of p.rtp
 
@@ -87,11 +87,14 @@ Genet. Epidemiol. 25, 360–366. doi: 10.1002/gepi.10264
 Olga A. Vsevolozhskaya, Fengjiao Hu and Dmitri V. Zaykin. (2019). Detecting Weak
 Signals by Combining Small P-Values in Genetic Association Studies.
 Front. Genet. 10:1051. doi: 10.3389/fgene.2019.01051.
-github.com/dmitri-zaykin/Total_Decor.  
+https://github.com/dmitri-zaykin/Total_Decor.  
 
 Zhang, Hong; Tong, Tiejun; Landers, John; Wu, Zheyang. TFisher: A powerful truncation
 and weighting procedure for combining p-values. Ann. Appl. Stat. 14 (2020), no. 1, 178--201.
-doi:10.1214/19-AOAS1302. CRAN.R-project.org/package=TFisher
+doi:10.1214/19-AOAS1302. https://CRAN.R-project.org/package=TFisher
+
+https://en.wikipedia.org/wiki/Order_statistic  
+Order statistics sampled from a uniform distribution.  
 
 https://en.wikipedia.org/wiki/Gamma_distribution  
 Characterization using shape α and rate β.
@@ -99,5 +102,4 @@ Characterization using shape α and rate β.
 https://en.wikipedia.org/wiki/Beta_distribution  
 Probability density function.
 
-https://en.wikipedia.org/wiki/Order_statistic  
-Order statistics sampled from a uniform distribution.  
+
