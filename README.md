@@ -13,16 +13,18 @@ Augmented truncated product function from Vsevolozhskaya et al.
 
 **p.tfisher.soft(tau, p)**  
 Soft thresholding TFisher method from Zhang et al.
-This is implemented by a fast C++ tfisher function.
+This is implemented by a fast C++ TFisher function.
 
 **p.tfisher.tpm(tau, p)**  
 Truncated product method (tpm) from Zaykin et al.
-solved by tfisher function.  
+solved by TFisher function.  
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank truncated product p-value by integrand gamma PDF x beta CDF integrated by Riemann sum.
 This is a fast and reliable function selected from
 all functions in C++ source code.
+
+### Reference implementations of p.rtp
 
 **p.rtp.mutoss(K, p)**  
 Rank truncated product p-value from
@@ -37,8 +39,7 @@ from Vsevolozhskaya et al.
 Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF)
 integrated by library cubature function pcubature.
 The integrand implements Dudbridge and Koeleman equations.
-This gives high accuracy "exact" reference values quite reliable,
-but quite slow.
+This gives high accuracy "exact" reference values quite reliable, but quite slow.
 
 ## Documentation
 
