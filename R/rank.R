@@ -6,7 +6,7 @@ p.fisher <- function(p) {
     pgamma(-lw, L, lower.tail = FALSE)
 }
 
-# p.art is slightly modified Art function in Vsevolozhskaya et al (2019).
+# p.art is slightly modified Art function in Vsevolozhskaya et al.
 p.art <- function(K, p) {
     L <- length(p)
     p <- sort(p, partial = c(1:K))[1:K]
@@ -22,18 +22,18 @@ p.art <- function(K, p) {
 # This is a fast and reliable function selected from
 # the other rpt-functions presented here.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    riemannGamma(K, p, tol, stepscale)
+    pRrtpDgammaRiema(K, p, tol, stepscale)
 }
 
 # Gamma functions use default rate = 1.
 
 # fBetaQuantile.R is integrand over Beta probabilities in [0, 1].
-# This is the integrand in Vsevolozhskaya et al. (2019).
+# This is the integrand in Vsevolozhskaya et al.
 fBetaQ.R <- function(p, lw, K, L) {
     b <- qbeta(p, K + 1, L - K)
     g <- log(b) * K - lw
     1 - pgamma(g, K)
-    # pgamma(g, K, lower.tail = FALSE) # better accuracy and less failures
+    # pgamma(g, K, lower.tail = FALSE) # better accuracy for small p's
 }
 
 # fGammaQ.R is integrand over Gamma probabilities in [0, 1].
@@ -45,7 +45,7 @@ fGammaQ.R <- function(p, lw, K, L) {
 }
 
 # fBetaD.R is integrand over Beta density in [0, 1]. This is
-# equivalent to the integrand equation in Dudbridge and Koeleman (2003).
+# This implement the equations in Dudbridge and Koeleman.
 fBetaD.R <- function(b, lw, K, L) {
     g <- K * log(b) - lw
     dbeta(b, K + 1, L - K) * pgamma(g, K, lower.tail = FALSE)
@@ -57,66 +57,55 @@ fGammaD.R <- function(g, lw, K, L) {
     dgamma(g, K) * pbeta(b, K + 1, L - K)
 }
 
-# fBetaD ----------------------------------------- fBetaD
-
 # Reference integration by library cubature function pcubature.
-p.rtp.dbeta.cuba <- function(K, p, tol = 1e-15) {
+p.rtp.dbeta.cuba <- function(K, p, tol = 1e-14) {
     if (K == 1) {
-        return(probSmallest(p))
+        return(probSmallest(p)) # cpp
     }
     if (K == length(p)) {
-        return(fisher(p))
+        return(fisher(p)) # cpp
     }
-    l <- init(K, p)
+    l <- init(K, p) # cpp
     if (l < 0) {
         return(l)
     }
-    top <- fBetaDtop()
+    top <- fBetaDtop() # cpp
 
-    cubature::pcubature(fBetaD, 0, top, tol = tol)$integral +
-        cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
+    I <- cubature::pcubature(fBetaD, 0, top, tol = tol)$integral # fBetaD cpp
+    I + cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 
 # RPT p-value by Beta density and adaptive Simpson's 1/3.
-p.rtp.dbeta.simp.a <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
-    simpsonAdaBeta(K, p, abstol, reltol)
+p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
+    pRtpDbetaAsimp(K, p, abstol, reltol)
 }
 
 # RPT p-value by Beta density and Riemann sum integration.
 p.rtp.dbeta.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    riemannBeta(K, p, tol, stepscale)
+    pRtpDbetaRiema(K, p, tol, stepscale)
 }
-
-#  fGammaD --------------------------------------- fGammaD
 
 # RPT p-value by Gamma density and fixed step Simpson's 1/3.
 p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    simpsonGamma(K, p, tol, stepscale)
+    pRtpDgammaSimp(K, p, tol, stepscale)
 }
 
 # RPT p-value by Gamma density and Riemann sum integration.
 # This is same as p.rtp.
 p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    riemannGamma(K, p, tol, stepscale)
-}
-
-# fBetaQ ----------------------------------------- fBetaQ
-
-# RPT p-value by inverse beta CDF and adaptive Simpson's 1/3.
-p.rtp.qbeta.simp.a <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
-    simpsonAdaBetaQ(K, p, abstol, reltol, depth = 25)
+    pRrtpDgammaRiema(K, p, tol, stepscale)
 }
 
 # stat.rpt returns RPT method test statistic.
-stat.rpt <- function(K, p) {
+stat.rtp <- function(K, p) {
     sum(log(sort(p, partial = c(1:K))[1:K]))
 }
 
 # RPT p-value by inverse Beta CDF and R integrate function.
-# Inverse beta CDF/Quantile function method from Vsevolozhskaya et al (2019).
+# The inverse beta CDF function method from Vsevolozhskaya et al.
 p.rtp.qbeta <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
     L <- length(p)
-    lw <- stat.rpt(K, p)
+    lw <- stat.rtp(K, p)
     f <- function(u) fBetaQ.R(u, lw, K, L)
 
     integrate(f, 0, 1, abs.tol = abstol, rel.tol = reltol)$value

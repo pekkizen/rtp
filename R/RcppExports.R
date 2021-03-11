@@ -41,20 +41,20 @@ fisher <- function(p) {
     .Call(`_rtp_fisher`, p)
 }
 
-riemannBeta <- function(k, p, tol = 1e-10, stepscale = 1) {
-    .Call(`_rtp_riemannBeta`, k, p, tol, stepscale)
+pRtpDbetaRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
+    .Call(`_rtp_pRtpDbetaRiema`, k, p, tol, stepscale)
 }
 
-simpsonAdaBeta <- function(k, p, abstol = 1e-7, reltol = 1e-3) {
-    .Call(`_rtp_simpsonAdaBeta`, k, p, abstol, reltol)
+pRtpDbetaAsimp <- function(k, p, abstol = 1e-7, reltol = 1e-3) {
+    .Call(`_rtp_pRtpDbetaAsimp`, k, p, abstol, reltol)
 }
 
-riemannGamma <- function(k, p, tol = 1e-10, stepscale = 1) {
-    .Call(`_rtp_riemannGamma`, k, p, tol, stepscale)
+pRrtpDgammaRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
+    .Call(`_rtp_pRrtpDgammaRiema`, k, p, tol, stepscale)
 }
 
-simpsonGamma <- function(k, p, tol = 1e-10, stepscale = 1) {
-    .Call(`_rtp_simpsonGamma`, k, p, tol, stepscale)
+pRtpDgammaSimp <- function(k, p, tol = 1e-10, stepscale = 1) {
+    .Call(`_rtp_pRtpDgammaSimp`, k, p, tol, stepscale)
 }
 
 tfisher <- function(lw, n, tau1, tau2, tol = 1e-16) {

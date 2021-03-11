@@ -14,19 +14,19 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
             p <- c(small, runif(L - 1))
         },
         unit = "us",
-        DBmutos = p.rtp.mutoss(K, p),
+        # DBmutos = p.rtp.mutoss(K, p),
         QBinte = p.rtp.qbeta(K, p),
-        # DBsimA = simpsonAdaBeta(K, p),
-        DBriem = riemannBeta(K, p),
-        DGsimp = simpsonGamma(K, p, stepscale = 1),
-        DGriem = riemannGamma(K, p, stepscale = 1),
+        # DBsimA = pRtpDbetaAsimp(K, p),
+        DBriem = pRtpDbetaRiema(K, p),
+        DGsimp = pRtpDgammaSimp(K, p, stepscale = 1),
+        DGriem = pRrtpDgammaRiema(K, p, stepscale = 1),
 
-        # DBcuba = p.rtp.dbeta.cuba(K, p),
+        DBcuba = p.rtp.dbeta.cuba(K, p),
         # tau <- K / L
         # TFish = p.tfisher.softR(tau, p),
         # TFish = p.tfisher.soft(tau, p),
         # Art = p.art(K, p),
-        times = 500
+        times = 1000
     )
     plot.new()
     boxplot(res,
@@ -44,7 +44,7 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
 }
 
 # bench.integrands(K=5, L=100, small=1e-3)
-# R adds ~900 ns baseline cost (fNull) for these C-functions.
+# R adds ~900 ns baseline cost for Rcpp functions.
 bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -80,7 +80,7 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
     )
 }
 
-# bench.select(K=25, L=1000, times=2000)
+# bench.select(K=10, L=1000, times=2000)
 bench.select <- function(K, L, unit = "us", times = 2000) {
     res <- microbenchmark::microbenchmark(
         setup = {
@@ -91,7 +91,7 @@ bench.select <- function(K, L, unit = "us", times = 2000) {
         uniSelect = uniSel(K, p),
         simpleSelect = simpleSel(K, p),
         nth_element = nth_element(K, p),
-        sortPartial = sort(p, partial = c(1:K)),
+        sort_partial = sort(p, partial = c(1:K)),
         # sortFull = sort(p),
         times = times
     )
