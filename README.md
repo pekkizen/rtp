@@ -54,7 +54,7 @@ library(devtools)
 install_github("pekkizen/rtp")
 ```
 
-## Example
+## Examples
 
 Generate 199 random p-values, add one small value 1e-7 and calculate
 combined p-value by different methods.
@@ -69,6 +69,14 @@ p.rtp(K, p)
 p.tfisher.soft(tau, p)
 p.tfisher.tpm(tau, p)
 p.fisher(p)
+
+# Comparing methods has also dedicated function
+pvalues.methods(K = 10, L = 200, small = 1e-7, seed = 0)
+
+# The integrand functions can be examined by
+plot.quantile.integrands(K = 10, L = 200, small = 1e-1, seed = 0)
+plot.BxG.integrand(K = 10, L = 200, small = 1e-3, seed = 0)
+plot.GxB.integrand(K = 10, L = 200, small = 1e-3, seed = 0)
 ```
 
 ## References
@@ -99,3 +107,5 @@ Characterization using shape α and rate β.
 
 https://en.wikipedia.org/wiki/Beta_distribution  
 Probability density function.
+
+https://en.wikipedia.org/wiki/Beta_function  Incomplete_beta_function
