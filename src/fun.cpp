@@ -77,11 +77,6 @@ inline static double qbeta(double p, double a, double b) {
     return R::qbeta(p, a, b, 1, 0);
 }
 
-// Beta distribution function.
-inline static double pbeta(double x, double a, double b) {
-    return R::pbeta(x, a, b, 1, 0); // (x >= 1 || x <= 0) returns 0
-}
-
 // Fast binomial survival function.
 // sbinom(K, L, b) = pbeta(b, K+1, L-K) = 1 - pbinom(K, L, b)
 static double sbinom(double k, double n, double p) {
@@ -98,7 +93,7 @@ static double sbinom(double k, double n, double p) {
     if (cdf > (1.0 - 1e-10) || cdf == 0)
         // these give also values in [0, 1e-16]
         // return  R::pbinom(k, n, p, 0, 0)
-        return pbeta(p, k + 1, n - k);
+        return R::pbeta(p, k + 1, n - k, 1, 0);
 
     return 1 - cdf;
 }
@@ -129,7 +124,7 @@ inline static double gammaMean(double k) {
     return k;
 }
 
-// Fast gamma survival function for positive integer shape k and rate 1.
+// Fast gamma survival function for positive integers k=shape and rate 1.
 static double sgamma(double g, double k) {
     if (g <= 0) return 1;
 
@@ -160,8 +155,8 @@ inline static double qgamma(double p, double k) {
     return R::qgamma(p, k, 1, 1, 0);
 }
 
-// fBetaD is integrand over Beta density in [0, 1]. This is equivalent
-// to the integrand equation in Dudbridge and Koeleman (2003).
+// fBetaD is integrand over Beta density in [0, 1].
+// This implements the equations in Dudbridge and Koeleman.
 // [[Rcpp::export]]
 double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
@@ -177,11 +172,11 @@ double fGammaD(double g) {
 
     double b = exp((g + LW) / K);
     return dgamma(g, LF, K) * sbinom(K, L, b);
-    // return dgamma(g, LF, K) * pbeta(b, K + 1, L - K);
+    // return dgamma(g, LF, K) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // fBetaQ is integrand over Beta probabilities in [0, 1].
-// This is the integrand in Vsevolozhskaya et al. (2019).
+// This is the integrand in Vsevolozhskaya et al.
 // [[Rcpp::export]]
 double fBetaQ(double p) {
     if (p <= 0) return 1;
@@ -200,7 +195,7 @@ double fGammaQ(double p) {
     double g = qgamma(p, K); // Inverse gamma CDF method
     double b = exp((g + LW) / K);
     return sbinom(K, L, b);
-    // return pbeta(b, K + 1, L - K);
+    // return R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // riemann integrates f from a to inf by Riemann sum. Integration
@@ -311,9 +306,9 @@ double fisher(NumericVector p) {
     return R::pgamma(-lw, l, 1, 0, 0);
 }
 
-// riemannBeta integrates fBetaD from 0 to 1 by Riemann sum integral.
+// pRtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
 // [[Rcpp::export]]
-double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double pRtpDbetaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double steps = 8.0, maxstep = 0.05;
     double betaTop, h, SD, l;
 
@@ -330,9 +325,9 @@ double riemannBeta(double k, NumericVector p, double tol = 1e-10, double stepsca
     return riemann(&fBetaD, 0, h, tol, SD); // x >= 1 -> fBetaD(x) = 0.
 }
 
-// simpsonAdaBeta integrates fBetaD from 0 to 1.
+// pRtpDbetaAsimp integrates fBetaD from 0 to 1.
 // [[Rcpp::export]]
-double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
+double pRtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
     double top, fa, fm, fb, I;
 
     if (k == 1) return probSmallest(p);
@@ -352,10 +347,10 @@ double simpsonAdaBeta(double k, NumericVector p, double abstol = 1e-7, double re
     return I;
 }
 
-// riemannGamma integrates fGammaD from 0 to inf by Rieman sum integral.
+// pRrtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
 // [[Rcpp::export]]
-double riemannGamma(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cSD = 1.25;
+double pRrtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    const double cStep = 1.25;
     double h, SD;
 
     if (k == 1) return probSmallest(p);
@@ -363,17 +358,17 @@ double riemannGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
     if (init(k, p) < 0) return ERR;
 
     SD = gammaSD(k);
-    h = cSD * SD;
+    h = cStep * SD;
     if (k < 6) h *= k / 6;
     h *= stepscale;
 
     return riemann(&fGammaD, 0, h, tol, SD);
 }
 
-// simpsonGamma integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
+// pRtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
 // [[Rcpp::export]]
-double simpsonGamma(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cSD = 1.5;
+double pRtpDgammaSimp(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    const double cStep = 1.5;
     double h, SD, hlim = 0.15, hmul = 1.5;
 
     if (k == 1) return probSmallest(p);
@@ -382,14 +377,14 @@ double simpsonGamma(double k, NumericVector p, double tol = 1e-10, double stepsc
 
     if (stepscale != 1) hlim = 0; // h, hlim and hmul are dependant
     SD = gammaSD(k);
-    h = cSD * SD;
+    h = cStep * SD;
     if (k < 6) h *= k / 6;
     h *= stepscale;
 
     return simpson(&fGammaD, 0, h, tol, SD, hlim, hmul);
 }
 
-// tfisher implements R function p.tfisher from Zhang et al (2020).
+// tfisher implements R function p.tfisher in Zhang et al.
 // [[Rcpp::export]]
 double tfisher(double lw, double n, double tau1, double tau2, double tol = 1e-16) {
     double lqTau, p, probBin, deltaP, survG;
