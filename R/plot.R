@@ -193,7 +193,8 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     if (err != "") {
         return(err)
     }
-    p <- p.gen(L, small, seed)
+    if (seed > 0) set.seed(seed)
+    p <- c(small, runif(L - 1))
     pval <- p.rtp.dbeta.cuba(K, p)
     lw <- sum(log(p[1:K]))
     init(K, p)
