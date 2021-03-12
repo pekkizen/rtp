@@ -58,8 +58,7 @@ static void selectBig(int k, int lo, int hi, NumericVector p) {
 }
 
 static void select(int k, int lo, int hi, NumericVector p) {
-
-    double b = hi - lo + 1 - k;
+    int b = hi - lo + 1 - k;
     if (b < k)
         selectBig(b, lo, hi, p);
     else
@@ -119,7 +118,7 @@ void uniSelect(int k, NumericVector p) {
         lo = i;
         k -= i;
     }
-    if (abs(i - lo - k) <= 3) { // partition missed 3 or less
+    if (abs(i - lo - k) <= 3) { // partition missed 3 or less numbers
         select(k, lo, hi, p);
         return;
     }
@@ -145,7 +144,7 @@ void uniSelect(int k, NumericVector p) {
     // selectBig(1, 0, k - 1, p); // k'th smallest to p[k-1]
 }
 
-// Bechmark functions
+// For bechmarking only
 // [[Rcpp::export]]
 int uniSel(int k, NumericVector p) {
     uniSelect(k, p);
