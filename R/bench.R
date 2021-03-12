@@ -1,7 +1,7 @@
 
 
-# bench.integrals(K=10, L=100, small=1e-5, seed=0)
-bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
+# bench.integrals(K=10, L=100, plot = FALSE, seed=0)
+bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
@@ -28,24 +28,26 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
         # Art = p.art(K, p),
         times = 1000
     )
-    plot.new()
-    boxplot(res,
-        unit = "us",
-        font.main = 1, cex.main = 1,
-        xlab = "XXyyyy = Integrand function and integrating function",
-        font.xlab = 1,
-        main = paste(
-            "Rank truncated p-value integrating time\n",
-            "microseconds, logarithmic time",
-            " p = ", format(pval, digits = 2)
-        )
-    )
     print(res, "us", signif = 3)
+    if (plot) {
+        plot.new()
+        boxplot(res,
+            unit = "us",
+            font.main = 1, cex.main = 1,
+            xlab = "XXyyyy = Integrand function and integrating function",
+            font.xlab = 1,
+            main = paste(
+                "Rank truncated p-value integrating time\n",
+                "microseconds, logarithmic time",
+                " p = ", format(pval, digits = 2)
+            )
+        )
+    }
 }
 
-# bench.integrands(K=5, L=100, small=1e-3)
+# bench.integrands(K=5, L=100, plot = FALSE)
 # R adds ~900 ns baseline cost for Rcpp functions.
-bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
+bench.integrands <- function(K, L, small = 1e-1, unit = "us", plot = FALSE) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
@@ -71,13 +73,16 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
         times = 5000
     )
     print(res, unit, signif = 3)
-    boxplot(res,
-        font.main = 1, cex.main = 1,
-        xlab = "",
-        font.xlab = 1,
-        unit = unit,
-        main = c("Integrands", title)
-    )
+    if (plot) {
+        plot.new()
+        boxplot(res,
+            font.main = 1, cex.main = 1,
+            xlab = "",
+            font.xlab = 1,
+            unit = unit,
+            main = c("Integrands", title)
+        )
+    }
 }
 
 # bench.select(K=10, L=1000, times=2000)

@@ -7,11 +7,11 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
-    lw <- sum(log(p[1:K]))
+    lw <- stat.rtp(K, p)
     pval <- p.rtp.qbeta(K, p)
 
     f1 <- function(u) fBetaQ.R(u, lw, K, L)
-    f2 <- function(u) fGammaQ.R(1 - u, lw, K, L)
+    f2 <- function(u) fGammaQ.R(u, lw, K, L)
 
     plot.new()
     plot(f1,
@@ -52,10 +52,10 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
+    lw <- stat.rtp(K, p)
     pval <- p.rtp.dbeta.cuba(K, p)
     init(K, p)
     top <- fBetaDtop()
-    lw <- sum(log(p[1:K]))
     left <- exp(lw / K) * 1.5
     right <- K / (L - 1)
     hight <- dbetaHight(K + 1, L - K)
@@ -132,7 +132,7 @@ plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
-    lw <- sum(log(p[1:K]))
+    lw <- stat.rtp(K, p)
     init(K, p)
     pval <- p.rtp.dbeta.cuba(K, p)
     iTop <- fBetaDtop()
@@ -195,8 +195,9 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
+    lw <- stat.rtp(K, p)
     pval <- p.rtp.dbeta.cuba(K, p)
-    lw <- sum(log(p[1:K]))
+
     init(K, p)
     hight <- dgamma(K - 1, K)
 
