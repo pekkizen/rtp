@@ -58,39 +58,40 @@ fGammaD.R <- function(g, lw, K, L) {
 }
 
 # Reference integration by library cubature function pcubature.
-p.rtp.dbeta.cuba <- function(K, p, tol = 1e-14) {
+p.rtp.dbeta.cuba <- function(K, p) {
+    L <- length(p)
     if (K == 1) {
-        return(probSmallest(p)) # cpp
+        return(pbinom(0, L, min(p), lower.tail = FALSE))
     }
-    if (K == length(p)) {
-        return(fisher(p)) # cpp
+    if (K == L) {
+        return(p.fisher(p))
     }
-    l <- init(K, p) # cpp
-    if (l < 0) {
-        return(l)
+    e <- init(K, p) # cpp
+    if (e < 0) {
+        return(e)
     }
     top <- fBetaDtop() # cpp
-
+    tol <- 1e-14
     I <- cubature::pcubature(fBetaD, 0, top, tol = tol)$integral # fBetaD cpp
     I + cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 
-# RPT p-value by Beta density and adaptive Simpson's 1/3.
+# RPT p-value by Beta density and adaptive Simpson's 1/3 rule.
 p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
     pRtpDbetaAsimp(K, p, abstol, reltol)
 }
 
-# RPT p-value by Beta density and Riemann sum integration.
+# RPT p-value by Beta density and Riemann sum integral.
 p.rtp.dbeta.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
     pRtpDbetaRiema(K, p, tol, stepscale)
 }
 
-# RPT p-value by Gamma density and fixed step Simpson's 1/3.
+# RPT p-value by Gamma density and fixed step Simpson's 1/3 rule.
 p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
     pRtpDgammaSimp(K, p, tol, stepscale)
 }
 
-# RPT p-value by Gamma density and Riemann sum integration.
+# RPT p-value by Gamma density and Riemann sum integral.
 # This is same as p.rtp.
 p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
     pRrtpDgammaRiema(K, p, tol, stepscale)

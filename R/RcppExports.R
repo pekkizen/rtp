@@ -33,14 +33,6 @@ fBetaDtop <- function() {
     .Call(`_rtp_fBetaDtop`)
 }
 
-probSmallest <- function(p) {
-    .Call(`_rtp_probSmallest`, p)
-}
-
-fisher <- function(p) {
-    .Call(`_rtp_fisher`, p)
-}
-
 pRtpDbetaRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
     .Call(`_rtp_pRtpDbetaRiema`, k, p, tol, stepscale)
 }
@@ -57,10 +49,6 @@ pRtpDgammaSimp <- function(k, p, tol = 1e-10, stepscale = 1) {
     .Call(`_rtp_pRtpDgammaSimp`, k, p, tol, stepscale)
 }
 
-tfisher <- function(lw, n, tau1, tau2, tol = 1e-16) {
-    .Call(`_rtp_tfisher`, lw, n, tau1, tau2, tol)
-}
-
 uniSel <- function(k, p) {
     .Call(`_rtp_uniSel`, k, p)
 }
@@ -71,5 +59,9 @@ simpleSel <- function(k, p) {
 
 nth_element <- function(k, p) {
     .Call(`_rtp_nth_element`, k, p)
+}
+
+tfisher <- function(lw, n, tau1, tau2, tol = 1e-16) {
+    .Call(`_rtp_tfisher`, lw, n, tau1, tau2, tol)
 }
 

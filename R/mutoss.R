@@ -1,7 +1,7 @@
 
 # This code is borrowed from
 # https://rdrr.io/cran/mutoss/src/R/Rank_Truncated.R
-# p.RTP.dbeta.riema with same integrand is ~700 x faster.
+# p.rtp.dbeta.riema with same integrand is ~700 x faster.
 p.rtp.mutoss <- function(K, pValues) {
     L <- length(pValues)
 

@@ -1,9 +1,9 @@
 
 # p <- p.gen(L = 100, small = 1e-4, seed = 0)
-p.gen <- function(L, small, seed = 0) {
-    if (seed > 0) set.seed(seed)
-    sort(c(small, runif(L - 1)), partial = c(1:K))
-}
+# p.gen <- function(L, small, seed = 0) {
+#     if (seed > 0) set.seed(seed)
+#     sort(c(small, runif(L - 1)))
+# }
 
 # Used in plot.R also
 checkPar <- function(K, L, small) {
@@ -43,7 +43,7 @@ pvalues.rtp <- function(K, L, small = 1e-1, seed = 0) {
     p8 <- p.rtp.dbeta.asimp(K, p, abstol = 1e-7, reltol = 1e-3)
     p11 <- p.rtp.dgamma.riema(K, p, tol = 1e-10, stepscale = 1)
     p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
-    pe <- p.rtp.dbeta.cuba(K, p, tol = 1e-15) # "exact" reference
+    pe <- p.rtp.dbeta.cuba(K, p) # "exact" reference
 
     w <- function(s) writeLines(s)
     wl <- function(s, f, e, d) writeLines(paste(s, f, "  ", e, "   ", d))

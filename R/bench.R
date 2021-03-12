@@ -7,21 +7,21 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1) {
         return(err)
     }
     p <- c(small, runif(L - 1))
-    pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
+    pval <- p.rtp.dbeta.cuba(K, p)
 
     res <- microbenchmark::microbenchmark(
         setup = {
             p <- c(small, runif(L - 1))
         },
         unit = "us",
-        # DBmutos = p.rtp.mutoss(K, p),
+        DBmutos = p.rtp.mutoss(K, p),
         QBinte = p.rtp.qbeta(K, p),
         # DBsimA = pRtpDbetaAsimp(K, p),
         DBriem = pRtpDbetaRiema(K, p),
         DGsimp = pRtpDgammaSimp(K, p, stepscale = 1),
         DGriem = pRrtpDgammaRiema(K, p, stepscale = 1),
 
-        DBcuba = p.rtp.dbeta.cuba(K, p),
+        # DBcuba = p.rtp.dbeta.cuba(K, p),
         # tau <- K / L
         # TFish = p.tfisher.softR(tau, p),
         # TFish = p.tfisher.soft(tau, p),
