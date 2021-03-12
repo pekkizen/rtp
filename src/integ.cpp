@@ -1,5 +1,4 @@
 #include <Rcpp.h>
-using namespace Rcpp;
 
 // riemann integrates f from a to inf by Riemann sum. Integration
 // stops when relative integral value on SD distance is < tol.
@@ -64,7 +63,7 @@ double adaSimpson(double (*f)(double), double a, double b,
     m = (a + b) / 2;
     abstol /= 2;
 
-    // bisect only if Ia differs enough from 0.
+    // bisect only if Ia differs enough from 0 ???
     if (Ia > abstol && Ia > Iab * reltol)
         Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
 

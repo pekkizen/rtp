@@ -22,9 +22,6 @@ static void selectSmall(int k, int lo, int hi, NumericVector p) {
             p[imax] = p[i];
             p[i] = pmax;
 
-            // if (lo < k - 1) // Rcpp, not faster
-            //     imax = which_max(p[Range(lo, k - 1)]) + lo;
-
             imax = lo;
             for (int j = lo + 1; j < k; j++)
                 if (p[imax] < p[j]) imax = j;

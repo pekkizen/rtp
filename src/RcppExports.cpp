@@ -5,13 +5,24 @@
 
 using namespace Rcpp;
 
+// baseNull
+double baseNull(double x);
+RcppExport SEXP _rtp_baseNull(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(baseNull(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // init
-double init(double k, NumericVector p);
+double init(int k, NumericVector p);
 RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(init(k, p));
     return rcpp_result_gen;
@@ -96,12 +107,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // pRtpDbetaRiema
-double pRtpDbetaRiema(double k, NumericVector p, double tol, double stepscale);
+double pRtpDbetaRiema(int k, NumericVector p, double tol, double stepscale);
 RcppExport SEXP _rtp_pRtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
@@ -110,12 +121,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // pRtpDbetaAsimp
-double pRtpDbetaAsimp(double k, NumericVector p, double abstol, double reltol);
+double pRtpDbetaAsimp(int k, NumericVector p, double abstol, double reltol);
 RcppExport SEXP _rtp_pRtpDbetaAsimp(SEXP kSEXP, SEXP pSEXP, SEXP abstolSEXP, SEXP reltolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type abstol(abstolSEXP);
     Rcpp::traits::input_parameter< double >::type reltol(reltolSEXP);
@@ -124,12 +135,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // pRrtpDgammaRiema
-double pRrtpDgammaRiema(double k, NumericVector p, double tol, double stepscale);
+double pRrtpDgammaRiema(int k, NumericVector p, double tol, double stepscale);
 RcppExport SEXP _rtp_pRrtpDgammaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
@@ -138,12 +149,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // pRtpDgammaSimp
-double pRtpDgammaSimp(double k, NumericVector p, double tol, double stepscale);
+double pRtpDgammaSimp(int k, NumericVector p, double tol, double stepscale);
 RcppExport SEXP _rtp_pRtpDgammaSimp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
@@ -204,6 +215,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
     {"_rtp_dbetaHight", (DL_FUNC) &_rtp_dbetaHight, 2},

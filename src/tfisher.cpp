@@ -1,5 +1,4 @@
 #include <Rcpp.h>
-using namespace Rcpp;
 
 // tfisher implements R function p.tfisher in Zhang et al.
 // [[Rcpp::export]]
