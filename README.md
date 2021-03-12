@@ -20,8 +20,9 @@ Truncated product method (tpm) from Zaykin et al.
 solved by TFisher function.  
 
 **p.rtp(K, p, stepscale = 1)**  
-Rank truncated product p-value by integrand gamma PDF x beta CDF integrated by Riemann sum.
-This is a fast, reliable and accurate, enough or more,  function selected from all functions in the C++ source code.
+Rank truncated product p-value by integrand gamma PDF x beta CDF and
+Riemann sum integral.
+This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code.
 
 ### Reference implementations of p.rtp
 
@@ -41,7 +42,7 @@ This gives high accuracy "exact" reference values very reliably, but quite slow.
 
 ## Documentation
 
-R-style documentation is coming soon or later. Statistical and computational methods are somewhat commented in the program code.
+R-style documentation may come soon or later. Statistical and computational methods are somewhat commented in the program code.
 
 ## Installation
 
@@ -70,12 +71,16 @@ p.tfisher.tpm(tau, p)
 p.fisher(p)
 
 # Comparing methods has also a dedicated function
-pvalues.methods(K = 10, L = 200, small = 1e-7, seed = 0)
+pvalues.methods(K = 10, L = 200, small = 1e-7)
 
-# The integrand functions can be examined by
-plot.quantile.integrands(K = 10, L = 200, small = 1e-1, seed = 0)
-plot.BxG.integrand(K = 10, L = 200, small = 1e-3, seed = 0)
-plot.GxB.integrand(K = 10, L = 200, small = 1e-3, seed = 0)
+# The four integrand functions can be examined by
+plot.quantile.integrands(K = 10, L = 200, small = 1e-1)
+plot.BxG.integrand(K = 10, L = 200, small = 1e-3)
+plot.GxB.integrand(K = 10, L = 200, small = 1e-3)
+
+# Integrand and integral functions benchmarks
+bench.integrals(K = 10, L = 200, small = 1e-6)
+bench.integrands(K = 10, L = 200, small = 1e-6)
 ```
 
 ## References
