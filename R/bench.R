@@ -8,25 +8,23 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
     }
     p <- c(small, runif(L - 1))
     pval <- p.rtp.dbeta.cuba(K, p)
+    tau <- K / L
 
     res <- microbenchmark::microbenchmark(
         setup = {
             p <- c(small, runif(L - 1))
         },
         unit = "us",
-        DBmutos = p.rtp.mutoss(K, p),
-        QBinte = p.rtp.qbeta(K, p),
-        # DBsimA = pRtpDbetaAsimp(K, p),
-        DBriem = pRtpDbetaRiema(K, p),
-        DGsimp = pRtpDgammaSimp(K, p, stepscale = 1),
-        DGriem = pRrtpDgammaRiema(K, p, stepscale = 1),
-
-        # DBcuba = p.rtp.dbeta.cuba(K, p),
-        # tau <- K / L
-        # TFish = p.tfisher.softR(tau, p),
-        # TFish = p.tfisher.soft(tau, p),
-        # Art = p.art(K, p),
-        times = 1000
+        p.rtp.mutoss = p.rtp.mutoss(K, p),
+        p.rtp.qbeta = p.rtp.qbeta(K, p),
+        p.art = p.art(K, p),
+        p.rtp = pRrtpDgammaRiema(K, p, stepscale = 1),
+        p.tfisher.soft = p.tfisher.soft(tau, p),
+        p.rtp.dbeta.asimp = pRtpDbetaAsimp(K, p),
+        p.rtp.dbeta.riema = pRtpDbetaRiema(K, p),
+        p.rtp.dgamma.simp = pRtpDgammaSimp(K, p, stepscale = 1),
+        #  p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
+        times = 500
     )
     print(res, "us", signif = 3)
     if (plot) {
@@ -46,7 +44,7 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
 }
 
 # bench.integrands(K=5, L=100, plot = FALSE)
-# R adds ~900 ns baseline cost for Rcpp functions.
+# R adds ~1000 ns baseline cost for Rcpp functions.
 bench.integrands <- function(K, L, small = 1e-1, unit = "us", plot = FALSE) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -70,6 +68,7 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us", plot = FALSE) {
         DGamma = fGammaD(g),
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
+        baseNull = baseNull(u),
         times = 5000
     )
     print(res, unit, signif = 3)
