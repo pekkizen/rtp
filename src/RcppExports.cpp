@@ -95,28 +95,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// probSmallest
-double probSmallest(NumericVector p);
-RcppExport SEXP _rtp_probSmallest(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(probSmallest(p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// fisher
-double fisher(NumericVector p);
-RcppExport SEXP _rtp_fisher(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(fisher(p));
-    return rcpp_result_gen;
-END_RCPP
-}
 // pRtpDbetaRiema
 double pRtpDbetaRiema(double k, NumericVector p, double tol, double stepscale);
 RcppExport SEXP _rtp_pRtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
@@ -173,21 +151,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// tfisher
-double tfisher(double lw, double n, double tau1, double tau2, double tol);
-RcppExport SEXP _rtp_tfisher(SEXP lwSEXP, SEXP nSEXP, SEXP tau1SEXP, SEXP tau2SEXP, SEXP tolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type tau1(tau1SEXP);
-    Rcpp::traits::input_parameter< double >::type tau2(tau2SEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(tfisher(lw, n, tau1, tau2, tol));
-    return rcpp_result_gen;
-END_RCPP
-}
 // uniSel
 int uniSel(int k, NumericVector p);
 RcppExport SEXP _rtp_uniSel(SEXP kSEXP, SEXP pSEXP) {
@@ -224,6 +187,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// tfisher
+double tfisher(double lw, double n, double tau1, double tau2, double tol);
+RcppExport SEXP _rtp_tfisher(SEXP lwSEXP, SEXP nSEXP, SEXP tau1SEXP, SEXP tau2SEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type tau1(tau1SEXP);
+    Rcpp::traits::input_parameter< double >::type tau2(tau2SEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(tfisher(lw, n, tau1, tau2, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
@@ -234,16 +212,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
     {"_rtp_fGammaQ", (DL_FUNC) &_rtp_fGammaQ, 1},
     {"_rtp_fBetaDtop", (DL_FUNC) &_rtp_fBetaDtop, 0},
-    {"_rtp_probSmallest", (DL_FUNC) &_rtp_probSmallest, 1},
-    {"_rtp_fisher", (DL_FUNC) &_rtp_fisher, 1},
     {"_rtp_pRtpDbetaRiema", (DL_FUNC) &_rtp_pRtpDbetaRiema, 4},
     {"_rtp_pRtpDbetaAsimp", (DL_FUNC) &_rtp_pRtpDbetaAsimp, 4},
     {"_rtp_pRrtpDgammaRiema", (DL_FUNC) &_rtp_pRrtpDgammaRiema, 4},
     {"_rtp_pRtpDgammaSimp", (DL_FUNC) &_rtp_pRtpDgammaSimp, 4},
-    {"_rtp_tfisher", (DL_FUNC) &_rtp_tfisher, 5},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},
+    {"_rtp_tfisher", (DL_FUNC) &_rtp_tfisher, 5},
     {NULL, NULL, 0}
 };
 
