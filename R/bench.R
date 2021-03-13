@@ -15,9 +15,9 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
         p.art = p.art(K, p),
         p.rtp = rtpDgammaRiema(K, p, stepscale = 1),
         p.tfisher.soft = p.tfisher.soft(tau, p),
-        p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
+        # p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
         p.rtp.dbeta.riema = rtpDbetaRiema(K, p),
-        p.rtp.dgamma.simp = rtpDgammaSimp(K, p, stepscale = 1),
+        # p.rtp.dgamma.simp = rtpDgammaSimp(K, p, stepscale = 1),
         #  p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
         times = 500
     )
@@ -61,7 +61,7 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
         fNull = baseNull(u),
-        times = 5000
+        times = 10000
     )
     print(res, unit, signif = 3)
 }
