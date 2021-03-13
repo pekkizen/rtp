@@ -1,11 +1,4 @@
 
-# Standard Fisher's method using all p-values.
-p.fisher <- function(p) {
-    lw <- sum(log(p))
-    L <- length(p)
-    pgamma(-lw, L, lower.tail = FALSE)
-}
-
 # p.art is slightly modified Art function in Vsevolozhskaya et al.
 p.art <- function(K, p) {
     L <- length(p)
@@ -22,7 +15,7 @@ p.art <- function(K, p) {
 # This is a fast and reliable function selected from
 # the other rpt-functions presented here.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    pRrtpDgammaRiema(K, p, tol, stepscale)
+    rtpDgammaRiema(K, p, tol, stepscale)
 }
 
 # Gamma functions use default rate = 1.
@@ -78,23 +71,23 @@ p.rtp.dbeta.cuba <- function(K, p) {
 
 # RPT p-value by Beta density and adaptive Simpson's 1/3 rule.
 p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
-    pRtpDbetaAsimp(K, p, abstol, reltol)
+    rtpDbetaAsimp(K, p, abstol, reltol)
 }
 
 # RPT p-value by Beta density and Riemann sum integral.
 p.rtp.dbeta.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    pRtpDbetaRiema(K, p, tol, stepscale)
+    rtpDbetaRiema(K, p, tol, stepscale)
 }
 
 # RPT p-value by Gamma density and fixed step Simpson's 1/3 rule.
 p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    pRtpDgammaSimp(K, p, tol, stepscale)
+    rtpDgammaSimp(K, p, tol, stepscale)
 }
 
 # RPT p-value by Gamma density and Riemann sum integral.
 # This is same as p.rtp.
 p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    pRrtpDgammaRiema(K, p, tol, stepscale)
+    rtpDgammaRiema(K, p, tol, stepscale)
 }
 
 # stat.rpt returns RPT method test statistic.

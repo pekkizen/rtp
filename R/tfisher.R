@@ -1,4 +1,11 @@
 
+# Standard Fisher's method using all p-values.
+p.fisher <- function(p) {
+    lw <- sum(log(p))
+    L <- length(p)
+    pgamma(-lw, L, lower.tail = FALSE)
+}
+
 # tfisher R-functions are adapted from Zhang et al (2020) /
 # CRAN.R-project.org/package=TFisher
 # Here are R functions and equivalent C++ accelerated functions.

@@ -7,22 +7,17 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
         return(err)
     }
     p <- c(small, runif(L - 1))
-    pval <- p.rtp.dbeta.cuba(K, p)
     tau <- K / L
 
     res <- microbenchmark::microbenchmark(
-        setup = {
-            p <- c(small, runif(L - 1))
-        },
-        unit = "us",
         p.rtp.mutoss = p.rtp.mutoss(K, p),
         p.rtp.qbeta = p.rtp.qbeta(K, p),
         p.art = p.art(K, p),
-        p.rtp = pRrtpDgammaRiema(K, p, stepscale = 1),
+        p.rtp = rtpDgammaRiema(K, p, stepscale = 1),
         p.tfisher.soft = p.tfisher.soft(tau, p),
-        p.rtp.dbeta.asimp = pRtpDbetaAsimp(K, p),
-        p.rtp.dbeta.riema = pRtpDbetaRiema(K, p),
-        p.rtp.dgamma.simp = pRtpDgammaSimp(K, p, stepscale = 1),
+        p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
+        p.rtp.dbeta.riema = rtpDbetaRiema(K, p),
+        p.rtp.dgamma.simp = rtpDgammaSimp(K, p, stepscale = 1),
         #  p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
         times = 500
     )
@@ -44,18 +39,15 @@ bench.integrals <- function(K, L, seed = 0, small = 1e-1, plot = FALSE) {
 }
 
 # bench.integrands(K=5, L=100, plot = FALSE)
-# R adds ~1000 ns baseline cost for Rcpp functions.
-bench.integrands <- function(K, L, small = 1e-1, unit = "us", plot = FALSE) {
+# R adds ~1000 ns baseline cost for Rcpp functions, fNull.
+bench.integrands <- function(K, L, small = 1e-1, unit = "us") {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
     p <- c(small, runif(L - 1))
+    lw <- stat.rtp(K, p)
     init(K, p)
-    lw <- sum(log(p[1:K]))
-
-    title <- "Microseconds, logarithmic time"
-    if (unit == "ns") title <- "nanoseconds, logarithmic time"
 
     res <- microbenchmark::microbenchmark(
         setup = {
@@ -68,20 +60,10 @@ bench.integrands <- function(K, L, small = 1e-1, unit = "us", plot = FALSE) {
         DGamma = fGammaD(g),
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
-        baseNull = baseNull(u),
+        fNull = baseNull(u),
         times = 5000
     )
     print(res, unit, signif = 3)
-    if (plot) {
-        plot.new()
-        boxplot(res,
-            font.main = 1, cex.main = 1,
-            xlab = "",
-            font.xlab = 1,
-            unit = unit,
-            main = c("Integrands", title)
-        )
-    }
 }
 
 # bench.select(K=10, L=1000, times=2000)
