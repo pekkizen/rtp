@@ -106,9 +106,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// pRtpDbetaRiema
-double pRtpDbetaRiema(int k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_pRtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpDbetaRiema
+double rtpDbetaRiema(int k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -116,13 +116,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(pRtpDbetaRiema(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpDbetaRiema(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
-// pRtpDbetaAsimp
-double pRtpDbetaAsimp(int k, NumericVector p, double abstol, double reltol);
-RcppExport SEXP _rtp_pRtpDbetaAsimp(SEXP kSEXP, SEXP pSEXP, SEXP abstolSEXP, SEXP reltolSEXP) {
+// rtpDbetaAsimp
+double rtpDbetaAsimp(int k, NumericVector p, double abstol, double reltol);
+RcppExport SEXP _rtp_rtpDbetaAsimp(SEXP kSEXP, SEXP pSEXP, SEXP abstolSEXP, SEXP reltolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -130,13 +130,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type abstol(abstolSEXP);
     Rcpp::traits::input_parameter< double >::type reltol(reltolSEXP);
-    rcpp_result_gen = Rcpp::wrap(pRtpDbetaAsimp(k, p, abstol, reltol));
+    rcpp_result_gen = Rcpp::wrap(rtpDbetaAsimp(k, p, abstol, reltol));
     return rcpp_result_gen;
 END_RCPP
 }
-// pRrtpDgammaRiema
-double pRrtpDgammaRiema(int k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_pRrtpDgammaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpDgammaRiema
+double rtpDgammaRiema(int k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDgammaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -144,13 +144,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(pRrtpDgammaRiema(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpDgammaRiema(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
-// pRtpDgammaSimp
-double pRtpDgammaSimp(int k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_pRtpDgammaSimp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpDgammaSimp
+double rtpDgammaSimp(int k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDgammaSimp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -158,7 +158,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(pRtpDgammaSimp(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpDgammaSimp(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -224,10 +224,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
     {"_rtp_fGammaQ", (DL_FUNC) &_rtp_fGammaQ, 1},
     {"_rtp_fBetaDtop", (DL_FUNC) &_rtp_fBetaDtop, 0},
-    {"_rtp_pRtpDbetaRiema", (DL_FUNC) &_rtp_pRtpDbetaRiema, 4},
-    {"_rtp_pRtpDbetaAsimp", (DL_FUNC) &_rtp_pRtpDbetaAsimp, 4},
-    {"_rtp_pRrtpDgammaRiema", (DL_FUNC) &_rtp_pRrtpDgammaRiema, 4},
-    {"_rtp_pRtpDgammaSimp", (DL_FUNC) &_rtp_pRtpDgammaSimp, 4},
+    {"_rtp_rtpDbetaRiema", (DL_FUNC) &_rtp_rtpDbetaRiema, 4},
+    {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 4},
+    {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
+    {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},

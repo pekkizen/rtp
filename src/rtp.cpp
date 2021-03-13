@@ -202,7 +202,7 @@ double fBetaDtop() {
 }
 
 // Smallest p-value "method". K == 1.
-double probSmallest(NumericVector p) {
+static double probSmallest(NumericVector p) {
     double l = p.size();
     double pmin = p[0];
 
@@ -212,7 +212,7 @@ double probSmallest(NumericVector p) {
 }
 
 // Standard Fisher's method using all p-values.
-double fisher(NumericVector p) {
+static double fisher(NumericVector p) {
     double l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
@@ -220,9 +220,9 @@ double fisher(NumericVector p) {
     return R::pgamma(-lw, l, 1, 0, 0);
 }
 
-// pRtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
+// rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
 // [[Rcpp::export]]
-double pRtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double steps = 8.0, maxstep = 0.05;
     double betaTop, h, SD, l;
 
@@ -239,9 +239,9 @@ double pRtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepsca
     return riemann(&fBetaD, 0, h, tol, SD); // x >= 1 -> fBetaD(x) = 0.
 }
 
-// pRtpDbetaAsimp integrates fBetaD from 0 to 1.
+// rtpDbetaAsimp integrates fBetaD from 0 to 1.
 // [[Rcpp::export]]
-double pRtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
+double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
     double top, fa, fm, fb, I;
 
     if (k == 1) return probSmallest(p);
@@ -261,9 +261,9 @@ double pRtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double relto
     return I;
 }
 
-// pRrtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
+// rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
 // [[Rcpp::export]]
-double pRrtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
     double h, SD;
 
@@ -279,9 +279,9 @@ double pRrtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double steps
     return riemann(&fGammaD, 0, h, tol, SD);
 }
 
-// pRtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
+// rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
 // [[Rcpp::export]]
-double pRtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.5;
     double h, SD, hlim = 0.15, hmul = 1.5;
 
