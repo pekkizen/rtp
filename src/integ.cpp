@@ -1,14 +1,11 @@
 #include <Rcpp.h>
 
-// riemann integrates f from a to inf by Riemann sum. Integration
-// stops when relative integral value on SD distance is < tol.
+// riemann integrates f from a to inf by Riemann sum.
+// Integration stops when relative integral increment is < tol.
 // Assumed unimodal f(x) -> 0 when x -> inf.
-double riemann(double (*f)(double), double a,
-               double h, double tol, double SD) {
+double riemann(double (*f)(double), double a, double h, double tol) {
     double fa, fsum = 0;
 
-    tol /= SD;
-    tol *= h;
     a += h / 2;
     while (true) {
         fa = f(a);
@@ -19,26 +16,19 @@ double riemann(double (*f)(double), double a,
 }
 
 // simpson integrates f from a to inf by Simpson's 1/3 rule.
-// When f gets small, stepsize h is increased by hlim and hmul.
-// Integration stops when relative integral value on SD distance is < tol.
-// Assumed unimodal f(x) -> 0 when x -> inf.
-double simpson(double (*f)(double), double a, double h, double tol,
-               double SD, double hlim, double hmul) {
-    double fa, fm, fb, fab, I = 0;
+// Integration stops when relative integral increment is < tol.
+double simpson(double (*f)(double), double a, double h, double tol) {
+    double fa, fm, fb, fab, fsum = 0;
 
-    tol /= SD;
-    hlim /= SD;
     fb = f(a);
     while (true) {
         fa = fb;
         fm = f(a + h / 2);
         fb = f(a + h);
-        fab = (fa + 4 * fm + fb) / 6;
-        I += h * fab;
+        fab = (fa + 4 * fm + fb);
+        fsum += fab;
         a += h;
-        if (fab < I * tol) return fmin(1, I);
-
-        if (fab * h < I * hlim) h *= hmul;
+        if (fab < fsum * tol) return fmin(1, h / 6 * fsum);
     }
 }
 

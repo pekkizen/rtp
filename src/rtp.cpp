@@ -2,31 +2,36 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+/*
+See referencies in README.md.
+
+The K+1'th smallest of L unif(0, 1) numbers ~Beta(K+1, L-K).
+The density function of order statistic x ~Beta(K+1, L-K) is
+    dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
+                       = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
+Beta distribution's relation to Binomial distribution.
+    pbeta(x, K+1, L-K) = 1 - pbinom(K, L, x)
+    dbeta(x, K + 1, L - K) = (L - K) / (1 - x) * dbinom(K, L, x)
+    Check script:
+    K <- 10
+    L <- 100
+    x <- 0.05
+    dbeta(x, K + 1, L - K)
+    choose(L, K + 1) * (K + 1) * x^K * (1 - x)^(L - K - 1)
+    (L - K) / (1 - x) * dbinom(K, L, x)
+    pbeta(x, K + 1, L - K)
+    1 - pbinom(K, L, x)
+*/
+
 // "rtp.h"
-double riemann(double (*f)(double), double a, double h, double tol, double SD);
-double simpson(double (*f)(double), double a, double h, double tol, double SD,
-               double hlim, double hmul);
+double riemann(double (*f)(double), double a, double h, double tol);
+double simpson(double (*f)(double), double a, double h, double tol);
 double adaSimpson(double (*f)(double), double a, double b, double fa,
                   double fm, double fb, double Iprev, double abstol,
                   double reltol, int depth);
 void uniSelect(int k, NumericVector p);
-
-/*
-https://en.wikipedia.org/wiki/Gamma_distribution
-Characterization using shape α and rate β
-https://en.wikipedia.org/wiki/Beta_distribution
-Probability density function
-https://en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function
-https://en.wikipedia.org/wiki/Order_statistic
-Order statistics sampled from a uniform distribution
-
-Density function of the K + 1'th Uniform(0, 1) order statistic is
-dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
-                   = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
-Beta distribution's relation to Binomial distribution.
-pbeta(x, K+1, L-K) = 1 - pbinom(K, L, x)
-dbeta(x, K+1, L-K) = (L-K) / (1-x) * dbinom(K, L, x)
-*/
+static double fisher(NumericVector p);
+static double probSmallest(NumericVector p);
 
 // [[Rcpp::export]]
 double baseNull(double x) {
@@ -39,13 +44,19 @@ static double L;     // number of p-values
 static double LBETA; // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
 static double LKF;   // lgamma(K) = log((K - 1)!)
 static double LW;    // log(p1 x ... x pK), test statistic
-static int ERR = -1;
+static int ERR = 0;
+
+#define OK 2
 
 // [[Rcpp::export]]
 double init(int k, NumericVector p) {
     L = p.size();
     K = k;
-    if (L < K || L < 1) return ERR;
+    ERR = 0;
+    if (L < K || L < 1) return ERR = -1;
+    if (K == 1) return probSmallest(p);
+    if (K == L) return fisher(p);
+
     uniSelect(K, p);
     LW = 0;
     for (int i = 0; i < K; i++)
@@ -53,7 +64,7 @@ double init(int k, NumericVector p) {
 
     LBETA = R::lbeta(K + 1, L - K);
     LKF = lgamma(K);
-    return L;
+    return OK;
 }
 
 // Beta standard deviation.
@@ -74,7 +85,7 @@ inline static double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-// Fast binomial survival function for small K.
+// Fast binomial survival function for not very big k.
 // sbinom(K, L, b) = pbeta(b, K+1, L-K) = 1 - pbinom(K, L, b)
 static double sbinom(double k, double n, double p) {
     if (p <= 0) return 0;
@@ -84,7 +95,7 @@ static double sbinom(double k, double n, double p) {
     double cdf = prob;
 
     for (double j = 1.0; j <= k; j++) {
-        prob *= p * (n + 1 - j) / ((1 - p) * j);
+        prob *= p / (1 - p) * (n + 1 - j) / j;
         cdf += prob;
     }
     if (cdf > (1.0 - 1e-10) || cdf == 0)
@@ -101,12 +112,6 @@ inline static double dbeta(double x, double lbeta, double a, double b) {
     return exp(-lbeta + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
-// Hight of Beta density function. For plot. Function value at mode.
-// [[Rcpp::export]]
-double dbetaHight(double a, double b) {
-    return dbeta(betaMode(a, b), R::lbeta(a, b), a, b);
-}
-
 inline static double gammaSD(double k) {
     return sqrt(k);
 }
@@ -119,12 +124,12 @@ inline static double gammaMean(double k) {
     return k;
 }
 
-// Fast gamma survival function for small positive
-// integers k=shape and rate 1.
+// Fast gamma survival function for (small) positive
+// integers k = shape and rate 1.
 static double sgamma(double g, double k) {
     if (g <= 0) return 1;
 
-    if (g > 700 || k > 100)
+    if (g > 700 || k > 50)
         return R::pgamma(g, k, 1, 0, 0); // right tail
 
     double p = exp(-g); // p > 0
@@ -144,7 +149,7 @@ inline static double dgamma(double g, double lkf, double k) {
     return exp((k - 1) * log(g) - g - lkf);
 }
 
-// fBetaD is rtp integrand over Beta density in [0, 1].
+// fBetaD is rtp integrand Beta PDF x (1 - Gamma CDF) over [0, 1].
 // This implements the equations in Dudbridge and Koeleman.
 // [[Rcpp::export]]
 double fBetaD(double b) {
@@ -152,9 +157,10 @@ double fBetaD(double b) {
 
     double g = K * log(b) - LW;
     return dbeta(b, LBETA, K + 1, L - K) * sgamma(g, K);
+    // return dbeta(b, LBETA, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
 }
 
-// fGammaD is rtp integrand over Gamma density in [0, inf).
+// fGammaD is rtp integrand Gamma PDF x Beta CDF over [0, inf).
 // [[Rcpp::export]]
 double fGammaD(double g) {
     if (g <= 0) return 0;
@@ -173,6 +179,7 @@ double fBetaQ(double p) {
     double b = R::qbeta(p, K + 1, L - K, 1, 0); // Inverse beta CDF method
     double g = K * log(b) - LW;
     return sgamma(g, K);
+    // return R::pgamma(g, K, 1, 0, 0);
 }
 
 // fGammaQ is rtp integrand over Gamma probabilities in [0, 1].
@@ -203,7 +210,7 @@ double fBetaDtop() {
 
 // Smallest p-value "method". K == 1.
 static double probSmallest(NumericVector p) {
-    double l = p.size();
+    int l = p.size();
     double pmin = p[0];
 
     for (int i = 1; i < l; i++)
@@ -213,7 +220,7 @@ static double probSmallest(NumericVector p) {
 
 // Standard Fisher's method using all p-values.
 static double fisher(NumericVector p) {
-    double l = p.size();
+    int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
         lw += log(p[i]);
@@ -222,31 +229,26 @@ static double fisher(NumericVector p) {
 
 // rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
 // [[Rcpp::export]]
-double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double steps = 8.0, maxstep = 0.05;
-    double betaTop, h, SD, l;
+double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
+    const double cStep = 0.3;
+    double h, s, l;
 
-    if (k == 1) return probSmallest(p);
-    if (k == p.size()) return fisher(p);
-    if (init(k, p) < 0) return ERR;
+    if ((s = init(k, p)) != OK) return s;
 
     l = p.size();
-    SD = betaSD(k + 1, l - k);
-    betaTop = betaMode(k + 1, l - k);
-    h = fmin(maxstep, fmin(6 * SD, betaTop) / steps);
+    h = cStep * betaSD(k + 1, l - k);
+    if (k < 6) h *= (double)k / 6;
     h *= stepscale;
 
-    return riemann(&fBetaD, 0, h, tol, SD); // x >= 1 -> fBetaD(x) = 0.
+    return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
 }
 
 // rtpDbetaAsimp integrates fBetaD from 0 to 1.
 // [[Rcpp::export]]
 double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
-    double top, fa, fm, fb, I;
+    double top, fa, fm, fb, I, s;
 
-    if (k == 1) return probSmallest(p);
-    if (k == p.size()) return fisher(p);
-    if (init(k, p) < 0) return ERR;
+    if ((s = init(k, p)) != OK) return s;
 
     top = fBetaDtop();
     fa = 0;
@@ -263,37 +265,26 @@ double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol
 
 // rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
 // [[Rcpp::export]]
-double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
     const double cStep = 1.25;
-    double h, SD;
+    double h, s;
 
-    if (k == 1) return probSmallest(p);
-    if (k == p.size()) return fisher(p);
-    if (init(k, p) < 0) return ERR;
+    if ((s = init(k, p)) != OK) return s;
 
-    SD = gammaSD(k);
-    h = cStep * SD;
-    if (k < 6) h *= (double)k / 6;
-    h *= stepscale;
+    h = cStep * gammaSD(k) * stepscale;
 
-    return riemann(&fGammaD, 0, h, tol, SD);
+    return riemann(&fGammaD, 0, h, tol);
 }
 
 // rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
 // [[Rcpp::export]]
 double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cStep = 1.5;
-    double h, SD, hlim = 0.15, hmul = 1.5;
+    const double cStep = 1.25;
+    double h, s;
 
-    if (k == 1) return probSmallest(p);
-    if (k == p.size()) return fisher(p);
-    if (init(k, p) < 0) return ERR;
+    if ((s = init(k, p)) != OK) return s;
 
-    if (stepscale != 1) hlim = 0; // h, hlim and hmul are dependant
-    SD = gammaSD(k);
-    h = cStep * SD;
-    if (k < 6) h *= (double)k / 6;
-    h *= stepscale;
+    h = cStep * gammaSD(k) * stepscale;
 
-    return simpson(&fGammaD, 0, h, tol, SD, hlim, hmul);
+    return simpson(&fGammaD, 0, h, tol);
 }

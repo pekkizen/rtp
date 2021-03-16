@@ -40,18 +40,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// dbetaHight
-double dbetaHight(double a, double b);
-RcppExport SEXP _rtp_dbetaHight(SEXP aSEXP, SEXP bSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    Rcpp::traits::input_parameter< double >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(dbetaHight(a, b));
-    return rcpp_result_gen;
-END_RCPP
-}
 // fBetaD
 double fBetaD(double b);
 RcppExport SEXP _rtp_fBetaD(SEXP bSEXP) {
@@ -218,7 +206,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
-    {"_rtp_dbetaHight", (DL_FUNC) &_rtp_dbetaHight, 2},
     {"_rtp_fBetaD", (DL_FUNC) &_rtp_fBetaD, 1},
     {"_rtp_fGammaD", (DL_FUNC) &_rtp_fGammaD, 1},
     {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
