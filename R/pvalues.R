@@ -1,11 +1,5 @@
 
-# p <- p.gen(L = 100, small = 1e-4, seed = 0)
-# p.gen <- function(L, small, seed = 0) {
-#     if (seed > 0) set.seed(seed)
-#     sort(c(small, runif(L - 1)))
-# }
-
-# Used in plot.R also
+# Used in plot.R and benc.R also
 checkPar <- function(K, L, small) {
     if (small < 1e-300) {
         return("Invalid: small < 1e-300")
@@ -38,11 +32,11 @@ pvalues.rtp <- function(K, L, small = 1e-1, seed = 0) {
     p <- c(small, runif(L - 1))
 
     p1 <- p.rtp.qbeta(K, p)
-    p4 <- p.rtp.dbeta.riema(K, p, stepscale = 1)
+    p4 <- p.rtp.dbeta.riema(K, p)
     p6 <- p.rtp.mutoss(K, p)
-    p8 <- p.rtp.dbeta.asimp(K, p, abstol = 1e-7, reltol = 1e-3)
-    p11 <- p.rtp.dgamma.riema(K, p, tol = 1e-10, stepscale = 1)
-    p13 <- p.rtp.dgamma.simp(K, p, tol = 1e-10, stepscale = 1)
+    p8 <- p.rtp.dbeta.asimp(K, p)
+    p11 <- p.rtp.dgamma.riema(K, p)
+    p13 <- p.rtp.dgamma.simp(K, p)
     pe <- p.rtp.dbeta.cuba(K, p) # "exact" reference
 
     w <- function(s) writeLines(s)

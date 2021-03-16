@@ -57,8 +57,8 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     init(K, p)
     top <- fBetaDtop()
     left <- exp(lw / K) * 1.5
-    right <- K / (L - 1)
-    hight <- dbetaHight(K + 1, L - K)
+    right <- K / (L - 1) # beta mode
+    hight <- dbeta(right, K + 1, L - K) # function value at mode
 
     sd <- betaSD(K + 1, L - K)
     xmax <- min(1.0, top + 8 * sd)
@@ -87,7 +87,7 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
                 " L = ", format(L, digits = 5)
             ),
             paste(
-                " Approx. integrand location = ",
+                " Approx. integrand top (blue vertical line) = ",
                 format(top, digits = 2)
             )
         )
@@ -205,14 +205,12 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     f2 <- function(g) fGammaD.R(g, lw, K, L)
     f1 <- function(g) {
         b <- exp((g + lw) / K)
-        # pbinom(K, L, b, 0)
         pbeta(b, K + 1, L - K)
     }
     bTop <- K * log(K / (L - 1)) - lw
     xmax <- floor(bTop + 4 * sqrt(K))
     xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
     gTop <- K - 1
-    iTop <- (gTop + 2 * bTop) / 3
 
     plot.new()
     plot(f2,
@@ -243,7 +241,6 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
         col.ticks = "blue", col.axis = "blue",
     )
     abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
-    abline(v = iTop, lty = 2, col = "blue", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
     abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
     par(new = TRUE)

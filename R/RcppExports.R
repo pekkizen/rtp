@@ -13,10 +13,6 @@ betaSD <- function(a, b) {
     .Call(`_rtp_betaSD`, a, b)
 }
 
-dbetaHight <- function(a, b) {
-    .Call(`_rtp_dbetaHight`, a, b)
-}
-
 fBetaD <- function(b) {
     .Call(`_rtp_fBetaD`, b)
 }
@@ -45,7 +41,7 @@ rtpDbetaAsimp <- function(k, p, abstol = 1e-7, reltol = 1e-3) {
     .Call(`_rtp_rtpDbetaAsimp`, k, p, abstol, reltol)
 }
 
-rtpDgammaRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
+rtpDgammaRiema <- function(k, p, tol = 1e-12, stepscale = 1) {
     .Call(`_rtp_rtpDgammaRiema`, k, p, tol, stepscale)
 }
 

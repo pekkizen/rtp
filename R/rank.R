@@ -20,7 +20,7 @@ p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
 
 # Gamma functions use default rate = 1.
 
-# fBetaQuantile.R is integrand over Beta probabilities in [0, 1].
+# fBetaQuantile.R is rtp integrand over Beta probabilities in [0, 1].
 # This is the integrand in Vsevolozhskaya et al.
 fBetaQ.R <- function(p, lw, K, L) {
     b <- qbeta(p, K + 1, L - K)
@@ -29,7 +29,7 @@ fBetaQ.R <- function(p, lw, K, L) {
     # pgamma(g, K, lower.tail = FALSE) # better accuracy for small p's
 }
 
-# fGammaQ.R is integrand over Gamma probabilities in [0, 1].
+# fGammaQ.R is rtp integrand over Gamma probabilities in [0, 1].
 # fGammaQ.R(1 - p, ) is close to fBetaQ.R(p, ).
 fGammaQ.R <- function(p, lw, K, L) {
     g <- qgamma(p, K)
@@ -37,14 +37,14 @@ fGammaQ.R <- function(p, lw, K, L) {
     pbeta(b, K + 1, L - K)
 }
 
-# fBetaD.R is integrand over Beta density in [0, 1]. This is
+# fBetaD is rtp integrand Beta PDF x (1 - Gamma CDF) over [0, 1].
 # This implement the equations in Dudbridge and Koeleman.
 fBetaD.R <- function(b, lw, K, L) {
     g <- K * log(b) - lw
     dbeta(b, K + 1, L - K) * pgamma(g, K, lower.tail = FALSE)
 }
 
-# fGammaD.R is integrand over Gamma density in [0, inf).
+# fGammaD is rtp integrand Gamma PDF x Beta CDF over [0, inf).
 fGammaD.R <- function(g, lw, K, L) {
     b <- exp((g + lw) / K)
     dgamma(g, K) * pbeta(b, K + 1, L - K)
@@ -60,7 +60,7 @@ p.rtp.dbeta.cuba <- function(K, p) {
         return(p.fisher(p))
     }
     e <- init(K, p) # cpp
-    if (e < 0) {
+    if (e <= 1) {
         return(e)
     }
     top <- fBetaDtop() # cpp
