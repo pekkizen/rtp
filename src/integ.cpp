@@ -2,7 +2,7 @@
 
 // riemann integrates f from a to inf by Riemann sum.
 // Integration stops when relative integral increment is < tol.
-// Assumed unimodal f(x) -> 0 when x -> inf.
+// Assumed f(x) -> 0 when x -> inf.
 double riemann(double (*f)(double), double a, double h, double tol) {
     double fa, fsum = 0;
 

@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // selectSmall swaps k smallest values in range p[lo], ..., p[hi]
 // to the beginning of the range: p[lo], ..., p[lo+k-1].
-// For fixed (small) k and large n this is O(n) = n x compare.
+// For fixed (small) k and large n this is O(n) ~ n x compare.
 static void selectSmall(int k, int lo, int hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
@@ -91,14 +91,14 @@ void uniSelect(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
-    if (n < 51 || k < 6) {
+    if (n < 50 || k < 6) {
         select(k, 0, n - 1, p);
         return;
     }
     double K = k, N = n + 1;
     double SD = sqrt(K * (N - K) / (N * N * (N + 1)));
-    double mean = K / N; // k / (n+1)
-    double pivot = mean + 1.0 * SD;
+    double mean = K / N;          // k / (n+1)
+    double pivot = mean + 1 * SD; // 1 is parameter
 
     int pi, lo = 0, hi = n - 1;
 

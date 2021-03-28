@@ -187,17 +187,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // tfisher
-double tfisher(double lw, double n, double tau1, double tau2, double tol);
-RcppExport SEXP _rtp_tfisher(SEXP lwSEXP, SEXP nSEXP, SEXP tau1SEXP, SEXP tau2SEXP, SEXP tolSEXP) {
+double tfisher(double lw, double L, double tau1, double tau2, double tol);
+RcppExport SEXP _rtp_tfisher(SEXP lwSEXP, SEXP LSEXP, SEXP tau1SEXP, SEXP tau2SEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type L(LSEXP);
     Rcpp::traits::input_parameter< double >::type tau1(tau1SEXP);
     Rcpp::traits::input_parameter< double >::type tau2(tau2SEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(tfisher(lw, n, tau1, tau2, tol));
+    rcpp_result_gen = Rcpp::wrap(tfisher(lw, L, tau1, tau2, tol));
     return rcpp_result_gen;
 END_RCPP
 }
