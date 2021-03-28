@@ -1,20 +1,22 @@
 
 
 # bench.pvalues(K=10, L=100)
-bench.pvalues <- function(K, L, small = 1e-1, plot = FALSE) {
+bench.pvalues <- function(K, L, small = 1e-1, tau = 0.05, plot = FALSE) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
     p <- c(small, runif(L - 1))
-    tau <- K / L
+    if (tau == 0) tau <- K / L
 
     res <- microbenchmark::microbenchmark(
         p.rtp.mutoss = p.rtp.mutoss(K, p),
         p.rtp.qbeta = p.rtp.qbeta(K, p),
         p.art = p.art(K, p),
-        p.rtp = rtpDgammaRiema(K, p),
+        p.tfisher.softR = p.tfisher.softR(tau, p),
         p.tfisher.soft = p.tfisher.soft(tau, p),
+        p.rtp = rtpDgammaRiema(K, p),
+
         # p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
         # p.rtp.dbeta.riema = rtpDbetaRiema(K, p),
         # p.rtp.dgamma.simp = rtpDgammaSimp(K, p),

@@ -33,7 +33,7 @@ fBetaDtop <- function() {
     .Call(`_rtp_fBetaDtop`)
 }
 
-rtpDbetaRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
+rtpDbetaRiema <- function(k, p, tol = 1e-12, stepscale = 1) {
     .Call(`_rtp_rtpDbetaRiema`, k, p, tol, stepscale)
 }
 
@@ -61,7 +61,7 @@ nth_element <- function(k, p) {
     .Call(`_rtp_nth_element`, k, p)
 }
 
-tfisher <- function(lw, n, tau1, tau2, tol = 1e-16) {
-    .Call(`_rtp_tfisher`, lw, n, tau1, tau2, tol)
+tfisher <- function(lw, L, tau1, tau2, tol = 1e-16) {
+    .Call(`_rtp_tfisher`, lw, L, tau1, tau2, tol)
 }
 

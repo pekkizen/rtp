@@ -9,9 +9,7 @@ p.rtp.mutoss <- function(K, pValues) {
         warn1 <- paste("K must be smaller than L")
         stop(warn1)
     }
-
     #-----Compute the test statistic-----#
-
     index <- order(pValues)
     rindex <- order(index)
     spval <- pValues[index]
