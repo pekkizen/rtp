@@ -21,22 +21,21 @@ solved by TFisher function.
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank truncated product p-value by integrand gamma PDF x beta CDF and
-Riemann sum integral.
+Riemann sum integral over [0, inf).
 This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code.
 
 ### Reference implementations of p.rtp
 
 **p.rtp.mutoss(K, p)**  
 Rank truncated product p-value from
-https://rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This implements
-exactly equations from Dudbridge and Koeleman.
+https://rdrr.io/cran/mutoss/src/R/Rank_Truncated.R. This implements exactly equations from Dudbridge and Koeleman. Integrated over [0, 1] by 1000 equidistant function evaluations.
 
 **p.rtp.qbeta(K, p, abstol = 1e-4, reltol = 1e-2)**  
-Rank truncated product p-value by inverse beta CDF method
-from Vsevolozhskaya et al.
+Rank truncated product p-value by inverse beta CDF method from Vsevolozhskaya et al.
+Integrated over [0, 1] by R integrate.
 
 **p.rtp.dbeta.cuba(K, p)**  
-Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by library cubature function pcubature.
+Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by package cubature function pcubature over [0, 1].
 The integrand implements Dudbridge and Koeleman equations.
 This gives high accuracy "exact" reference values very reliably, but quite slow.
 
@@ -46,7 +45,7 @@ R-style documentation may come soon or later. Statistical and computational meth
 
 ## Installation
 
-Package rtp is built and tested with R version 4.0.3, Rcpp version 1.0.6 and
+Package rtp is built and tested with R version 4.0.4, Rcpp version 1.0.6 and
 g++ compiler version 8.3.0 in Rtools 4.0 on Windows system.
 
 ```R
@@ -78,9 +77,9 @@ plot.quantile.integrands(K = 10, L = 200, small = 1e-1)
 plot.BxG.integrand(K = 10, L = 200, small = 1e-3)
 plot.GxB.integrand(K = 10, L = 200, small = 1e-3)
 
-# Integrand and integral functions benchmarks
-bench.integrals(K = 10, L = 200, small = 1e-6)
-bench.integrands(K = 10, L = 200, small = 1e-6)
+# Integrand and p-value functions benchmarks
+bench.integrands(K = 10, L = 200, small = 1e-5)
+bench.pvalues(K = 10, L = 200, small = 1e-5)
 ```
 
 ## References
