@@ -98,7 +98,7 @@ void uniSelect(int k, NumericVector p) {
     double K = k, N = n + 1;
     double SD = sqrt(K * (N - K) / (N * N * (N + 1)));
     double mean = K / N;          // k / (n+1)
-    double pivot = mean + 1 * SD; // 1 is parameter
+    double pivot = mean + 1 * SD; // 1 is a "parameter"
 
     int pi, lo = 0, hi = n - 1;
 

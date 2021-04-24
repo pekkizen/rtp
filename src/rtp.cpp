@@ -4,14 +4,14 @@ using namespace Rcpp;
 
 /* See referencies in the README.md.
 
-The K+1'th smallest of L unif(0, 1) numbers ~Beta(K+1, L-K).
-The density function of order statistic x ~Beta(K+1, L-K) is
+The K+1'th smallest of L unif(0, 1) numbers is distributed Beta(K+1, L-K).
+The density function of order statistic x ~ Beta(K+1, L-K) is
     dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
                        = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
 Beta distribution's relation to Binomial distribution.
     pbeta(x, K+1, L-K) = 1 - pbinom(K, L, x)
     dbeta(x, K + 1, L - K) = (L - K) / (1 - x) * dbinom(K, L, x)
-    Check:
+    Check in R:
     K <- 10
     L <- 100
     x <- 0.05
@@ -28,7 +28,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
                   double reltol, int depth);
 void uniSelect(int k, NumericVector p);
 static double fisher(NumericVector p);
-static double probSmallest(NumericVector p);
+static double sidak(NumericVector p);
 
 // [[Rcpp::export]]
 double baseNull(double x) {
@@ -51,7 +51,7 @@ double init(int k, NumericVector p) {
     K = k;
     ERR = 0;
     if (L < K || L < 1) return ERR = -1;
-    if (K == 1) return probSmallest(p);
+    if (K == 1) return sidak(p);
     if (K == L) return fisher(p);
 
     uniSelect(K, p);
@@ -124,8 +124,7 @@ inline static double gammaMean(double k) {
     return k;
 }
 
-// Fast gamma survival function for (small) positive
-// integers k = shape and rate 1.
+// Fast gamma survival function for (small) positive integers k = shape and rate 1.
 //
 static double sgamma(double g, double k) {
     if (g <= 0) return 1;
@@ -213,19 +212,22 @@ double fBetaDtop() {
     double weight = 0.2 + 3 * left / right + 2 * right;
     return (left + weight * right) / (1 + weight);
 }
-
-// Smallest p-value "method". K == 1.
+// sidak returns the probability of getting one or
+// more p-values = minimum observed p-value.
+// RTP for K == 1.
 //
-static double probSmallest(NumericVector p) {
+static double sidak(NumericVector p) {
     int l = p.size();
     double pmin = p[0];
 
     for (int i = 1; i < l; i++)
         if (pmin > p[i]) pmin = p[i];
-    return R::pbinom(0, l, pmin, 0, 0); // rigth tail
+    // return R::pbinom(0, l, pmin, 0, 0); // rigth tail
+    return 1 - pow(1 - pmin, l);
 }
 
 // Standard Fisher's method using all p-values.
+// RTP for K == L.
 //
 static double fisher(NumericVector p) {
     int l = p.size();
@@ -245,9 +247,8 @@ double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscal
     if ((s = init(k, p)) != OK) return s;
 
     l = p.size();
-    h = cStep * betaSD(k + 1, l - k);
+    h = cStep * betaSD(k + 1, l - k) * stepscale;
     if (k < 8) h *= (double)k / 8;
-    h *= stepscale;
 
     return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
 }
