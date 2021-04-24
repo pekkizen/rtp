@@ -83,5 +83,5 @@ bench.select <- function(K, L, times = 2000) {
         # sortFull = sort(p),
         times = times
     )
-    print(res, unit, signif = 4)
+    print(res, signif = 4)
 }

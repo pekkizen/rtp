@@ -18,8 +18,6 @@ p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
     rtpDgammaRiema(K, p, tol, stepscale)
 }
 
-# Gamma functions use default rate = 1.
-
 # Reference integration by library cubature function pcubature.
 # The integration is divided into two parts at the approx.
 # highest point of the integrand fBetaD.
