@@ -53,7 +53,7 @@ double adaSimpson(double (*f)(double), double a, double b,
     m = (a + b) / 2;
     abstol /= 2;
 
-    // bisect only if Ia differs enough from 0 ???
+    // integrate only if Ia differs enough from 0 ???
     if (Ia > abstol && Ia > Iab * reltol)
         Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
 

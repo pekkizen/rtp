@@ -74,12 +74,12 @@ double betaSD(double a, double b) {
 }
 
 // betaMode(K+1, L-K) = K / (L-1).
-inline static double betaMode(double a, double b) {
+double betaMode(double a, double b) {
     return (a - 1) / (a + b - 2);
 }
 
 // betaMean(K+1, L-K) = (K+1) / (L+1).
-inline static double betaMean(double a, double b) {
+double betaMean(double a, double b) {
     return a / (a + b);
 }
 

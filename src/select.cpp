@@ -1,6 +1,9 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+double betaSD(double a, double b);
+double betaMean(double a, double b);
+
 // Here are functions for efficient selection of k smallest
 // of n uniform(0, 1) numbers. Functions implements what is known
 // as the Nth Element Algorith.
@@ -91,13 +94,12 @@ void uniSelect(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
-    if (n < 50 || k < 6) {
+    if (n < 25 || k < 6 || n - k < 6) {
         select(k, 0, n - 1, p);
         return;
     }
-    double K = k, N = n + 1;
-    double SD = sqrt(K * (N - K) / (N * N * (N + 1)));
-    double mean = K / N;          // k / (n+1)
+    double SD = betaSD(k + 1, n - k);
+    double mean = betaMean(k + 1, n - k);
     double pivot = mean + 1 * SD; // 1 is a "parameter"
 
     int pi, lo = 0, hi = n - 1;
@@ -119,7 +121,7 @@ void uniSelect(int k, NumericVector p) {
         select(k, lo, hi, p);
         return;
     }
-    pivot *= K / (pi + 1); // inter/extrapolate to k numbers
+    pivot *= (double)k / (pi + 1); // inter/extrapolate to k numbers
     pi = partition(lo, hi, pivot, p);
 
     if (p[pi] > pivot) { // pivot too small, very rare
