@@ -10,7 +10,8 @@ double tfisher(double lw, double L, double tau1, double tau2, double tol = 1e-16
     lw /= 2;                  // Chisq stat to Gamma stat
     p = tau1;
 
-    probBin = pow(1 - p, L);           // dbinom(0, L, p)
+    probBin = pow(1 - p, L); // dbinom(0, L, p)
+
     if (lw > 0) cumP = probBin;        // soft TFisher & tpm always
     if (tau1 == tau2) prod = exp(-lw); // soft TFisher
     survG = prod;
