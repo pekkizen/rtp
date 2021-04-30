@@ -20,6 +20,7 @@ Beta distribution's relation to Binomial distribution.
     (L - K) / (1 - x) * dbinom(K, L, x)
     pbeta(x, K + 1, L - K)
     1 - pbinom(K, L, x)
+    survbinom(K, L, x)
 */
 double riemann(double (*f)(double), double a, double h, double tol);
 double simpson(double (*f)(double), double a, double h, double tol);
@@ -27,7 +28,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
                   double fm, double fb, double Iprev, double abstol,
                   double reltol, int depth);
 void uniSelect(int k, NumericVector p);
-static double fisher(NumericVector p);
+double fisher(NumericVector p);
 static double sidak(NumericVector p);
 
 // [[Rcpp::export]]
@@ -84,13 +85,15 @@ double betaMean(double a, double b) {
 }
 
 // Fast binomial survival function for not very big k.
-// sbinom(K, L, b) = pbeta(b, K+1, L-K) = 1 - pbinom(K, L, b)
+// survbinom(K, L, b) = 1 - pbinom(K, L, b) = pbeta(b, K+1, L-K)
 //
-static double sbinom(double k, double n, double p) {
+// [[Rcpp::export]]
+double survbinom(double k, double n, double p) {
     if (p >= 1) return 1;
     if (p <= 0) return 0;
 
-    double prob = R::dbinom(0, n, p, 0);
+    // double prob = R::dbinom(0, n, p, 0);
+    double prob = exp(n * log1p(-p)); // (1-p)^n
     double cdf = prob;
 
     for (double j = 1.0; j <= k; j++) {
@@ -98,7 +101,7 @@ static double sbinom(double k, double n, double p) {
         cdf += prob;
     }
     if (cdf > (1.0 - 1e-10) || cdf == 0)
-        return R::pbinom(k, n, p, 0, 0);
+        return R::pbinom(k, n, p, 0, 0); // right tail
 
     return 1 - cdf;
 }
@@ -112,27 +115,28 @@ inline static double dbeta(double x, double lbeta, double a, double b) {
     return exp(-lbeta + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
-inline static double gammaSD(double k) {
-    return sqrt(k);
+inline static double gammaSD(double shape) {
+    return sqrt(shape);
 }
 
-inline static double gammaMode(double k) {
-    return k - 1;
+inline static double gammaMode(double shape) {
+    return shape - 1;
 }
 
-inline static double gammaMean(double k) {
-    return k;
+inline static double gammaMean(double shape) {
+    return shape;
 }
 
 // Fast gamma survival function for (small) positive integers k = shape and rate 1.
 //
-static double sgamma(double g, double k) {
+// [[Rcpp::export]]
+double survgamma(double g, double k) {
     if (g <= 0) return 1;
 
     if (g > 700 || k > 100)
         return R::pgamma(g, k, 1, 0, 0); // right tail
 
-    double p = exp(-g); // p > 0
+    double p = exp(-g); // p > 0 for 64 bits floats
     double s = p;
     for (double j = 1.0; j < k; j++) {
         p *= g / j;
@@ -158,7 +162,7 @@ double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
-    return dbeta(b, LBETA, K + 1, L - K) * sgamma(g, K);
+    return dbeta(b, LBETA, K + 1, L - K) * survgamma(g, K);
     // return dbeta(b, LBETA, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
 }
 
@@ -169,7 +173,7 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, LKF, K) * sbinom(K, L, b);
+    return dgamma(g, LKF, K) * survbinom(K, L, b);
     // return dgamma(g, LKF, K) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
@@ -182,7 +186,7 @@ double fBetaQ(double p) {
 
     double b = R::qbeta(p, K + 1, L - K, 1, 0); // Inverse beta CDF method
     double g = K * log(b) - LW;
-    return sgamma(g, K);
+    return survgamma(g, K);
     // return R::pgamma(g, K, 1, 0, 0);
 }
 
@@ -195,7 +199,7 @@ double fGammaQ(double p) {
 
     double g = R::qgamma(p, K, 1, 1, 0); // Inverse gamma CDF method
     double b = exp((g + LW) / K);
-    return sbinom(K, L, b);
+    return survbinom(K, L, b);
     // return R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
@@ -227,9 +231,10 @@ static double sidak(NumericVector p) {
 }
 
 // Standard Fisher's method using all p-values.
-// RTP for K == L.
+// Solved by Gamma distribution. RTP for K == L.
 //
-static double fisher(NumericVector p) {
+// [[Rcpp::export]]
+double fisher(NumericVector p) {
     int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
@@ -253,7 +258,7 @@ double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscal
     return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
 }
 
-// rtpDbetaAsimp integrates fBetaD from 0 to 1.
+// rtpDbetaAsimp integrates fBetaD from 0 to 1 by adaptive Simpson's 1/3 rule.
 //
 // [[Rcpp::export]]
 double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
