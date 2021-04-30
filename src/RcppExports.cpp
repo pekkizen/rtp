@@ -40,6 +40,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// survbinom
+double survbinom(double k, double n, double p);
+RcppExport SEXP _rtp_survbinom(SEXP kSEXP, SEXP nSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(survbinom(k, n, p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// survgamma
+double survgamma(double g, double k);
+RcppExport SEXP _rtp_survgamma(SEXP gSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type g(gSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(survgamma(g, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // fBetaD
 double fBetaD(double b);
 RcppExport SEXP _rtp_fBetaD(SEXP bSEXP) {
@@ -91,6 +116,17 @@ BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(fBetaDtop());
+    return rcpp_result_gen;
+END_RCPP
+}
+// fisher
+double fisher(NumericVector p);
+RcppExport SEXP _rtp_fisher(SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(fisher(p));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -206,11 +242,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
+    {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 3},
+    {"_rtp_survgamma", (DL_FUNC) &_rtp_survgamma, 2},
     {"_rtp_fBetaD", (DL_FUNC) &_rtp_fBetaD, 1},
     {"_rtp_fGammaD", (DL_FUNC) &_rtp_fGammaD, 1},
     {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
     {"_rtp_fGammaQ", (DL_FUNC) &_rtp_fGammaQ, 1},
     {"_rtp_fBetaDtop", (DL_FUNC) &_rtp_fBetaDtop, 0},
+    {"_rtp_fisher", (DL_FUNC) &_rtp_fisher, 1},
     {"_rtp_rtpDbetaRiema", (DL_FUNC) &_rtp_rtpDbetaRiema, 4},
     {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 4},
     {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
