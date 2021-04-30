@@ -4,6 +4,7 @@ p.fisher <- function(p) {
     lw <- sum(log(p))
     L <- length(p)
     pgamma(-lw, L, lower.tail = FALSE)
+    # pchisq(-lw * 2, L * 2, lower.tail = FALSE)
 }
 
 # tfisher R-functions are adapted from Zhang et al (2020) /

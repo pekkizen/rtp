@@ -13,6 +13,14 @@ betaSD <- function(a, b) {
     .Call(`_rtp_betaSD`, a, b)
 }
 
+survbinom <- function(k, n, p) {
+    .Call(`_rtp_survbinom`, k, n, p)
+}
+
+survgamma <- function(g, k) {
+    .Call(`_rtp_survgamma`, g, k)
+}
+
 fBetaD <- function(b) {
     .Call(`_rtp_fBetaD`, b)
 }
@@ -31,6 +39,10 @@ fGammaQ <- function(p) {
 
 fBetaDtop <- function() {
     .Call(`_rtp_fBetaDtop`)
+}
+
+fisher <- function(p) {
+    .Call(`_rtp_fisher`, p)
 }
 
 rtpDbetaRiema <- function(k, p, tol = 1e-12, stepscale = 1) {
