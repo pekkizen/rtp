@@ -41,7 +41,7 @@ bench.pvalues <- function(K, L, small = 1e-1, tau = 0.05, plot = FALSE) {
 }
 
 # bench.integrands(K=5, L=100)
-# R adds ~> 1000 ns baseline cost for Rcpp functions, fNull.
+# R adds ~1000 ns baseline cost for Rcpp functions, fNull.
 bench.integrands <- function(K, L, small = 1e-1) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -59,7 +59,9 @@ bench.integrands <- function(K, L, small = 1e-1) {
         Qbeta = fBetaQ(u),
         QbetaR = fBetaQ.R(u, lw, K, L),
         QGamma = fGammaQ(u),
+        QGammaR = fGammaQ.R(u, lw, K, L),
         DGamma = fGammaD(g),
+        DGammaR = fGammaD.R(u, lw, K, L),
         DBeta = fBetaD(u),
         DBetaR = fBetaD.R(u, lw, K, L),
         fNull = baseNull(u),
