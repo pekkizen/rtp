@@ -1,10 +1,13 @@
 
 
 # bench.pvalues(K=10, L=100)
-bench.pvalues <- function(K, L, small = 1e-1, tau = 0.05, plot = FALSE) {
+bench.pvalues <- function(K, L, small = 1, tau = 0) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
+    }
+    if (small == 1) {
+        small <- K / L * 0.01
     }
     p <- c(small, runif(L - 1))
     if (tau == 0) tau <- K / L
@@ -24,20 +27,6 @@ bench.pvalues <- function(K, L, small = 1e-1, tau = 0.05, plot = FALSE) {
         times = 500
     )
     print(res, "us", signif = 3)
-    if (plot) {
-        plot.new()
-        boxplot(res,
-            unit = "us",
-            font.main = 1, cex.main = 1,
-            xlab = "XXyyyy = Integrand function and integrating function",
-            font.xlab = 1,
-            main = paste(
-                "Rank truncated p-value integrating time\n",
-                "microseconds, logarithmic time",
-                " p = ", format(pval, digits = 2)
-            )
-        )
-    }
 }
 
 # bench.integrands(K=5, L=100)
@@ -74,7 +63,7 @@ bench.integrands <- function(K, L, small = 1e-1) {
 bench.select <- function(K, L, times = 2000) {
     res <- microbenchmark::microbenchmark(
         setup = {
-            p <- c(runif(L) * 1.0)
+            p <- c(runif(L))
             # p <- sort(p, decreasing = TRUE)
             # p <- sort(p)
         },
@@ -82,8 +71,9 @@ bench.select <- function(K, L, times = 2000) {
         simpleSelect = simpleSel(K, p),
         nth_element = nth_element(K, p),
         sort_partial = sort(p, partial = c(1:K)),
-        # sortFull = sort(p),
+        sortFull = sort(p),
+        fNull = baseNull(1),
         times = times
     )
-    print(res, signif = 4)
+    print(res, unit = "us", signif = 3)
 }
