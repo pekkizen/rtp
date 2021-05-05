@@ -16,7 +16,7 @@ double tfisher(double lw, double L, double tau1, double tau2, double tol = 1e-16
     if (tau1 == tau2) prod = exp(-lw); // soft TFisher
     survG = prod;
 
-    for (double k = 1.0; k <= L; k++) {
+    for (double k = 1; k <= L; k++) {
 
         if (probBin > 0)
             probBin *= p / (1 - p) * (L + 1 - k) / k;

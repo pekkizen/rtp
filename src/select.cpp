@@ -86,11 +86,11 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
     }
 }
 
-// uniSelect picks k smallest numbers in p and swaps
+// selectUnif picks k smallest numbers in p and swaps
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
 // The k'th smallest of n unif(0, 1) numbers ~Beta(k, n-k+1).
-void uniSelect(int k, NumericVector p) {
+void selectUnif(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
@@ -98,8 +98,8 @@ void uniSelect(int k, NumericVector p) {
         select(k, 0, n - 1, p);
         return;
     }
-    double SD = betaSD(k + 1, n - k);
-    double mean = betaMean(k + 1, n - k);
+    double SD = betaSD(k, n + 1 - k);
+    double mean = betaMean(k, n + 1 - k);
     double pivot = mean + 1 * SD; // 1 is a "parameter"
 
     int pi, lo = 0, hi = n - 1;
@@ -146,7 +146,7 @@ void uniSelect(int k, NumericVector p) {
 // For bechmarking only
 // [[Rcpp::export]]
 int uniSel(int k, NumericVector p) {
-    uniSelect(k, p);
+    selectUnif(k, p);
     return k;
 }
 // [[Rcpp::export]]
