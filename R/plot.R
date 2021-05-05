@@ -260,3 +260,53 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
         xlab = "", ylab = "", axes = FALSE,
     )
 }
+
+# This compares Gamma and Normal distributions
+# plot.GammaNorm(K=10)
+plot.GammaNorm <- function(K) {
+    hight <- dgamma(K - 1, K)
+
+    f3 <- function(g) dgamma(g, K)
+    f2 <- function(g) dnorm(g, K, sqrt(K))
+
+    gTop <- K - 1
+    xmax <- floor(gTop + 8 * sqrt(K))
+    xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
+    rpoint <- xmax
+
+    plot.new()
+    plot(f2,
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "black",
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        ylab = "", yaxt = "n", xaxt = "n",
+        xlab = c(
+            paste(
+                "Gamma density at ", format(rpoint, digits = 2), " :",
+                format(dgamma(rpoint, K), digits = 2)
+            ),
+            paste(
+                "Normal density at ", format(rpoint, digits = 2), " :",
+                format(dnorm(rpoint, K, sqrt(K)), digits = 2)
+            )
+        ),
+        main = c(
+            "Gamma(K, 1)  density:  green",
+            "Normal(K, sqrt(K))  density:  black",
+            paste(
+                " K = ", format(K, digits = 5)
+            )
+        )
+    )
+    axis(1,
+        at = pretty(c(xmin, xmax))
+    )
+    axis(2,
+        at = pretty(c(0, hight / 2, hight)),
+    )
+    par(new = TRUE)
+    plot(f3,
+        type = "l", lwd = 1, col = "darkgreen",
+        xlim = c(xmin, xmax), ylim = c(0, hight),
+        xlab = "", ylab = "", axes = FALSE,
+    )
+}
