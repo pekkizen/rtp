@@ -110,9 +110,9 @@ https://en.wikipedia.org/wiki/Order_statistic
 Order statistics sampled from a uniform distribution.  
 
 https://en.wikipedia.org/wiki/Gamma_distribution  
-Characterization using shape K and rate β.
+Characterization using shape α and rate β.
 The cumulative distribution function for positive
-integers K.
+integers α and β = 1.
 
 https://en.wikipedia.org/wiki/Beta_distribution  
 Probability density function.
