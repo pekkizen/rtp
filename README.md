@@ -110,11 +110,13 @@ https://en.wikipedia.org/wiki/Order_statistic
 Order statistics sampled from a uniform distribution.  
 
 https://en.wikipedia.org/wiki/Gamma_distribution  
-Characterization using shape α and rate β.
+Characterization using shape K and rate β.
+The cumulative distribution function for positive
+integers K.
 
 https://en.wikipedia.org/wiki/Beta_distribution  
 Probability density function.
 
 https://en.wikipedia.org/wiki/Beta_function  
 https://dlmf.nist.gov/8.17#E5. Formula 8.17.5  
-Regularized incomplete beta function
+Regularized incomplete beta function (beta CDF function).
