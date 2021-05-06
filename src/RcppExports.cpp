@@ -17,14 +17,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // init
-double init(int k, NumericVector p);
-RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP) {
+double init(int k, NumericVector p, int density);
+RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP, SEXP densitySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(init(k, p));
+    Rcpp::traits::input_parameter< int >::type density(densitySEXP);
+    rcpp_result_gen = Rcpp::wrap(init(k, p, density));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -119,17 +120,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fisher
-double fisher(NumericVector p);
-RcppExport SEXP _rtp_fisher(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(fisher(p));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rtpDbetaRiema
 double rtpDbetaRiema(int k, NumericVector p, double tol, double stepscale);
 RcppExport SEXP _rtp_rtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
@@ -183,6 +173,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
     rcpp_result_gen = Rcpp::wrap(rtpDgammaSimp(k, p, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// fisher
+double fisher(NumericVector p);
+RcppExport SEXP _rtp_fisher(SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(fisher(p));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -240,7 +241,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
-    {"_rtp_init", (DL_FUNC) &_rtp_init, 2},
+    {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
     {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 3},
     {"_rtp_survgamma", (DL_FUNC) &_rtp_survgamma, 2},
@@ -249,11 +250,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
     {"_rtp_fGammaQ", (DL_FUNC) &_rtp_fGammaQ, 1},
     {"_rtp_fBetaDtop", (DL_FUNC) &_rtp_fBetaDtop, 0},
-    {"_rtp_fisher", (DL_FUNC) &_rtp_fisher, 1},
     {"_rtp_rtpDbetaRiema", (DL_FUNC) &_rtp_rtpDbetaRiema, 4},
     {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 4},
     {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
     {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
+    {"_rtp_fisher", (DL_FUNC) &_rtp_fisher, 1},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},

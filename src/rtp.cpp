@@ -26,7 +26,8 @@ https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
 
     For large k the gamma(k,1) distribution converges to 
     normal distribution with mean k and variance k.
-    For k > 10 distributions look quite alike.
+    For k > 10 distributions start to look quite alike.
+    Test by plot.GammaNorm(K) function.
 */
 double riemann(double (*f)(double), double a, double h, double tol);
 double simpson(double (*f)(double), double a, double h, double tol);
@@ -54,7 +55,7 @@ static int ERR = 0;
 #define OK 2
 
 // [[Rcpp::export]]
-double init(int k, NumericVector p) {
+double init(int k, NumericVector p, int density = 0) {
     L = p.size();
     K = k;
     ERR = 0;
@@ -66,9 +67,10 @@ double init(int k, NumericVector p) {
     LW = 0;
     for (int i = 0; i < K; i++)
         LW += log(p[i]);
-
-    LBETA = R::lbeta(K + 1, L - K);
-    LKF = lgamma(K);
+    if (density == 1)
+        LBETA = R::lbeta(K + 1, L - K);
+    else
+        LKF = lgamma(K);
     return OK;
 }
 
@@ -226,6 +228,70 @@ double fBetaDtop() {
     double weight = 0.2 + 3 * left / right + 2 * right;
     return (left + weight * right) / (1 + weight);
 }
+
+// rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
+//
+// [[Rcpp::export]]
+double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
+    const double cStep = 0.5;
+    double h, s, l;
+
+    if ((s = init(k, p, 1)) != OK) return s;
+
+    l = p.size();
+    h = cStep * betaSD(k + 1, l - k) * stepscale;
+    if (k < 8) h *= (double)k / 8;
+
+    return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
+}
+
+// rtpDbetaAsimp integrates fBetaD from 0 to 1 by adaptive Simpson's 1/3 rule.
+//
+// [[Rcpp::export]]
+double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
+    double top, fa, fm, fb, I, s;
+
+    if ((s = init(k, p, 1)) != OK) return s;
+
+    top = fBetaDtop();
+    fa = 0;
+    fm = fBetaD(top / 2);
+    fb = fBetaD(top);
+    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol / 2, reltol, 25);
+
+    fa = fb;
+    fm = fBetaD((top + 1) / 2);
+    fb = 0;
+    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol / 2, reltol, 25);
+    return I;
+}
+
+// rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
+// For k = 10 this needs < 10 integrand function evaluations.
+//
+// [[Rcpp::export]]
+double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
+    const double cStep = 1.25;
+    double h, s;
+    if ((s = init(k, p, 0)) != OK) return s;
+
+    h = cStep * gammaSD(k) * stepscale;
+
+    return riemann(&fGammaD, 0, h, tol);
+}
+
+// rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
+// [[Rcpp::export]]
+double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    const double cStep = 1.25;
+    double h, s;
+    if ((s = init(k, p, 0)) != OK) return s;
+
+    h = cStep * gammaSD(k) * stepscale;
+
+    return simpson(&fGammaD, 0, h, tol);
+}
+
 // sidak returns the probability of getting one or
 // more p-values = minimum observed p-value.
 // RTP for K == 1.
@@ -250,66 +316,4 @@ double fisher(NumericVector p) {
     for (int i = 0; i < l; i++)
         lw += log(p[i]);
     return R::pgamma(-lw, l, 1, 0, 0);
-}
-
-// rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
-//
-// [[Rcpp::export]]
-double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
-    const double cStep = 0.5;
-    double h, s, l;
-
-    if ((s = init(k, p)) != OK) return s;
-
-    l = p.size();
-    h = cStep * betaSD(k + 1, l - k) * stepscale;
-    if (k < 8) h *= (double)k / 8;
-
-    return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
-}
-
-// rtpDbetaAsimp integrates fBetaD from 0 to 1 by adaptive Simpson's 1/3 rule.
-//
-// [[Rcpp::export]]
-double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
-    double top, fa, fm, fb, I, s;
-    if ((s = init(k, p)) != OK) return s;
-
-    top = fBetaDtop();
-    fa = 0;
-    fm = fBetaD(top / 2);
-    fb = fBetaD(top);
-    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol / 2, reltol, 25);
-
-    fa = fb;
-    fm = fBetaD((top + 1) / 2);
-    fb = 0;
-    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol / 2, reltol, 25);
-    return I;
-}
-
-// rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
-// For k = 10 this needs < 10 integrand function evaluations.
-//
-// [[Rcpp::export]]
-double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
-    const double cStep = 1.25;
-    double h, s;
-    if ((s = init(k, p)) != OK) return s;
-
-    h = cStep * gammaSD(k) * stepscale;
-
-    return riemann(&fGammaD, 0, h, tol);
-}
-
-// rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
-// [[Rcpp::export]]
-double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cStep = 1.25;
-    double h, s;
-    if ((s = init(k, p)) != OK) return s;
-
-    h = cStep * gammaSD(k) * stepscale;
-
-    return simpson(&fGammaD, 0, h, tol);
 }
