@@ -35,7 +35,7 @@ Rank truncated product p-value by inverse beta CDF method from Vsevolozhskaya et
 Integrated over [0, 1] by R integrate.
 
 **p.rtp.dbeta.cuba(K, p)**  
-Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by package cubature function pcubature over [0, 1].
+Rank truncated product p-value by integrand beta PDF x (1 - gamma CDF) integrated by package cubature function pcubature over [0, 1] with very small tolerances.
 The integrand implements Dudbridge and Koeleman equations.
 This gives high accuracy "exact" reference values very reliably, but quite slow.
 
