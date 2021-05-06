@@ -97,20 +97,15 @@ double betaMean(double a, double b) {
 //
 // [[Rcpp::export]]
 double survbinom(double k, double n, double p) {
-    const double machEps = 0x1p-53;
-    const double minLog = -744;
-    double lg, prob, cdf;
     if (p >= 1) return 1;
     if (p <= 0) return 0;
 
     // double prob = R::dbinom(0, n, p, 0);
-    lg = n * log1p(-p);
-    if (lg < minLog)
+    double prob = exp(n * log1p(-p)); // (1-p)^n
+    if (prob == 0)
         return R::pbinom(k, n, p, 0, 0); //right tail
 
-    prob = exp(lg); // (1-p)^n (> 0)
-    cdf = prob;
-
+    double cdf = prob;
     for (double j = 1; j <= k; j++) {
         prob *= p / (1 - p) * (n + 1 - j) / j;
         cdf += prob;
@@ -118,10 +113,8 @@ double survbinom(double k, double n, double p) {
     if (cdf > (1 - 1e-10))
         return R::pbinom(k, n, p, 0, 0);
 
-    if (cdf <= machEps)
-        return (1 - machEps);
-
-    return 1 - cdf;
+    if (cdf < 0x1p-53) cdf = 0x1p-53;
+    return 1 - cdf; // always < 1
 }
 
 // Beta density function.
@@ -149,13 +142,11 @@ inline static double gammaMean(double k) {
 //
 // [[Rcpp::export]]
 double survgamma(double g, double k) {
-    const double minLog = -744;
     if (g <= 0) return 1;
 
-    if (-g < minLog || k > 100)
+    double p = exp(-g);
+    if (p == 0)
         return R::pgamma(g, k, 1, 0, 0); // right tail
-
-    double p = exp(-g); // 0 < p < 1 for 64-bit floats
     double s = p;
     for (double j = 1; j < k; j++) {
         p *= g / j;
