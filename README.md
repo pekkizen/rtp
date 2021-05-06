@@ -52,6 +52,7 @@ g++ compiler version 8.3.0 in Rtools 4.0 on Windows system.
 install.packages("devtools") # if not installed
 library(devtools)
 install_github("pekkizen/rtp")
+library(rtp)
 ```
 
 ## Examples
@@ -71,6 +72,9 @@ p.fisher(p)
 
 # Comparing methods has also a dedicated function
 pvalues.methods(K = 10, L = 200, small = 1e-7)
+
+# Comparing accuracy of the rtp functions
+pvalues.rtp(K=10, L=200, small=1e-6, seed=0)
 
 # The four integrand functions can be examined by
 plot.quantile.integrands(K = 10, L = 200, small = 1e-1)
@@ -112,4 +116,5 @@ https://en.wikipedia.org/wiki/Beta_distribution
 Probability density function.
 
 https://en.wikipedia.org/wiki/Beta_function  
+https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
 Incomplete_beta_function
