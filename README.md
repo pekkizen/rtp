@@ -20,9 +20,9 @@ Truncated product method (tpm) from Zaykin et al.
 solved by TFisher function.  
 
 **p.rtp(K, p, stepscale = 1)**  
-Rank truncated product p-value by integrand gamma PDF x beta CDF and
-Riemann sum integral over [0, inf).
-This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code.
+Rank truncated product p-value by integrand gamma PDF x beta CDF and Riemann sum integral over [0, inf).
+This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code. Parameter stepscale affects the integration step size.
+E.g. stepscale = 0.5 halves then default step size and increases accuracy (which mostly is unnecessary).
 
 ### Reference implementations of p.rtp
 
@@ -117,4 +117,4 @@ Probability density function.
 
 https://en.wikipedia.org/wiki/Beta_function  
 https://dlmf.nist.gov/8.17#E5. Formula 8.17.5  
-Incomplete_beta_function
+Regularized incomplete beta function
