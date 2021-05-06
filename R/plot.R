@@ -44,7 +44,7 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
     abline(h = 0.5, lty = 1, col = "#757474", lwd = 0.25)
 }
 
-# plot.BxG.integrand(K=10, L=100, small=1e-4, seed=0)
+# plot.BxG.integrand(K=0, L=100, small=1e-4, seed=0)
 plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -216,7 +216,9 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     plot(f2,
         type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "blue",
         xlim = c(xmin, xmax), ylim = c(0, hight),
-        ylab = "", yaxt = "n", xaxt = "n",
+        yaxt = "n", xaxt = "n",
+        ylab = "Integrand  and  Gamma  density",
+
         xlab = c(
             paste(
                 "Area under the blue integrand is p = ",
@@ -238,7 +240,8 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     )
     axis(2,
         at = pretty(c(0, hight / 2, hight)),
-        col.ticks = "blue", col.axis = "blue",
+        col.ticks = "#272769", col.axis = "blue",
+        col.lab = "blue",
     )
     abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
@@ -247,7 +250,7 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     plot(f1,
         type = "l", lwd = 1, col = "red",
         xlim = c(xmin, xmax), ylim = c(0, 1),
-        ylab = "", xlab = "", axes = FALSE,
+        xlab = "", ylab = "", axes = FALSE,
     )
     axis(4,
         at = c(0, 0.5, 1),
