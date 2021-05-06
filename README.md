@@ -116,5 +116,5 @@ https://en.wikipedia.org/wiki/Beta_distribution
 Probability density function.
 
 https://en.wikipedia.org/wiki/Beta_function  
-https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
+https://dlmf.nist.gov/8.17#E5. Formula 8.17.5  
 Incomplete_beta_function
