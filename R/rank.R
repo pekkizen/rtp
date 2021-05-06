@@ -29,7 +29,7 @@ p.rtp.dbeta.cuba <- function(K, p) {
     if (K == L) {
         return(p.fisher(p))
     }
-    e <- init(K, p) # cpp
+    e <- init(K, p, 1) # cpp
     if (e <= 1) {
         return(e)
     }

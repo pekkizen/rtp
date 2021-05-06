@@ -38,7 +38,8 @@ bench.integrands <- function(K, L, small = 1e-1) {
     }
     p <- c(small, runif(L - 1))
     lw <- stat.rtp(K, p)
-    init(K, p)
+    init(K, p, 0)
+    init(K, p, 1)
 
     res <- microbenchmark::microbenchmark(
         setup = {

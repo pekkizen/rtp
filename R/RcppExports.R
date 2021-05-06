@@ -5,8 +5,8 @@ baseNull <- function(x) {
     .Call(`_rtp_baseNull`, x)
 }
 
-init <- function(k, p) {
-    .Call(`_rtp_init`, k, p)
+init <- function(k, p, density = 0L) {
+    .Call(`_rtp_init`, k, p, density)
 }
 
 betaSD <- function(a, b) {
@@ -41,10 +41,6 @@ fBetaDtop <- function() {
     .Call(`_rtp_fBetaDtop`)
 }
 
-fisher <- function(p) {
-    .Call(`_rtp_fisher`, p)
-}
-
 rtpDbetaRiema <- function(k, p, tol = 1e-12, stepscale = 1) {
     .Call(`_rtp_rtpDbetaRiema`, k, p, tol, stepscale)
 }
@@ -59,6 +55,10 @@ rtpDgammaRiema <- function(k, p, tol = 1e-12, stepscale = 1) {
 
 rtpDgammaSimp <- function(k, p, tol = 1e-10, stepscale = 1) {
     .Call(`_rtp_rtpDgammaSimp`, k, p, tol, stepscale)
+}
+
+fisher <- function(p) {
+    .Call(`_rtp_fisher`, p)
 }
 
 uniSel <- function(k, p) {
