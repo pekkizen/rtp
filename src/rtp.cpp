@@ -53,11 +53,9 @@ double baseNull(double x) {
 }
 
 // Global "constants" in integration
-static double K;     // rank, number of smallest
-static double L;     // number of p-values
-static double LBETA; // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
-static double LKF;   // lgamma(K) = log((K - 1)!)
-static double LW;    // log(p1 x ... x pK), test statistic
+static double K;  // rank, number of smallest
+static double L;  // number of p-values
+static double LW; // log(p1 x ... x pK), test statistic
 static int ERR = 0;
 
 #define OK 2
@@ -75,11 +73,6 @@ double init(int k, NumericVector p, int density = 0) {
     LW = 0;
     for (int i = 0; i < K; i++)
         LW += log(p[i]);
-    if (density == 1)
-        LBETA = R::lbeta(K + 1, L - K);
-    else {
-        LKF = lgamma(K);
-    }
     return OK;
 }
 
@@ -103,9 +96,9 @@ double betaMean(double a, double b) {
 }
 
 inline static double ldbinom(double k, double n, double p) {
-    static double lbc = -1;
+    static double lbc = 0;
+    if (lbc == 0) lbc = R::lchoose(n, k);
 
-    if (lbc < 0) lbc = R::lchoose(n, k);
     return lbc + k * log(p) + (n - k) * log(1 - p);
 }
 
@@ -139,19 +132,20 @@ double survbinom(double k, double n, double p) {
         cdf += prob;
     }
     if (cdf > (1 - 1e-14))
-        // gives also very small (< 1e-16) probabilities
+        // gives also very small (<1e-16) probabilities
         return pbinomRT(k, n, p);
 
     return 1 - cdf;
 }
 
 // Beta density function.
-// lbeta is lbeta(a, b).
 //
-inline static double dbeta(double x, double lbeta, double a, double b) {
+inline static double dbeta(double x, double a, double b) {
+    static double lb = 0;
     if (x <= 0 || x >= 1) return 0;
+    if (lb == 0) lb = R::lbeta(a, b);
 
-    return exp(-lbeta + (a - 1) * log(x) + (b - 1) * log(1 - x));
+    return exp(-lb + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
 inline static double gammaSD(double k) {
@@ -184,10 +178,11 @@ double survgamma(double g, double k) {
 }
 
 // Gamma density function (g,k) = e^-g * g^(k-1) / (k-1)!
-// lkf is logarithm of (k-1)!.
 //
-inline static double dgamma(double g, double lkf, double k) {
+inline static double dgamma(double g, double k) {
+    static double lkf = 0;
     if (g <= 0) return 0;
+    if (lkf == 0) lkf = lgamma(k);
 
     return exp((k - 1) * log(g) - g - lkf);
 }
@@ -200,8 +195,8 @@ double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
-    return dbeta(b, LBETA, K + 1, L - K) * survgamma(g, K);
-    // return dbeta(b, LBETA, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
+    return dbeta(b, K + 1, L - K) * survgamma(g, K);
+    // return dbeta(b, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
 }
 
 // fGammaD is rtp integrand Gamma PDF x Beta CDF over [0, inf).
@@ -211,8 +206,8 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, LKF, K) * survbinom(K, L, b);
-    // return dgamma(g, LKF, K) * R::pbeta(b, K + 1, L - K, 1, 0);
+    return dgamma(g, K) * survbinom(K, L, b);
+    // return dgamma(g, K) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // fBetaQ is rtp integrand over Beta probabilities in [0, 1].
