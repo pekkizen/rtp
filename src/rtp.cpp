@@ -9,9 +9,14 @@ The density function of order statistic x ~ Beta(K+1, L-K) is
     dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
                        = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
 Beta distribution's relation to Binomial distribution.
-https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
+https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
 
-    pbeta(x, K+1, L-K) = 1 - pbinom(K, L, x)
+    pbeta(x, K+1, L-K)         = 1 - pbinom(K, L, x) 
+    pbeta(x, K+1, L-K)         = survbinom(K, L, x)
+    pbeta(x, K+1, L-K)         = 1 - pbeta(1 - x, L - K, K + 1)
+    pbeta(1 - x, L - K, K + 1) = pbinom(K, L, x)
+    pbeta(x, L - K, K + 1)     = pbinom(K, L, 1-x)
+    
     dbeta(x, K + 1, L - K) = (L - K) / (1 - x) * dbinom(K, L, x)
     Check in R:
     K <- 10
@@ -21,11 +26,14 @@ https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
     choose(L, K + 1) * (K + 1) * x^K * (1 - x)^(L - K - 1)
     (L - K) / (1 - x) * dbinom(K, L, x)
     pbeta(x, K + 1, L - K)
+    1 - pbeta(1 - x, L - K, K + 1)
     1 - pbinom(K, L, x)
     survbinom(K, L, x)
 
+    
+
     For large k the gamma(k,1) distribution converges to 
-    normal distribution with mean k and variance k.
+    normal distribution with mean k and SD sqrt(k).
     For k > 10 distributions start to look quite alike.
     Test by plot.GammaNorm(K) function.
 */
@@ -94,6 +102,20 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
+inline static double ldbinom(double k, double n, double p) {
+    static double lbc = -1;
+
+    if (lbc < 0) lbc = R::lchoose(n, k);
+    return lbc + k * log(p) + (n - k) * log(1 - p);
+}
+
+// Binomial distribution from k+1 to n.
+// Right tail, 1-CDF, survival function.
+//
+inline static double pbinomRT(double k, double n, double p) {
+    return R::pbinom(k, n, p, 0, 0); // right tail
+}
+
 // Fast binomial survival function for not very big k.
 // survbinom(K, L, b) = 1 - pbinom(K, L, b) = pbeta(b, K+1, L-K)
 // https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
@@ -102,32 +124,26 @@ double betaMean(double a, double b) {
 double survbinom(double k, double n, double p) {
     if (p >= 1) return 1;
     if (p <= 0) return 0;
-    if (k > 100)
-        return R::pbinom(k, n, p, 0, 0); // right tail
+    if (k > 100 || n > 10000)
+        return pbinomRT(k, n, p);
 
     double prob = exp(n * log1p(-p)); // (1-p)^n
-    if (prob == 0)
-        return R::pbinom(k, n, p, 0, 0);
-
+    if (prob == 0) {
+        if (ldbinom(k, n, p) < -744) // dbinom(k, n, p) = 0
+            return 1;
+        return pbinomRT(k, n, p);
+    }
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
         prob *= p / (1 - p) * (n + 1 - j) / j;
         cdf += prob;
     }
     if (cdf > (1 - 1e-14))
-        // to get small probabilities right
-        return R::pbinom(k, n, p, 0, 0);
+        // gives also very small (< 1e-16) probabilities
+        return pbinomRT(k, n, p);
 
     return 1 - cdf;
 }
-
-// inline static double dbinom(double lbc, double k, double n, double p) {
-//     if (p == 0 && k == 0) return 1;
-//     if (p == 1 && k == n) return 1;
-//     if (p <= 0 || p >= 1) return 0;
-
-//     return exp(lbc + k * log(p) + (n - k) * log(1 - p));
-// }
 
 // Beta density function.
 // lbeta is lbeta(a, b).
