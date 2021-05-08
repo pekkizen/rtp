@@ -37,7 +37,6 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
 void selectUnif(int k, NumericVector p);
 double fisher(NumericVector p);
 static double sidak(NumericVector p);
-static double survbinomRT(double lbc, double k, double n, double p);
 
 // Benchmark baseline function
 // [[Rcpp::export]]
@@ -46,12 +45,11 @@ double baseNull(double x) {
 }
 
 // Global "constants" in integration
-static double K;       // rank, number of smallest
-static double L;       // number of p-values
-static double LBETA;   // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
-static double LBC = 0; // log(choose(L, K+1)) for survbinomRT
-static double LKF;     // lgamma(K) = log((K - 1)!)
-static double LW;      // log(p1 x ... x pK), test statistic
+static double K;     // rank, number of smallest
+static double L;     // number of p-values
+static double LBETA; // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
+static double LKF;   // lgamma(K) = log((K - 1)!)
+static double LW;    // log(p1 x ... x pK), test statistic
 static int ERR = 0;
 
 #define OK 2
@@ -73,7 +71,6 @@ double init(int k, NumericVector p, int density = 0) {
         LBETA = R::lbeta(K + 1, L - K);
     else {
         LKF = lgamma(K);
-        LBC = R::lchoose(L, K + 1);
     }
     return OK;
 }
@@ -105,39 +102,32 @@ double betaMean(double a, double b) {
 double survbinom(double k, double n, double p) {
     if (p >= 1) return 1;
     if (p <= 0) return 0;
+    if (k > 100)
+        return R::pbinom(k, n, p, 0, 0); // right tail
 
-    // double prob = R::dbinom(0, n, p, 0);
     double prob = exp(n * log1p(-p)); // (1-p)^n
     if (prob == 0)
-        return survbinomRT(LBC, k, n, p);
+        return R::pbinom(k, n, p, 0, 0);
 
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
         prob *= p / (1 - p) * (n + 1 - j) / j;
         cdf += prob;
     }
-    if (cdf > (1 - 1e-10))
-        return survbinomRT(LBC, k, n, p);
+    if (cdf > (1 - 1e-14))
+        // to get small probabilities right
+        return R::pbinom(k, n, p, 0, 0);
 
     return 1 - cdf;
 }
 
-// survbinomRT sums the right tail of binomial distribution.
-// This is better for small p-values.
-// lbc = lchoose(n, k + 1);
-static double survbinomRT(double lbc, double k, double n, double p) {
+// inline static double dbinom(double lbc, double k, double n, double p) {
+//     if (p == 0 && k == 0) return 1;
+//     if (p == 1 && k == n) return 1;
+//     if (p <= 0 || p >= 1) return 0;
 
-    // double prob = R::dbinom(k + 1, n, p, 0);
-    double prob = exp(lbc + (k + 1) * log(p) + (n - k - 1) * log(1 - p));
-
-    double surv = prob;
-    for (double j = k + 2; j <= n; j++) {
-        prob *= p / (1 - p) * (n + 1 - j) / j;
-        surv += prob;
-        if (prob < surv * 0x1p-53) break;
-    }
-    return fmin(1, surv);
-}
+//     return exp(lbc + k * log(p) + (n - k) * log(1 - p));
+// }
 
 // Beta density function.
 // lbeta is lbeta(a, b).
