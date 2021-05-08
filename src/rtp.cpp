@@ -56,6 +56,9 @@ double baseNull(double x) {
 static double K;  // rank, number of smallest
 static double L;  // number of p-values
 static double LW; // log(p1 x ... x pK), test statistic
+static double LBETA;
+static double LKF;
+static double LBC;
 static int ERR = 0;
 
 #define OK 2
@@ -73,6 +76,12 @@ double init(int k, NumericVector p, int density = 0) {
     LW = 0;
     for (int i = 0; i < K; i++)
         LW += log(p[i]);
+    if (density == 1)
+        LBETA = R::lbeta(K + 1, L - K);
+    else {
+        LKF = lgamma(K);
+        LBC = R::lchoose(L, K);
+    }
     return OK;
 }
 
@@ -96,10 +105,8 @@ double betaMean(double a, double b) {
 }
 
 inline static double ldbinom(double k, double n, double p) {
-    static double lbc = 0;
-    if (lbc == 0) lbc = R::lchoose(n, k);
 
-    return lbc + k * log(p) + (n - k) * log(1 - p);
+    return LBC + k * log(p) + (n - k) * log(1 - p);
 }
 
 // Binomial distribution from k+1 to n.
@@ -122,8 +129,8 @@ double survbinom(double k, double n, double p) {
 
     double prob = exp(n * log1p(-p)); // (1-p)^n
     if (prob == 0) {
-        if (ldbinom(k, n, p) < -744) // dbinom(k, n, p) = 0
-            return 1;
+        // if (exp(ldbinom(k, n, p)) == 0) // dbinom(k, n, p) = 0
+        //     return 1;
         return pbinomRT(k, n, p);
     }
     double cdf = prob;
@@ -141,11 +148,9 @@ double survbinom(double k, double n, double p) {
 // Beta density function.
 //
 inline static double dbeta(double x, double a, double b) {
-    static double lb = 0;
     if (x <= 0 || x >= 1) return 0;
-    if (lb == 0) lb = R::lbeta(a, b);
 
-    return exp(-lb + (a - 1) * log(x) + (b - 1) * log(1 - x));
+    return exp(-LBETA + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
 inline static double gammaSD(double k) {
@@ -180,11 +185,9 @@ double survgamma(double g, double k) {
 // Gamma density function (g,k) = e^-g * g^(k-1) / (k-1)!
 //
 inline static double dgamma(double g, double k) {
-    static double lkf = 0;
     if (g <= 0) return 0;
-    if (lkf == 0) lkf = lgamma(k);
 
-    return exp((k - 1) * log(g) - g - lkf);
+    return exp((k - 1) * log(g) - g - LKF);
 }
 
 // fBetaD is rtp integrand Beta PDF x (1 - Gamma CDF) over [0, 1].
