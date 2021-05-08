@@ -37,6 +37,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
 void selectUnif(int k, NumericVector p);
 double fisher(NumericVector p);
 static double sidak(NumericVector p);
+static double survbinomRT(double k, double n, double p);
 
 // Benchmark baseline function
 // [[Rcpp::export]]
@@ -48,8 +49,9 @@ double baseNull(double x) {
 static double K;     // rank, number of smallest
 static double L;     // number of p-values
 static double LBETA; // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
-static double LKF;   // lgamma(K) = log((K - 1)!)
-static double LW;    // log(p1 x ... x pK), test statistic
+static double LBINC = 0;
+static double LKF; // lgamma(K) = log((K - 1)!)
+static double LW;  // log(p1 x ... x pK), test statistic
 static int ERR = 0;
 
 #define OK 2
@@ -69,8 +71,9 @@ double init(int k, NumericVector p, int density = 0) {
         LW += log(p[i]);
     if (density == 1)
         LBETA = R::lbeta(K + 1, L - K);
-    else
+    else {
         LKF = lgamma(K);
+    }
     return OK;
 }
 
@@ -105,7 +108,7 @@ double survbinom(double k, double n, double p) {
     // double prob = R::dbinom(0, n, p, 0);
     double prob = exp(n * log1p(-p)); // (1-p)^n
     if (prob == 0)
-        return R::pbinom(k, n, p, 0, 0); //right tail
+        return survbinomRT(k, n, p);
 
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
@@ -113,10 +116,27 @@ double survbinom(double k, double n, double p) {
         cdf += prob;
     }
     if (cdf > (1 - 1e-10))
-        return R::pbinom(k, n, p, 0, 0);
+        return survbinomRT(k, n, p);
 
-    if (cdf < 0x1p-53) cdf = 0x1p-53;
-    return 1 - cdf; // always < 1
+    return 1 - cdf;
+}
+
+// survbinomRT sums the right tail of binomial distribution.
+// This is better for small p-values.
+// lgm = lchoose(n, k + 1);
+static double survbinomRT(double k, double n, double p) {
+
+    // double prob = R::dbinom(k + 1, n, p, 0);
+    if (LBINC == 0) LBINC = R::lchoose(L, K + 1);
+    double prob = exp(LBINC + (k + 1) * log(p) + (n - k - 1) * log(1 - p));
+
+    double surv = prob;
+    for (double j = k + 2; j <= n; j++) {
+        prob *= p / (1 - p) * (n + 1 - j) / j;
+        surv += prob;
+        if (prob < surv * 0x1p-53) break;
+    }
+    return fmin(1, surv);
 }
 
 // Beta density function.
@@ -249,6 +269,7 @@ double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscal
 //
 // [[Rcpp::export]]
 double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
+    const double depth = 25;
     double top, fa, fm, fb, I, s;
 
     if ((s = init(k, p, 1)) != OK) return s;
@@ -257,12 +278,12 @@ double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol
     fa = 0;
     fm = fBetaD(top / 2);
     fb = fBetaD(top);
-    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol / 2, reltol, 25);
+    I = adaSimpson(&fBetaD, 0, top, fa, fm, fb, 2, abstol / 2, reltol, depth);
 
     fa = fb;
     fm = fBetaD((top + 1) / 2);
     fb = 0;
-    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol / 2, reltol, 25);
+    I += adaSimpson(&fBetaD, top, 1, fa, fm, fb, 2, abstol / 2, reltol, depth);
     return I;
 }
 
@@ -291,6 +312,16 @@ double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscal
 
     return simpson(&fGammaD, 0, h, tol);
 }
+// double normalPDF(double x) {
+//     return R::dnorm(x, 0, 1, 0);
+// }
+// // [[Rcpp::export]]
+// double integnormal(double a, double h, double tol) {
+
+//     // double h = 1;
+
+//     return riemann(&normalPDF, a, h, 1e-10);
+// }
 
 // sidak returns the probability of getting one or
 // more p-values = minimum observed p-value.
