@@ -73,7 +73,7 @@ double init(int k, NumericVector p, int density = 0) {
         LBETA = R::lbeta(K + 1, L - K);
     else {
         LKF = lgamma(K);
-        LBC = R::lchoose(n, k + 1);
+        LBC = R::lchoose(L, K + 1);
     }
     return OK;
 }
