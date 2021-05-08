@@ -37,7 +37,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
 void selectUnif(int k, NumericVector p);
 double fisher(NumericVector p);
 static double sidak(NumericVector p);
-static double survbinomRT(double k, double n, double p);
+static double survbinomRT(double lbc, double k, double n, double p);
 
 // Benchmark baseline function
 // [[Rcpp::export]]
@@ -46,12 +46,12 @@ double baseNull(double x) {
 }
 
 // Global "constants" in integration
-static double K;     // rank, number of smallest
-static double L;     // number of p-values
-static double LBETA; // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
-static double LBINC = 0;
-static double LKF; // lgamma(K) = log((K - 1)!)
-static double LW;  // log(p1 x ... x pK), test statistic
+static double K;       // rank, number of smallest
+static double L;       // number of p-values
+static double LBETA;   // lbeta(K + 1, L - K) = log(K! * L-K-1! / L!)
+static double LBC = 0; // log(choose(L, K+1)) for survbinomRT
+static double LKF;     // lgamma(K) = log((K - 1)!)
+static double LW;      // log(p1 x ... x pK), test statistic
 static int ERR = 0;
 
 #define OK 2
@@ -73,6 +73,7 @@ double init(int k, NumericVector p, int density = 0) {
         LBETA = R::lbeta(K + 1, L - K);
     else {
         LKF = lgamma(K);
+        LBC = R::lchoose(n, k + 1);
     }
     return OK;
 }
@@ -108,7 +109,7 @@ double survbinom(double k, double n, double p) {
     // double prob = R::dbinom(0, n, p, 0);
     double prob = exp(n * log1p(-p)); // (1-p)^n
     if (prob == 0)
-        return survbinomRT(k, n, p);
+        return survbinomRT(LBC, k, n, p);
 
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
@@ -116,19 +117,18 @@ double survbinom(double k, double n, double p) {
         cdf += prob;
     }
     if (cdf > (1 - 1e-10))
-        return survbinomRT(k, n, p);
+        return survbinomRT(LBC, k, n, p);
 
     return 1 - cdf;
 }
 
 // survbinomRT sums the right tail of binomial distribution.
 // This is better for small p-values.
-// lgm = lchoose(n, k + 1);
-static double survbinomRT(double k, double n, double p) {
+// lbc = lchoose(n, k + 1);
+static double survbinomRT(double lbc, double k, double n, double p) {
 
     // double prob = R::dbinom(k + 1, n, p, 0);
-    if (LBINC == 0) LBINC = R::lchoose(L, K + 1);
-    double prob = exp(LBINC + (k + 1) * log(p) + (n - k - 1) * log(1 - p));
+    double prob = exp(lbc + (k + 1) * log(p) + (n - k - 1) * log(1 - p));
 
     double surv = prob;
     for (double j = k + 2; j <= n; j++) {
