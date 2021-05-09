@@ -1,4 +1,21 @@
 
+# Standard Fisher's method using all p-values.
+#  Solved by Gamma distribution. RTP for K == L.
+p.fisher <- function(p) {
+    lw <- sum(log(p))
+    L <- length(p)
+    pgamma(-lw, L, lower.tail = FALSE)
+    # pchisq(-lw * 2, L * 2, lower.tail = FALSE)
+}
+
+# sidak returns the probability of getting one or
+# more p-values = minimum observed p-value.
+# RTP for K == 1.
+p.sidak <- function(p) {
+    L <- length(p)
+    return(pbinom(0, L, min(p), lower.tail = FALSE))
+}
+
 # p.art is slightly modified Art function in Vsevolozhskaya et al.
 p.art <- function(K, p) {
     L <- length(p)
@@ -24,7 +41,7 @@ p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
 p.rtp.dbeta.cuba <- function(K, p) {
     L <- length(p)
     if (K == 1) {
-        return(pbinom(0, L, min(p), lower.tail = FALSE))
+        return(p.sidak(p))
     }
     if (K == L) {
         return(p.fisher(p))
