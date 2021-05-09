@@ -8,6 +8,7 @@ The K+1'th smallest of L unif(0, 1) numbers is distributed Beta(K+1, L-K).
 The density function of order statistic x ~ Beta(K+1, L-K) is
     dbeta(x, K+1, L-K) = L! / (K! * L-K-1!) * x^K * (1-x)^(L-K-1)
                        = (L choose K+1) * (K+1) * x^K * (1-x)^(L-K-1)
+
 Beta distribution's relation to Binomial distribution.
 https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
 
@@ -16,8 +17,8 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     pbeta(x, K+1, L-K)         = 1 - pbeta(1 - x, L - K, K + 1)
     pbeta(1 - x, L - K, K + 1) = pbinom(K, L, x)
     pbeta(x, L - K, K + 1)     = pbinom(K, L, 1-x)
-    
-    dbeta(x, K + 1, L - K) = (L - K) / (1 - x) * dbinom(K, L, x)
+    dbeta(x, K + 1, L - K)     = (L - K) / (1 - x) * dbinom(K, L, x)
+
     Check in R:
     K <- 10
     L <- 100
@@ -30,11 +31,12 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     1 - pbinom(K, L, x)
     survbinom(K, L, x)
 
-    
+    Adjacent binomial mass probabilities have connection:
+    dbinom(K+1, L, p) = dbinom(K, L, p) * p / (1 - p) * (L + 1 - (K+1)) / (K+1)
 
     For large k the gamma(k,1) distribution converges to 
     normal distribution with mean k and SD sqrt(k).
-    For k > 10 distributions start to look quite alike.
+    For k > 10 the distributions start to look quite alike.
     Test by plot.GammaNorm(K) function.
 */
 double riemann(double (*f)(double), double a, double h, double tol);
@@ -43,7 +45,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
                   double fm, double fb, double Iprev, double abstol,
                   double reltol, int depth);
 void selectUnif(int k, NumericVector p);
-double fisher(NumericVector p);
+static double fisher(NumericVector p);
 static double sidak(NumericVector p);
 
 // Benchmark baseline function
@@ -53,18 +55,18 @@ double baseNull(double x) {
 }
 
 // Global "constants" in integration
-static double K;  // rank, number of smallest
-static double L;  // number of p-values
-static double LW; // log(p1 x ... x pK), test statistic
-static double LBETA;
-static double LKF;
-static double LBC;
-static int ERR = 0;
+static double K;     // rank, number of smallest
+static double L;     // number of p-values
+static double LW;    // log(p1 x ... x pK), test statistic
+static double LBETA; // log(L! / (K! * L-K-1!))
+static double LKF;   // log((K-1)!)
+static double LBIN;  // log(choose(L, K))
+static int ERR = 0;  // yet not used
 
 #define OK 2
 
 // [[Rcpp::export]]
-double init(int k, NumericVector p, int density = 0) {
+double init(int k, NumericVector p, int denfunc = 0) {
     L = p.size();
     K = k;
     ERR = 0;
@@ -76,17 +78,18 @@ double init(int k, NumericVector p, int density = 0) {
     LW = 0;
     for (int i = 0; i < K; i++)
         LW += log(p[i]);
-    if (density == 1)
+    if (denfunc == 1)
         LBETA = R::lbeta(K + 1, L - K);
-    else {
+
+    if (denfunc == 0) {
         LKF = lgamma(K);
-        LBC = R::lchoose(L, K);
+        LBIN = R::lchoose(L, K);
     }
     return OK;
 }
 
 // Beta standard deviation.
-// betaSD(K+1, L-K) = ~sqrt(K) / L, for small K/L.
+// betaSD(K+1, L-K) ~ sqrt(K) / L, for small K/L.
 //
 // [[Rcpp::export]]
 double betaSD(double a, double b) {
@@ -104,9 +107,10 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-inline static double ldbinom(double k, double n, double p) {
+// Log of binomial(k, n, p) probability.
+inline static double ldbinom(double k, double n, double p, double lbin) {
 
-    return LBC + k * log(p) + (n - k) * log(1 - p);
+    return lbin + k * log(p) + (n - k) * log(1 - p);
 }
 
 // Binomial distribution from k+1 to n.
@@ -116,21 +120,20 @@ inline static double pbinomRT(double k, double n, double p) {
     return R::pbinom(k, n, p, 0, 0); // right tail
 }
 
-// Fast binomial survival function for not very big k.
+// Fast binomial survival/beta CDF function for small k.
 // survbinom(K, L, b) = 1 - pbinom(K, L, b) = pbeta(b, K+1, L-K)
-// https://dlmf.nist.gov/8.17#E5. Formula 8.17.5
 //
 // [[Rcpp::export]]
 double survbinom(double k, double n, double p) {
     if (p >= 1) return 1;
     if (p <= 0) return 0;
-    if (k > 100 || n > 10000)
-        return pbinomRT(k, n, p);
+    if (k > 100 || n > 10000) return pbinomRT(k, n, p);
 
-    double prob = exp(n * log1p(-p)); // (1-p)^n
+    double prob = exp(n * log(1 - p)); // (1-p)^n
     if (prob == 0) {
-        // if (exp(ldbinom(k, n, p)) == 0) // dbinom(k, n, p) = 0
-        //     return 1;
+        if (ldbinom(k, n, p, LBIN) < -744 && k < n * p)
+            return 1; // prob(0), ..., prob(k) = 0
+
         return pbinomRT(k, n, p);
     }
     double cdf = prob;
@@ -147,10 +150,10 @@ double survbinom(double k, double n, double p) {
 
 // Beta density function.
 //
-inline static double dbeta(double x, double a, double b) {
+inline static double dbeta(double x, double a, double b, double lbeta) {
     if (x <= 0 || x >= 1) return 0;
 
-    return exp(-LBETA + (a - 1) * log(x) + (b - 1) * log(1 - x));
+    return exp(-lbeta + (a - 1) * log(x) + (b - 1) * log(1 - x));
 }
 
 inline static double gammaSD(double k) {
@@ -166,6 +169,7 @@ inline static double gammaMean(double k) {
 }
 
 // Fast gamma survival function for (small) positive integers k = shape and rate 1.
+// survgamma(g, K) = 1 - pgamma(g, K)
 //
 // [[Rcpp::export]]
 double survgamma(double g, double k) {
@@ -174,6 +178,7 @@ double survgamma(double g, double k) {
     double p = exp(-g);
     if (p == 0)
         return R::pgamma(g, k, 1, 0, 0); // right tail
+
     double s = p;
     for (double j = 1; j < k; j++) {
         p *= g / j;
@@ -184,10 +189,10 @@ double survgamma(double g, double k) {
 
 // Gamma density function (g,k) = e^-g * g^(k-1) / (k-1)!
 //
-inline static double dgamma(double g, double k) {
+inline static double dgamma(double g, double k, double lkf) {
     if (g <= 0) return 0;
 
-    return exp((k - 1) * log(g) - g - LKF);
+    return exp((k - 1) * log(g) - g - lkf);
 }
 
 // fBetaD is rtp integrand Beta PDF x (1 - Gamma CDF) over [0, 1].
@@ -198,7 +203,7 @@ double fBetaD(double b) {
     if (b <= 0 || b >= 1) return 0;
 
     double g = K * log(b) - LW;
-    return dbeta(b, K + 1, L - K) * survgamma(g, K);
+    return dbeta(b, K + 1, L - K, LBETA) * survgamma(g, K);
     // return dbeta(b, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
 }
 
@@ -209,8 +214,8 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, K) * survbinom(K, L, b);
-    // return dgamma(g, K) * R::pbeta(b, K + 1, L - K, 1, 0);
+    return dgamma(g, K, LKF) * survbinom(K, L, b);
+    // return dgamma(g, K, LKF) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // fBetaQ is rtp integrand over Beta probabilities in [0, 1].
@@ -306,6 +311,7 @@ double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-12, double stepsca
 }
 
 // rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
+//
 // [[Rcpp::export]]
 double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
@@ -316,16 +322,6 @@ double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscal
 
     return simpson(&fGammaD, 0, h, tol);
 }
-// double normalPDF(double x) {
-//     return R::dnorm(x, 0, 1, 0);
-// }
-// // [[Rcpp::export]]
-// double integnormal(double a, double h, double tol) {
-
-//     // double h = 1;
-
-//     return riemann(&normalPDF, a, h, 1e-10);
-// }
 
 // sidak returns the probability of getting one or
 // more p-values = minimum observed p-value.
@@ -337,18 +333,18 @@ static double sidak(NumericVector p) {
 
     for (int i = 1; i < l; i++)
         if (pmin > p[i]) pmin = p[i];
-    // return R::pbinom(0, l, pmin, 0, 0); // rigth tail
-    return 1 - pow(1 - pmin, l);
+
+    return R::pbinom(0, l, pmin, 0, 0); // rigth tail
+    // return 1 - pow(1 - pmin, l);
 }
 
 // Standard Fisher's method using all p-values.
 // Solved by Gamma distribution. RTP for K == L.
 //
-// [[Rcpp::export]]
-double fisher(NumericVector p) {
+static double fisher(NumericVector p) {
     int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
-        lw += log(p[i]);
-    return R::pgamma(-lw, l, 1, 0, 0);
+        lw += -log(p[i]);
+    return R::pgamma(lw, l, 1, 0, 0);
 }
