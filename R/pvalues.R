@@ -1,5 +1,5 @@
 
-# Used in plot.R and benc.R also
+# Used in plot.R and bench.R also.
 checkPar <- function(K, L, small) {
     if (small < 1e-300) {
         return("Invalid: small < 1e-300")
@@ -36,7 +36,7 @@ pvalues.rtp <- function(K, L, small = 1e-1, seed = 0) {
     p6 <- p.rtp.mutoss(K, p)
     p8 <- p.rtp.dbeta.asimp(K, p)
     p11 <- p.rtp.dgamma.riema(K, p)
-    p13 <- p.rtp.dgamma.simp(K, p)
+    p13 <- p.rtp(K, p)
     pe <- p.rtp.dbeta.cuba(K, p) # "exact" reference
 
     w <- function(s) writeLines(s)
@@ -83,8 +83,8 @@ pvalues.rtp <- function(K, L, small = 1e-1, seed = 0) {
     wl("\np.rpt.dbeta.cuba   ", fe, "0 (ref)   ~14", "\n")
     wl("p.rtp.dbeta.asimp  ", f8, e8, d8)
     wl("p.rtp.dbeta.riema  ", f4, e4, d4)
-    wl("p.rtp.dgamma.simp  ", f13, e13, d13)
     wl("p.rtp.dgamma.riema ", f11, e11, d11)
+    wl("p.rtp              ", f13, e13, d13)
 }
 
 # pvalues.methods(K=10, L=100, small=1e-6, seed=0)
@@ -95,7 +95,7 @@ pvalues.methods <- function(K, L, small = 1e-1, seed = 0) {
     }
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
-    tau <- (K + 1) / (L + 1)
+    tau <- (K + 1) / (L + 1) # beta mean
 
     rtp <- p.rtp.dbeta.cuba(K, p)
     art <- p.art(K, p)
@@ -110,7 +110,7 @@ pvalues.methods <- function(K, L, small = 1e-1, seed = 0) {
         if (p < 0.00001) f <- "%1.4e"
         sprintf(f, p)
     }
-    w("\nFunction--------P-value-----P-value/RTP", "", "")
+    w("\nMethod----------P-value-----P-value/RTP", "", "")
     w("RTP            ", fpv(rtp), "    1")
     w("TFisher soft   ", fpv(tsoft), fd(tsoft))
     w("Art            ", fpv(art), fd(art))

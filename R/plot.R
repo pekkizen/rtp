@@ -235,13 +235,12 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
         )
     )
     axis(1,
-        col.ticks = "#3a3939", col.axis = "#3a3939",
+        col.axis = "#3a3939",
         at = pretty(c(xmin, xmax))
     )
     axis(2,
         at = pretty(c(0, hight / 2, hight)),
-        col.ticks = "#272769", col.axis = "blue",
-        col.lab = "blue",
+        col.axis = "blue",
     )
     abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
@@ -254,11 +253,11 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     )
     axis(4,
         at = c(0, 0.5, 1),
-        col.ticks = "red", col.axis = "red",
+        col.axis = "red",
     )
     par(new = TRUE)
     plot(f3,
-        type = "l", lwd = 1, col = "darkgreen",
+        type = "l", lwd = 1, col = "#035203",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         xlab = "", ylab = "", axes = FALSE,
     )

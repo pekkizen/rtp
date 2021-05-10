@@ -29,10 +29,10 @@ p.art <- function(K, p) {
 }
 
 # p.rtp returns Rank Truncated Product p-value.
-# This is a fast and reliable function selected from
-# the other rpt-functions presented here.
+# This is a fast and reliable function selected and
+# combined from the other rpt-functions presented here.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    rtpDgammaRiema(K, p, tol, stepscale)
+    rtpRiema(K, p, tol, stepscale)
 }
 
 # Reference integration by library cubature function pcubature.
