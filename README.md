@@ -20,9 +20,9 @@ Truncated product method (tpm) from Zaykin et al.
 solved by TFisher function.  
 
 **p.rtp(K, p, stepscale = 1)**  
-Rank truncated product p-value by integrand gamma PDF x beta CDF and Riemann sum integral over [0, inf).
+Rank truncated product p-value by integrand gamma PDF x beta CDF or beta PDF x (1-gamma CDF) and Riemann sum integral over [0, inf) or [0, 1].
 This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code. Parameter stepscale affects the integration step size.
-E.g. stepscale = 0.5 halves then default step size and increases accuracy (which mostly is unnecessary).
+E.g. stepscale = 0.5 halves the default step size and increases accuracy (which mostly is unnecessary).
 
 ### Reference implementations of p.rtp
 
@@ -111,6 +111,7 @@ Order statistics sampled from a uniform distribution.
 
 https://en.wikipedia.org/wiki/Gamma_distribution  
 Characterization using shape α and rate β.
+The probability density function.
 The cumulative distribution function for positive
 integers α and β = 1.
 
@@ -119,4 +120,4 @@ Probability density function.
 
 https://en.wikipedia.org/wiki/Beta_function  
 https://dlmf.nist.gov/8.17#E5. Formula 8.17.5  
-Regularized incomplete beta function (beta CDF function).
+Regularized incomplete beta function = beta CDF function.
