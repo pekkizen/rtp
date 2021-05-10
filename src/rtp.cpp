@@ -60,8 +60,8 @@ static double L;     // number of p-values
 static double LW;    // log(p1 x ... x pK), test statistic
 static double LBETA; // log(L! / (K! * L-K-1!))
 static double LKF;   // log((K-1)!)
-static double LBIN;  // log(choose(L, K))
-static int ERR = 0;  // yet not used
+// static double LBIN;  // log(choose(L, K))
+static int ERR = 0; // yet not used
 
 #define OK 2
 
@@ -83,7 +83,7 @@ double init(int k, NumericVector p, int denfunc = 0) {
 
     if (denfunc == 0) {
         LKF = lgamma(K);
-        LBIN = R::lchoose(L, K);
+        // LBIN = R::lchoose(L, K);
     }
     return OK;
 }
@@ -107,11 +107,11 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-// Log of binomial(k, n, p) probability.
-inline static double ldbinom(double k, double n, double p, double lbin) {
+// // Binomial(k, n, p) probability.
+// inline static double dbinom(double k, double n, double p, double lbin) {
 
-    return lbin + k * log(p) + (n - k) * log(1 - p);
-}
+//     return exp(lbin + k * log(p) + (n - k) * log(1 - p));
+// }
 
 // Binomial distribution from k+1 to n.
 // Right tail, 1-CDF, survival function.
@@ -127,23 +127,24 @@ inline static double pbinomRT(double k, double n, double p) {
 double survbinom(double k, double n, double p) {
     if (p >= 1) return 1;
     if (p <= 0) return 0;
-    if (k > 100 || n > 10000) return pbinomRT(k, n, p);
 
-    double prob = exp(n * log(1 - p)); // (1-p)^n
-    if (prob == 0) {
-        if (ldbinom(k, n, p, LBIN) < -744 && k < n * p)
-            return 1; // prob(0), ..., prob(k) = 0
+    // k < mean - 6 * SD => error in 1 < 1e-10
+    // For k = 10 and n = 200, this takes 77% of the cases
+    if (k < n * p - 6 * sqrt(n * p * (1 - p))) return 1;
 
-        return pbinomRT(k, n, p);
-    }
+    if (k > n / 3 || k > 100 || n > 10000) return pbinomRT(k, n, p);
+
+    double prob = exp(n * log1p(-p)); // (1-p)^n
+    if (prob == 0)
+        return pbinomRT(k, n, p); // never here?
+
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
         prob *= p / (1 - p) * (n + 1 - j) / j;
         cdf += prob;
     }
     if (cdf > (1 - 1e-14))
-        // gives also very small (<1e-16) probabilities
-        return pbinomRT(k, n, p);
+        return pbinomRT(k, n, p); // can return values < 1e-16
 
     return 1 - cdf;
 }
@@ -261,7 +262,7 @@ double fBetaDtop() {
 // rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
 //
 // [[Rcpp::export]]
-double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
+double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 0.5;
     double h, s, l;
 
@@ -300,7 +301,7 @@ double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol
 // For k = 10 this needs < 10 integrand function evaluations.
 //
 // [[Rcpp::export]]
-double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-12, double stepscale = 1) {
+double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
     double h, s;
     if ((s = init(k, p, 0)) != OK) return s;
@@ -321,6 +322,18 @@ double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscal
     h = cStep * gammaSD(k) * stepscale;
 
     return simpson(&fGammaD, 0, h, tol);
+}
+// rtpRiema uses rtpDgammaRiema for K < L / 8 and
+// rtpDbetaRiema for bigger K's. This gives good
+// all over accuracy.
+//
+// [[Rcpp::export]]
+double rtpRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+
+    if (k < p.size() / 8.0)
+        return rtpDgammaRiema(K, p, tol, stepscale);
+
+    return rtpDbetaRiema(K, p, tol, stepscale);
 }
 
 // sidak returns the probability of getting one or
@@ -345,6 +358,6 @@ static double fisher(NumericVector p) {
     int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
-        lw += -log(p[i]);
-    return R::pgamma(lw, l, 1, 0, 0);
+        lw += log(p[i]);
+    return R::pgamma(-lw, l, 1, 0, 0);
 }

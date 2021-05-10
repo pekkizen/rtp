@@ -176,6 +176,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rtpRiema
+double rtpRiema(int k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpRiema(k, p, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
 // uniSel
 int uniSel(int k, NumericVector p);
 RcppExport SEXP _rtp_uniSel(SEXP kSEXP, SEXP pSEXP) {
@@ -243,6 +257,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 4},
     {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
     {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
+    {"_rtp_rtpRiema", (DL_FUNC) &_rtp_rtpRiema, 4},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},
