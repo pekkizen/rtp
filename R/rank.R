@@ -29,8 +29,6 @@ p.art <- function(K, p) {
 }
 
 # p.rtp returns Rank Truncated Product p-value.
-# This is a fast and reliable function selected and
-# combined from the other rpt-functions presented here.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
     rtpRiema(K, p, tol, stepscale)
 }
@@ -84,7 +82,7 @@ stat.rtp <- function(K, p) {
 
 # RPT p-value by inverse Beta CDF and R integrate function.
 # The inverse beta CDF function method from Vsevolozhskaya et al.
-p.rtp.qbeta <- function(K, p, abstol = 1e-4, reltol = 1e-2) {
+p.rtp.qbeta <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
     L <- length(p)
     lw <- stat.rtp(K, p)
     f <- function(u) fBetaQ.R(u, lw, K, L)

@@ -5,8 +5,12 @@ baseNull <- function(x) {
     .Call(`_rtp_baseNull`, x)
 }
 
-init <- function(k, p, denfunc = 0L) {
-    .Call(`_rtp_init`, k, p, denfunc)
+betaCutPoint <- function(k, l) {
+    .Call(`_rtp_betaCutPoint`, k, l)
+}
+
+init <- function(k, p, integrand = 0L) {
+    .Call(`_rtp_init`, k, p, integrand)
 }
 
 betaSD <- function(a, b) {

@@ -81,7 +81,7 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
             "Area under the green Beta density is 1"
         ),
         main = c(
-            "BxG integrand (blue) = Beta density (green) x Gamma survival (red)",
+            "BxG integrand (blue) = Beta PDF (green) x Gamma survival (red)",
             paste(
                 " K = ", format(K, digits = 5),
                 " L = ", format(L, digits = 5)
@@ -159,7 +159,7 @@ plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
         ylab = "",
         main = c(
             paste(
-                "Gamma survival (red), ", "Beta density (green), ",
+                "Gamma survival (red), ", "Beta PDF (green), ",
                 "Beta x Gamma integrand (blue)."
             ),
             paste(
@@ -217,17 +217,17 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
         type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "blue",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         yaxt = "n", xaxt = "n",
-        ylab = "Integrand  and  Gamma  density",
+        ylab = "Integrand  and  Gamma  PDF",
 
         xlab = c(
             paste(
                 "Area under the blue integrand is p = ",
                 format(pval, digits = 2)
             ),
-            "Area under the green Gamma density is 1"
+            "Area under the green Gamma PDF is 1"
         ),
         main = c(
-            "GxB integrand (blue) = Gamma density (green) x Beta CDF (red)",
+            "GxB integrand (blue) = Gamma PDF (green) x Beta CDF (red)",
             paste(
                 " K = ", format(K, digits = 5),
                 " L = ", format(L, digits = 5)
@@ -266,11 +266,10 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
 # This compares Gamma and Normal distributions
 # plot.GammaNorm(K=10)
 plot.GammaNorm <- function(K) {
-    hight <- dgamma(K - 1, K)
-
     f3 <- function(g) dgamma(g, K)
     f2 <- function(g) dnorm(g, K, sqrt(K))
 
+    hight <- dgamma(K - 1, K)
     gTop <- K - 1
     xmax <- floor(gTop + 8 * sqrt(K))
     xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
@@ -278,7 +277,7 @@ plot.GammaNorm <- function(K) {
 
     plot.new()
     plot(f2,
-        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "black",
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "red",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         ylab = "", yaxt = "n", xaxt = "n",
         xlab = c(
@@ -292,8 +291,7 @@ plot.GammaNorm <- function(K) {
             )
         ),
         main = c(
-            "Gamma(K, 1)  density:  green",
-            "Normal(K, sqrt(K))  density:  black",
+            "Gamma(K, 1) PDF (green) and Normal(K, sd=sqrt(K)) PDF (red)",
             paste(
                 " K = ", format(K, digits = 5)
             )
@@ -310,5 +308,55 @@ plot.GammaNorm <- function(K) {
         type = "l", lwd = 1, col = "darkgreen",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         xlab = "", ylab = "", axes = FALSE,
+    )
+}
+
+# plot.BetaPDF(10, 200)
+plot.BetaPDF <- function(K, L) {
+    f1 <- function(p) pbeta(p, K + 1, L - K)
+    f2 <- function(p) dbeta(p, K + 1, L - K)
+
+    plim <- betaCutPoint(K, L)
+    xmax <- min(1, plim + 5 * betaSD(K + 1, L - K))
+    prob <- pbeta(plim, K + 1, L - K, lower.tail = FALSE)
+    hight <- dbeta(K / (L - 1), K + 1, L - K)
+    plot.new()
+    plot(f1,
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "#e91b1b",
+        xlim = c(0, xmax), ylim = c(0, 1),
+        ylab = "", yaxt = "n", xaxt = "n",
+        main = c(
+            paste("Beta CDF (red),", " Beta PDF (green)"),
+            paste(
+                " K = ", format(K, digits = 5),
+                " L = ", format(L, digits = 5)
+            )
+        ),
+        xlab = c(
+            paste(
+                "Beta right tail probability from ", format(plim, digits = 2), "=",
+                format(prob, digits = 2)
+            )
+        ),
+    )
+    axis(1,
+        at = pretty(c(0, xmax))
+    )
+    axis(4,
+        at = c(0, 0.5, 1),
+        col.axis = "red",
+    )
+    abline(h = 1, lty = 2, col = "#615959", lwd = 0.25)
+    abline(v = plim, lty = 2, col = "#615959", lwd = 0.5)
+    par(new = TRUE)
+    plot(f2,
+        type = "l", lwd = 1, col = "darkgreen",
+        xlab = "", ylab = "",
+        axes = FALSE,
+        xlim = c(0, xmax),
+    )
+    axis(2,
+        at = pretty(c(0, hight / 2, hight)),
+        col.axis = "darkgreen",
     )
 }
