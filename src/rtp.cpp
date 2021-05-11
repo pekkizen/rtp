@@ -16,23 +16,33 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     pbeta(x, K+1, L-K)         = survbinom(K, L, x)
     pbeta(x, K+1, L-K)         = 1 - pbeta(1 - x, L - K, K + 1)
     pbeta(1 - x, L - K, K + 1) = pbinom(K, L, x)
-    pbeta(x, L - K, K + 1)     = pbinom(K, L, 1-x)
+    pbeta(x, L - K, K + 1)     = pbinom(K, L, 1 - x)
     dbeta(x, K + 1, L - K)     = (L - K) / (1 - x) * dbinom(K, L, x)
+    dbeta(x, K + 1, L- K + 1)  = (L + 1) * dbinom(K, L, x)
+
+    Binomial mass probabilities have recurrence relation:
+    dbinom(K+1, L, p) = dbinom(K, L, p) * p / (1 - p) * (L - K) / (K+1)
 
     Check in R:
     K <- 10
     L <- 100
-    x <- 0.05
+    x <- 0.1
+    p <- 0.1
+
     dbeta(x, K + 1, L - K)
     choose(L, K + 1) * (K + 1) * x^K * (1 - x)^(L - K - 1)
     (L - K) / (1 - x) * dbinom(K, L, x)
+
     pbeta(x, K + 1, L - K)
     1 - pbeta(1 - x, L - K, K + 1)
     1 - pbinom(K, L, x)
     survbinom(K, L, x)
 
-    Adjacent binomial mass probabilities have connection:
-    dbinom(K+1, L, p) = dbinom(K, L, p) * p / (1 - p) * (L + 1 - (K+1)) / (K+1)
+    pbeta(x, L - K, K + 1) 
+    pbinom(K, L, 1 - x)
+
+    dbinom(K+1, L, p)
+    dbinom(K, L, p) * p / (1 - p) * (L - K) / (K+1)
 
     For large k the gamma(k,1) distribution converges to 
     normal distribution with mean k and SD sqrt(k).
@@ -81,8 +91,21 @@ double betaCutPoint(double k, double l) {
     return plim;
 }
 
+static double rtpStat(double k, NumericVector p) {
+    const double e = 2.71828182845904523536;
+
+    selectUnif(k, p);
+    double w = 1;
+    double scale = e / p[k - 1];
+
+    for (int i = 0; i < k; i++)
+        w *= p[i] * scale;
+
+    return log(w) - k * log(scale);
+}
+
 // [[Rcpp::export]]
-double init(int k, NumericVector p, int integrand = 0) {
+double init(double k, NumericVector p, int integrand = 0) {
     L = p.size();
     K = k;
     ERR = 0;
@@ -90,14 +113,9 @@ double init(int k, NumericVector p, int integrand = 0) {
     if (K == 1) return sidak(p);
     if (K == L) return fisher(p);
 
-    selectUnif(K, p);
-    LW = 0;
-    for (int i = 0; i < K; i++)
-        LW += log(p[i]);
-
+    LW = rtpStat(k, p);
     if (integrand == 1)
         LBETA = R::lbeta(K + 1, L - K);
-
     else {
         LKF = lgamma(K);
         PLIM = betaCutPoint(K, L);
@@ -138,9 +156,9 @@ inline static double pbinomRT(double k, double n, double p) {
 // Fast binomial survival/beta CDF function for small k.
 // survbinom(K, L, b) = pbeta(b, K+1, L-K)
 // [[Rcpp::export]]
-double survbinom(double k, double n, double p) {
+double survbinom(double k, double n, double p, double plim = 1) {
     if (p <= 0) return 0;
-    if (p >= PLIM) return 1;
+    if (p >= plim) return 1;
     if (k > 100) return pbinomRT(k, n, p);
 
     double prob = exp(n * log1p(-p)); // (1-p)^n
@@ -219,7 +237,7 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, K, LKF) * survbinom(K, L, b);
+    return dgamma(g, K, LKF) * survbinom(K, L, b, PLIM);
     // return dgamma(g, K, LKF) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
@@ -262,22 +280,22 @@ double fBetaDtop() {
 
 // rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
 // [[Rcpp::export]]
-double rtpDbetaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cStep = 0.5;
+double rtpDbetaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    const double cStep = 0.75;
     double h, s, l;
 
     if ((s = init(k, p, 1)) != OK) return s;
 
     l = p.size();
     h = cStep * betaSD(k + 1, l - k) * stepscale;
-    if (k < 8) h *= (double)k / 8;
+    if (k < 8) h *= k / 8;
 
     return riemann(&fBetaD, 0, h, tol); // x >= 1 -> fBetaD(x) = 0.
 }
 
 // rtpDbetaAsimp integrates fBetaD from 0 to 1 by adaptive Simpson's 1/3 rule.
 // [[Rcpp::export]]
-double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
+double rtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
     const double depth = 25;
     double top, fa, fm, fb, I, s;
 
@@ -299,8 +317,8 @@ double rtpDbetaAsimp(int k, NumericVector p, double abstol = 1e-7, double reltol
 // rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
 // For k = 10 this needs < 10 integrand function evaluations.
 // [[Rcpp::export]]
-double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cStep = 1.25;
+double rtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    const double cStep = 1.0;
     double h, s;
     if ((s = init(k, p, 0)) != OK) return s;
 
@@ -311,7 +329,7 @@ double rtpDgammaRiema(int k, NumericVector p, double tol = 1e-10, double stepsca
 
 // rtpDgammaSimp integrates fGammaD from 0 to inf by fixed step Simpson's 1/3 rule.
 // [[Rcpp::export]]
-double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpDgammaSimp(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
     double h, s;
     if ((s = init(k, p, 0)) != OK) return s;
@@ -321,16 +339,16 @@ double rtpDgammaSimp(int k, NumericVector p, double tol = 1e-10, double stepscal
     return simpson(&fGammaD, 0, h, tol);
 }
 
-// rtpRiema uses rtpDgammaRiema for K < L / 8 and
+// rtpRiema uses rtpDgammaRiema for K < L / 6 and
 // rtpDbetaRiema for bigger K's. This gives good
 // all over accuracy.
 // [[Rcpp::export]]
-double rtpRiema(int k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+double rtpRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
+    double l = p.size();
+    if (k < l / 6 || (l < 20 && k / l < 0.5))
+        return rtpDgammaRiema(k, p, tol, stepscale);
 
-    if (k < p.size() / 8.0)
-        return rtpDgammaRiema(K, p, tol, stepscale);
-
-    return rtpDbetaRiema(K, p, tol, stepscale);
+    return rtpDbetaRiema(k, p, tol, stepscale);
 }
 
 // sidak returns the probability of getting one or
