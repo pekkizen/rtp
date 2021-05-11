@@ -44,7 +44,7 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
     abline(h = 0.5, lty = 1, col = "#757474", lwd = 0.25)
 }
 
-# plot.BxG.integrand(K=0, L=100, small=1e-4, seed=0)
+# plot.BxG.integrand(K=10, L=100, small=1e-4, seed=0)
 plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -92,13 +92,6 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
             )
         )
     )
-    axis(1,
-        col.ticks = "#3a3939", col.axis = "#3a3939",
-        at = pretty(c(xmin, xmax))
-    )
-    axis(2,
-        col.ticks = "darkgreen", col.axis = "darkgreen",
-    )
     abline(v = left, lty = 2, col = "red", lwd = 0.5)
     abline(v = right, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = top, lty = 2, col = "blue", lwd = 0.5)
@@ -117,10 +110,9 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
         xlim = c(xmin, xmax), ylim = c(0, 1),
         ylab = "", xlab = "", axes = FALSE,
     )
-    axis(4,
-        col.ticks = "red", col.axis = "red",
-        at = c(0, 0.5, 1)
-    )
+    axis(1, at = pretty(c(xmin, xmax)))
+    axis(2, col.axis = "blue")
+    axis(4, col.axis = "red", at = c(0, 0.5, 1))
 }
 
 # plotIntegrandLocation(K=10, L=100, small=1e-4, seed=0)
@@ -151,10 +143,8 @@ plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
     plot.new()
     plot(f1,
         type = "l", font.main = 1, lwd = 1, cex.main = 1, col = "red",
-        xlim = c(xmin, xmax), # yaxp = c(0, 1, 2),
-        axis(1,
-            at = c(xmin, xmax),
-        ),
+        xlim = c(xmin, xmax), yaxt = "n",
+        axis(1, at = c(xmin, xmax)),
         xlab = "Blue and green curves are vertically not in actual size",
         ylab = "",
         main = c(
@@ -173,17 +163,18 @@ plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
     abline(v = bTop, col = "#088308", lty = 2, lwd = 0.5)
     abline(v = gTop, col = "red", lty = 2, lwd = 0.5)
     abline(h = 0, lty = 1, col = "gray", lwd = 1)
+    axis(2, at = c(0, 0.5, 1), col.axis = "red")
     par(new = TRUE)
     plot(f3,
         type = "l", lwd = 1, xlim = c(xmin, xmax),
         yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-        col = "#088308",
+        col = "#088308", axes = FALSE
     )
     par(new = TRUE)
     plot(f2,
         type = "l", lwd = 1, xlim = c(xmin, xmax),
         yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-        col = "blue",
+        col = "blue", axes = FALSE
     )
 }
 
@@ -234,14 +225,10 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
             )
         )
     )
-    axis(1,
-        col.axis = "#3a3939",
-        at = pretty(c(xmin, xmax))
-    )
-    axis(2,
-        at = pretty(c(0, hight / 2, hight)),
-        col.axis = "blue",
-    )
+    axis(1, col.axis = "#3a3939", at = pretty(c(xmin, xmax)))
+    axis(2, at = pretty(c(0, hight / 2, hight)), col.axis = "blue")
+    axis(4, at = c(0, 0.5, 1), col.axis = "red")
+
     abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
     abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
@@ -250,10 +237,6 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
         type = "l", lwd = 1, col = "red",
         xlim = c(xmin, xmax), ylim = c(0, 1),
         xlab = "", ylab = "", axes = FALSE,
-    )
-    axis(4,
-        at = c(0, 0.5, 1),
-        col.axis = "red",
     )
     par(new = TRUE)
     plot(f3,

@@ -17,8 +17,8 @@ betaSD <- function(a, b) {
     .Call(`_rtp_betaSD`, a, b)
 }
 
-survbinom <- function(k, n, p) {
-    .Call(`_rtp_survbinom`, k, n, p)
+survbinom <- function(k, n, p, plim = 1) {
+    .Call(`_rtp_survbinom`, k, n, p, plim)
 }
 
 survgamma <- function(g, k) {
