@@ -47,7 +47,7 @@ double adaSimpson(double (*f)(double), double a, double b, double fa,
 void selectUnif(int k, NumericVector p);
 static double fisher(NumericVector p);
 static double sidak(NumericVector p);
-inline double betaMean(double a, double b);
+double betaMean(double a, double b);
 double betaSD(double a, double b);
 
 // Benchmark baseline function
