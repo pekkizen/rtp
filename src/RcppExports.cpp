@@ -16,16 +16,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// betaCutPoint
+double betaCutPoint(double k, double l);
+RcppExport SEXP _rtp_betaCutPoint(SEXP kSEXP, SEXP lSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    rcpp_result_gen = Rcpp::wrap(betaCutPoint(k, l));
+    return rcpp_result_gen;
+END_RCPP
+}
 // init
-double init(int k, NumericVector p, int denfunc);
-RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP, SEXP denfuncSEXP) {
+double init(int k, NumericVector p, int integrand);
+RcppExport SEXP _rtp_init(SEXP kSEXP, SEXP pSEXP, SEXP integrandSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    Rcpp::traits::input_parameter< int >::type denfunc(denfuncSEXP);
-    rcpp_result_gen = Rcpp::wrap(init(k, p, denfunc));
+    Rcpp::traits::input_parameter< int >::type integrand(integrandSEXP);
+    rcpp_result_gen = Rcpp::wrap(init(k, p, integrand));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -244,6 +256,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
+    {"_rtp_betaCutPoint", (DL_FUNC) &_rtp_betaCutPoint, 2},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
     {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 3},
