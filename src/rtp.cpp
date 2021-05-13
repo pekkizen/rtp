@@ -139,7 +139,7 @@ inline static double betaMode(double a, double b) {
 }
 
 // betaMean(K+1, L-K) = (K+1) / (L+1).
-inline double betaMean(double a, double b) {
+double betaMean(double a, double b) {
     return a / (a + b);
 }
 
