@@ -34,7 +34,7 @@ double tfisher(double lw, double L, double tau1, double tau2, double tol = 1e-16
         cumP += deltaP;
 
         if (cumP >= 1) return 0;
-        if ((k > p * L) && (deltaP < tol * (1 - cumP))) break;
+        if (k > p * L && (deltaP < tol * (1 - cumP))) break;
     }
     return 1 - cumP;
 }

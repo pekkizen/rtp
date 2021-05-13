@@ -54,7 +54,7 @@ double simpson(double (*f)(double), double a, double h, double tol);
 double adaSimpson(double (*f)(double), double a, double b, double fa,
                   double fm, double fb, double Iprev, double abstol,
                   double reltol, int depth);
-void selectUnif(int k, NumericVector p);
+void quickUniSelect(int k, NumericVector p);
 static double fisher(NumericVector p);
 static double sidak(NumericVector p);
 double betaMean(double a, double b);
@@ -91,15 +91,17 @@ double betaCutPoint(double k, double l) {
     return plim;
 }
 
-static double rtpStat(double k, NumericVector p) {
-    const double e = 2.71828182845904523536;
+// rtpStat calculates RPT method test statistic from p-value vector p.
+// U1 x U2 x ... x Un ~ e^-n (not 2^-n) for big n and Ui ~ Unif(0, 1).
+static double rtpStatistic(int k, NumericVector p) {
+    const double E = 2.71828182845904523536;
 
-    selectUnif(k, p);
+    quickUniSelect(k, p);
+    double scale = E / p[k - 1];
     double w = 1;
-    double scale = e / p[k - 1];
 
     for (int i = 0; i < k; i++)
-        w *= p[i] * scale;
+        w *= p[i] * scale; // w oscillates around 1
 
     return log(w) - k * log(scale);
 }
@@ -113,7 +115,7 @@ double init(double k, NumericVector p, int integrand = 0) {
     if (K == 1) return sidak(p);
     if (K == L) return fisher(p);
 
-    LW = rtpStat(k, p);
+    LW = rtpStatistic(k, p);
     if (integrand == 1)
         LBETA = R::lbeta(K + 1, L - K);
     else {
@@ -132,20 +134,14 @@ double betaSD(double a, double b) {
 }
 
 // betaMode(K+1, L-K) = K / (L-1).
-inline double betaMode(double a, double b) {
+inline static double betaMode(double a, double b) {
     return (a - 1) / (a + b - 2);
 }
 
 // betaMean(K+1, L-K) = (K+1) / (L+1).
-double betaMean(double a, double b) {
+inline double betaMean(double a, double b) {
     return a / (a + b);
 }
-
-// // Binomial(k, n, p) probability.
-// inline static double dbinom(double k, double n, double p, double lbin) {
-
-//     return exp(lbin + k * log(p) + (n - k) * log(1 - p));
-// }
 
 // Binomial distribution from k+1 to n.
 // Right tail, 1-CDF, survival function.
@@ -159,19 +155,20 @@ inline static double pbinomRT(double k, double n, double p) {
 double survbinom(double k, double n, double p, double plim = 1) {
     if (p <= 0) return 0;
     if (p >= plim) return 1;
-    if (k > 100) return pbinomRT(k, n, p);
+    if (k > 100)
+        return pbinomRT(k, n, p);
 
     double prob = exp(n * log1p(-p)); // (1-p)^n
     if (prob == 0)
-        return pbinomRT(k, n, p); // never here?
+        return pbinomRT(k, n, p);
 
     double cdf = prob;
     for (double j = 1; j <= k; j++) {
-        prob *= p / (1 - p) * (n + 1 - j) / j;
+        prob *= p / (1 - p) * (n - j + 1) / j;
         cdf += prob;
     }
-    if (cdf > (1 - 1e-14))
-        return pbinomRT(k, n, p); // can return values < 1e-16
+    if (cdf > (1 - 0x1p-46))
+        return pbinomRT(k, n, p); // returns also values in [0, 2^-53)
 
     return 1 - cdf;
 }

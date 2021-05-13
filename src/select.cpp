@@ -90,7 +90,7 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
 // The k'th smallest of n unif(0, 1) numbers ~Beta(k, n-k+1).
-void selectUnif(int k, NumericVector p) {
+void quickUniSelect(int k, NumericVector p) {
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
@@ -146,7 +146,7 @@ void selectUnif(int k, NumericVector p) {
 // For bechmarking only
 // [[Rcpp::export]]
 int uniSel(int k, NumericVector p) {
-    selectUnif(k, p);
+    quickUniSelect(k, p);
     return k;
 }
 // [[Rcpp::export]]

@@ -54,10 +54,10 @@ double adaSimpson(double (*f)(double), double a, double b,
     abstol /= 2;
 
     // integrate only if Ia differs enough from 0 ???
-    if (Ia > abstol && Ia > Iab * reltol)
-        Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
+    // if (Ia > abstol && Ia > Iab * reltol)
+    Ia = adaSimpson(f, a, m, fa, fam, fm, Ia, abstol, reltol, depth - 1);
 
-    if (Ib > abstol && Ib > Iab * reltol)
-        Ib = adaSimpson(f, m, b, fm, fmb, fb, Ib, abstol, reltol, depth - 1);
+    // if (Ib > abstol && Ib > Iab * reltol)
+    Ib = adaSimpson(f, m, b, fm, fmb, fb, Ib, abstol, reltol, depth - 1);
     return Ia + Ib;
 }
