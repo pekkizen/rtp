@@ -8,19 +8,17 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
     lw <- stat.rtp(K, p)
-    pval <- p.rtp.qbeta(K, p)
+    pval <- p.rtp.dbeta.cuba(K, p)
 
     f1 <- function(u) fBetaQ.R(u, lw, K, L)
     f2 <- function(u) fGammaQ.R(u, lw, K, L)
 
     plot.new()
     plot(f1,
-        type = "l", ylab = "", font.main = 1,
+        type = "l", font.main = 1,
         col = "blue", cex.main = 1,
-        xlim = c(0, 1), ylim = c(0, 1), yaxp = c(0, 1, 2),
-        axis(1,
-            at = pretty(c(0, 1)),
-        ),
+        xlim = c(0, 1), ylim = c(0, 1),
+        ylab = "", xaxt = "n", yaxt = "n",
         xlab = paste(
             "Area under the integrands is ",
             "p = ", format(pval, digits = 2)
@@ -30,11 +28,14 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
             "by Beta inverse (blue) and Gamma inverse (red)"
         )
     )
+    axis(1, at = c(0, 0.5, 1))
+    axis(2, at = c(0, 0.5, 1))
+
     par(new = TRUE)
     plot(f2,
-        type = "l", ylab = "", col = "red",
+        type = "l", col = "red",
         xlim = c(0, 1), ylim = c(0, 1),
-        xlab = "",
+        xlab = "", ylab = "",
         axes = FALSE,
     )
     abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
@@ -53,8 +54,7 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
     lw <- stat.rtp(K, p)
-    pval <- p.rtp.dbeta.cuba(K, p)
-    init(K, p)
+    pval <- p.rtp.dbeta.cuba(K, p) # calls init
     top <- fBetaDtop()
     left <- exp(lw / K) * 1.5
     right <- K / (L - 1) # beta mode
@@ -68,7 +68,6 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     f2 <- function(u) fBetaD.R(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
-    plot.new()
     plot(f3,
         type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "darkgreen",
         xlim = c(xmin, xmax), ylim = c(0, hight),
@@ -92,31 +91,31 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
             )
         )
     )
-    abline(v = left, lty = 2, col = "red", lwd = 0.5)
-    abline(v = right, lty = 2, col = "darkgreen", lwd = 0.5)
-    abline(v = top, lty = 2, col = "blue", lwd = 0.5)
-    abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
-    abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
+    axis(1, at = pretty(c(xmin, xmax)))
+    axis(2, at = pretty(0:floor(hight)), col.axis = "blue")
 
     par(new = TRUE)
     plot(f2,
         type = "l", lwd = 1, col = "blue",
         xlim = c(xmin, xmax), ylim = c(0, hight),
-        ylab = "", xlab = "", axes = FALSE,
+        ylab = "", xlab = "", axes = FALSE, yaxt = "n",
     )
     par(new = TRUE)
     plot(f1,
         type = "l", lwd = 1, col = "red",
         xlim = c(xmin, xmax), ylim = c(0, 1),
-        ylab = "", xlab = "", axes = FALSE,
+        ylab = "", xlab = "", axes = FALSE, yaxt = "n",
     )
-    axis(1, at = pretty(c(xmin, xmax)))
-    axis(2, col.axis = "blue")
     axis(4, col.axis = "red", at = c(0, 0.5, 1))
+
+    abline(v = left, lty = 2, col = "red", lwd = 0.5)
+    abline(v = right, lty = 2, col = "darkgreen", lwd = 0.5)
+    abline(v = top, lty = 2, col = "blue", lwd = 0.5)
+    abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
 }
 
 # plotIntegrandLocation(K=10, L=100, small=1e-4, seed=0)
-
 plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -187,9 +186,7 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
     lw <- stat.rtp(K, p)
-    pval <- p.rtp.dbeta.cuba(K, p)
-
-    init(K, p)
+    pval <- p.rtp.dbeta.cuba(K, p) # calls init
     hight <- dgamma(K - 1, K)
 
     f3 <- function(g) dgamma(g, K)
@@ -202,14 +199,17 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     gTop <- K - 1
     xmax <- floor(max(bTop, gTop) + 4 * sqrt(K))
     xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
+    plim <- betaCutPoint(K, L)
+    plim <- log(plim) * K - lw
+    xmax <- max(plim, xmax)
 
     plot.new()
     plot(f2,
         type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "blue",
-        xlim = c(xmin, xmax), ylim = c(0, hight),
+        xlim = c(xmin, xmax),
+        ylim = c(0, hight),
         yaxt = "n", xaxt = "n",
         ylab = "Integrand  and  Gamma  PDF",
-
         xlab = c(
             paste(
                 "Area under the blue integrand is p = ",
@@ -221,46 +221,50 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
             "GxB integrand (blue) = Gamma PDF (green) x Beta CDF (red)",
             paste(
                 " K = ", format(K, digits = 5),
-                " L = ", format(L, digits = 5)
+                ", L = ", format(L, digits = 5)
             )
         )
     )
-    axis(1, col.axis = "#3a3939", at = pretty(c(xmin, xmax)))
-    axis(2, at = pretty(c(0, hight / 2, hight)), col.axis = "blue")
-    axis(4, at = c(0, 0.5, 1), col.axis = "red")
+    axis(1, at = pretty(xmin:xmax))
+    axis(2, at = pretty(c(0, hight)), col.axis = "blue")
 
     abline(v = gTop, lty = 2, col = "darkgreen", lwd = 0.5)
     abline(v = bTop, lty = 2, col = "red", lwd = 0.5)
     abline(h = 0, lty = 1, col = "#757474", lwd = 0.25)
+    abline(v = plim, lty = 2, col = "#615959", lwd = 0.5)
+
     par(new = TRUE)
     plot(f1,
         type = "l", lwd = 1, col = "red",
         xlim = c(xmin, xmax), ylim = c(0, 1),
         xlab = "", ylab = "", axes = FALSE,
+        yaxt = "n", xaxt = "n",
     )
+    axis(4, col.axis = "red", at = c(0, 0.5, 1))
     par(new = TRUE)
     plot(f3,
         type = "l", lwd = 1, col = "#035203",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         xlab = "", ylab = "", axes = FALSE,
+        yaxt = "n", xaxt = "n",
     )
 }
 
 # This compares Gamma and Normal distributions
-# plot.GammaNorm(K=10)
-plot.GammaNorm <- function(K) {
-    f3 <- function(g) dgamma(g, K)
-    f2 <- function(g) dnorm(g, K, sqrt(K))
-
+# plot.GammaDist(K=10)
+plot.GammaDist <- function(K) {
     hight <- dgamma(K - 1, K)
     gTop <- K - 1
     xmax <- floor(gTop + 8 * sqrt(K))
     xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
     rpoint <- xmax
 
+    f3 <- function(g) dgamma(g, K)
+    f2 <- function(g) dnorm(g, K, sqrt(K))
+
     plot.new()
     plot(f2,
-        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "red",
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "blue",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         ylab = "", yaxt = "n", xaxt = "n",
         xlab = c(
@@ -274,45 +278,51 @@ plot.GammaNorm <- function(K) {
             )
         ),
         main = c(
-            "Gamma(K, 1) PDF (green) and Normal(K, sd=sqrt(K)) PDF (red)",
+            "Gamma(K, 1) PDF (green) and Norm(K, sd=sqrt(K)) PDF (blue)",
             paste(
                 " K = ", format(K, digits = 5)
             )
         )
     )
-    axis(1,
-        at = pretty(c(xmin, xmax))
-    )
-    axis(2,
-        at = pretty(c(0, hight / 2, hight)),
-    )
+    axis(1, at = pretty(c(xmin, xmax)))
+    axis(2, at = pretty(c(0, hight)))
+
     par(new = TRUE)
     plot(f3,
         type = "l", lwd = 1, col = "darkgreen",
         xlim = c(xmin, xmax), ylim = c(0, hight),
         xlab = "", ylab = "", axes = FALSE,
+        yaxt = "n", xaxt = "n",
     )
 }
 
-# plot.BetaPDF(10, 200)
-plot.BetaPDF <- function(K, L) {
-    f1 <- function(p) pbeta(p, K + 1, L - K)
-    f2 <- function(p) dbeta(p, K + 1, L - K)
-
+# plot.BetaDist(5, 10)
+plot.BetaDist <- function(K, L) {
     plim <- betaCutPoint(K, L)
     xmax <- min(1, plim + 5 * betaSD(K + 1, L - K))
     prob <- pbeta(plim, K + 1, L - K, lower.tail = FALSE)
-    hight <- dbeta(K / (L - 1), K + 1, L - K)
+    bhight <- dbeta(K / (L - 1), K + 1, L - K)
+    mean <- (K + 1) / (L + 1)
+    sd <- betaSD(K + 1, L - K)
+    nhight <- dnorm(mean, mean, sd)
+    hight <- max(bhight, nhight)
+
+    f1 <- function(p) pbeta(p, K + 1, L - K)
+    f2 <- function(p) dbeta(p, K + 1, L - K)
+    f3 <- function(p) dnorm(p, mean, sd)
+
     plot.new()
-    plot(f1,
-        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "#e91b1b",
-        xlim = c(0, xmax), ylim = c(0, 1),
+    plot(f2,
+        type = "l", lwd = 1, font.main = 1, cex.main = 1, col = "darkgreen",
+        xlim = c(0, xmax), ylim = c(0, hight),
         ylab = "", yaxt = "n", xaxt = "n",
         main = c(
             paste("Beta CDF (red),", " Beta PDF (green)"),
+            "Norm(betaMean, betaSD) PDF (blue)",
             paste(
                 " K = ", format(K, digits = 5),
-                " L = ", format(L, digits = 5)
+                ",  L = ", format(L, digits = 5),
+                ",  mean = ", format(mean, digits = 3)
             )
         ),
         xlab = c(
@@ -322,24 +332,29 @@ plot.BetaPDF <- function(K, L) {
             )
         ),
     )
-    axis(1,
-        at = pretty(c(0, xmax))
+    axis(1, at = pretty(c(0, xmax)))
+
+    axis(2, at = pretty(c(0, hight)), col.axis = "darkgreen")
+
+    par(new = TRUE)
+    plot(f3,
+        type = "l", lwd = 1, col = "blue",
+        xlim = c(0, xmax), ylim = c(0, hight),
+        xlab = "", ylab = "",
+        yaxt = "n", xaxt = "n", axes = FALSE,
     )
-    axis(4,
-        at = c(0, 0.5, 1),
-        col.axis = "red",
+
+    par(new = TRUE)
+    plot(f1,
+        type = "l", lwd = 1, col = "red",
+        xlim = c(0, xmax), ylim = c(0, 1),
+        xlab = "", ylab = "",
+        yaxt = "n", xaxt = "n", axes = FALSE,
     )
+    axis(4, at = c(0, 0.5, 1), col.axis = "red")
+
+
     abline(h = 1, lty = 2, col = "#615959", lwd = 0.25)
     abline(v = plim, lty = 2, col = "#615959", lwd = 0.5)
-    par(new = TRUE)
-    plot(f2,
-        type = "l", lwd = 1, col = "darkgreen",
-        xlab = "", ylab = "",
-        axes = FALSE,
-        xlim = c(0, xmax),
-    )
-    axis(2,
-        at = pretty(c(0, hight / 2, hight)),
-        col.axis = "darkgreen",
-    )
+    abline(v = mean, lty = 2, col = "blue", lwd = 0.5)
 }
