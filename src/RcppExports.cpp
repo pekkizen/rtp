@@ -41,6 +41,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// hitMiss
+double hitMiss(int reset);
+RcppExport SEXP _rtp_hitMiss(SEXP resetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type reset(resetSEXP);
+    rcpp_result_gen = Rcpp::wrap(hitMiss(reset));
+    return rcpp_result_gen;
+END_RCPP
+}
 // betaSD
 double betaSD(double a, double b);
 RcppExport SEXP _rtp_betaSD(SEXP aSEXP, SEXP bSEXP) {
@@ -53,17 +64,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// betaSkewness
+double betaSkewness(double a, double b);
+RcppExport SEXP _rtp_betaSkewness(SEXP aSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(betaSkewness(a, b));
+    return rcpp_result_gen;
+END_RCPP
+}
 // survbinom
-double survbinom(double k, double n, double p, double plim);
-RcppExport SEXP _rtp_survbinom(SEXP kSEXP, SEXP nSEXP, SEXP pSEXP, SEXP plimSEXP) {
+double survbinom(double k, double n, double p, double pcut);
+RcppExport SEXP _rtp_survbinom(SEXP kSEXP, SEXP nSEXP, SEXP pSEXP, SEXP pcutSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
     Rcpp::traits::input_parameter< double >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type plim(plimSEXP);
-    rcpp_result_gen = Rcpp::wrap(survbinom(k, n, p, plim));
+    Rcpp::traits::input_parameter< double >::type pcut(pcutSEXP);
+    rcpp_result_gen = Rcpp::wrap(survbinom(k, n, p, pcut));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -203,6 +226,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// quickUniSelect
+void quickUniSelect(int k, NumericVector p);
+RcppExport SEXP _rtp_quickUniSelect(SEXP kSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    quickUniSelect(k, p);
+    return R_NilValue;
+END_RCPP
+}
 // uniSel
 int uniSel(int k, NumericVector p);
 RcppExport SEXP _rtp_uniSel(SEXP kSEXP, SEXP pSEXP) {
@@ -259,7 +293,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_betaCutPoint", (DL_FUNC) &_rtp_betaCutPoint, 2},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
+    {"_rtp_hitMiss", (DL_FUNC) &_rtp_hitMiss, 1},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
+    {"_rtp_betaSkewness", (DL_FUNC) &_rtp_betaSkewness, 2},
     {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 4},
     {"_rtp_survgamma", (DL_FUNC) &_rtp_survgamma, 2},
     {"_rtp_fBetaD", (DL_FUNC) &_rtp_fBetaD, 1},
@@ -272,6 +308,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
     {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
     {"_rtp_rtpRiema", (DL_FUNC) &_rtp_rtpRiema, 4},
+    {"_rtp_quickUniSelect", (DL_FUNC) &_rtp_quickUniSelect, 2},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},

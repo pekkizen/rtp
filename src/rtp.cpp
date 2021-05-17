@@ -12,7 +12,7 @@ The density function of order statistic x ~ Beta(K+1, L-K) is
 Beta distribution's relation to Binomial distribution.
 https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
 
-    pbeta(x, K+1, L-K)         = 1 - pbinom(K, L, x) 
+    pbeta(x, K+1, L-K)         = 1 - pbinom(K, L, x)
     pbeta(x, K+1, L-K)         = survbinom(K, L, x)
     pbeta(x, K+1, L-K)         = 1 - pbeta(1 - x, L - K, K + 1)
     pbeta(1 - x, L - K, K + 1) = pbinom(K, L, x)
@@ -21,7 +21,7 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     dbeta(x, K + 1, L- K + 1)  = (L + 1) * dbinom(K, L, x)
 
     Binomial mass probabilities have recurrence relation:
-    dbinom(K+1, L, p) = dbinom(K, L, p) * p / (1 - p) * (L - K) / (K+1)
+    dbinom(K+1, L, p) = dbinom(K, L, p) * p / (1 - p) * (L - K) / (K + 1)
 
     Check in R:
     K <- 10
@@ -38,17 +38,18 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     1 - pbinom(K, L, x)
     survbinom(K, L, x)
 
-    pbeta(x, L - K, K + 1) 
+    pbeta(x, L - K, K + 1)
     pbinom(K, L, 1 - x)
 
     dbinom(K+1, L, p)
     dbinom(K, L, p) * p / (1 - p) * (L - K) / (K+1)
 
-    For large k the gamma(k,1) distribution converges to 
-    normal distribution with mean k and SD sqrt(k).
-    For k > 10 the distributions start to look quite alike.
-    Test by plot.GammaNorm(K) function.
+    For larger K and L Beta and Gamma distributions converge to
+    normal distribution with Beta and Gamma mean and SD. Try
+    functions plot.BetaDist(K, L) and plot.GammaDist(K).
+
 */
+
 double riemann(double (*f)(double), double a, double h, double tol);
 double simpson(double (*f)(double), double a, double h, double tol);
 double adaSimpson(double (*f)(double), double a, double b, double fa,
@@ -59,6 +60,7 @@ static double fisher(NumericVector p);
 static double sidak(NumericVector p);
 double betaMean(double a, double b);
 double betaSD(double a, double b);
+double betaSkewness(double a, double b);
 
 // Benchmark baseline function
 // [[Rcpp::export]]
@@ -72,38 +74,34 @@ static double L;     // number of p-values
 static double LW;    // log(p1 x ... x pK), test statistic
 static double LBETA; // log(L! / (K! * L-K-1!))
 static double LKF;   // log((K-1)!)
-static double PLIM;
-// static double LBIN;  // log(choose(L, K))
+static double PCUT;
 static int ERR = 0; // yet not used
+static int HIT = 0;
+static int MISS = 0;
 
 #define OK 2
 
-// betaCutPoint returns plim for which
-// 1 - pbeta(x, K+1, L-K) < 5e-11, when x > plim.
+// betaCutPoint returns limit for which
+// 1 - pbeta(x, K+1, L-K) < ~1e-12, when x > limit.
+// Positive left skewness lifts the right tail off zero.
 //
 // [[Rcpp::export]]
-double betaCutPoint(double k, double l) {
-    double plim, dist = 10;
-    if (k < 16) dist++;
-    if (k < 10) dist += 10 / k;
-    plim = betaMean(k + 1, l - k) + dist * betaSD(k + 1, l - k);
-    plim = fmin(1, plim);
-    return plim;
+double
+betaCutPoint(double k, double l) {
+    double pcut, dist;
+    dist = 7 + fmax(0, 9 * betaSkewness(k + 1, l - k));
+    pcut = betaMean(k + 1, l - k) + dist * betaSD(k + 1, l - k);
+    return fmin(1, pcut);
 }
 
 // rtpStat calculates RPT method test statistic from p-value vector p.
 // U1 x U2 x ... x Un ~ e^-n (not 2^-n) for big n and Ui ~ Unif(0, 1).
 static double rtpStatistic(int k, NumericVector p) {
-    const double E = 2.71828182845904523536;
-
     quickUniSelect(k, p);
-    double scale = E / p[k - 1];
-    double w = 1;
-
+    double lw = 0;
     for (int i = 0; i < k; i++)
-        w *= p[i] * scale; // w oscillates around 1
-
-    return log(w) - k * log(scale);
+        lw += log(p[i]);
+    return lw;
 }
 
 // [[Rcpp::export]]
@@ -120,9 +118,19 @@ double init(double k, NumericVector p, int integrand = 0) {
         LBETA = R::lbeta(K + 1, L - K);
     else {
         LKF = lgamma(K);
-        PLIM = betaCutPoint(K, L);
+        PCUT = betaCutPoint(K, L);
     }
     return OK;
+}
+
+// [[Rcpp::export]]
+double hitMiss(int reset) {
+    double r = (double)HIT / (HIT + MISS);
+    if (reset > 0) {
+        HIT = 0;
+        MISS = 0;
+    }
+    return r;
 }
 
 // Beta standard deviation.
@@ -143,34 +151,71 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-// Binomial distribution from k+1 to n.
-// Right tail, 1-CDF, survival function.
-inline static double pbinomRT(double k, double n, double p) {
-    return R::pbinom(k, n, p, 0, 0); // right tail
+// [[Rcpp::export]]
+double betaSkewness(double a, double b) {
+    return 2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b));
 }
 
-// Fast binomial survival/beta CDF function for small k.
-// survbinom(K, L, b) = pbeta(b, K+1, L-K)
-// [[Rcpp::export]]
-double survbinom(double k, double n, double p, double plim = 1) {
-    if (p <= 0) return 0;
-    if (p >= plim) return 1;
-    if (k > 100)
-        return pbinomRT(k, n, p);
-
-    double prob = exp(n * log1p(-p)); // (1-p)^n
-    if (prob == 0)
-        return pbinomRT(k, n, p);
-
-    double cdf = prob;
-    for (double j = 1; j <= k; j++) {
+// sumRight sums bin(n, p) probabilities from a to b. prob must be dbinom(a, n, p).
+inline static double sumRight(double a, double b, double n, double p, double prob) {
+    const double reltol = 1e-12;
+    double sum = prob;
+    for (double j = a + 1; j <= b; j++) {
         prob *= p / (1 - p) * (n - j + 1) / j;
-        cdf += prob;
+        sum += prob;
+        if (prob <= sum * reltol) break;
     }
-    if (cdf > (1 - 0x1p-46))
-        return pbinomRT(k, n, p); // returns also values in [0, 2^-53)
+    return sum;
+}
 
-    return 1 - cdf;
+// sumLeft sums from right to left, a > b.
+inline static double sumLeft(double a, double b, double n, double p, double prob) {
+    const double reltol = 1e-12;
+    double sum = prob;
+    for (double j = a; j > b; j--) {
+        prob *= (1 - p) / p * j / (n - j + 1);
+        sum += prob;
+        if (prob <= sum * reltol) break;
+    }
+    return sum;
+}
+
+// Binomial density / mass probability function (for survbinom).
+inline static double dbinom(double k, double n, double p) {
+    double lg = lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1);
+    return exp(lg + k * log(p) + (n - k) * log(1 - p));
+}
+
+// Faster binomial survival / beta CDF function.
+// survbinom(K, L, b) ~ R::pbeta(b, K + 1, L - K, 1, 0).
+// Absolute difference of the functions is < 1e-12 near 1
+// and < 1e-13 elsewhere. Relative difference is always < 1e-11.
+// [[Rcpp::export]]
+double survbinom(double k, double n, double p, double pcut) {
+    const double minNormal = 0x1p-1022; // min normal double
+    double prob;
+
+    if (p >= pcut) return 1;
+    if (p <= 0) return 0;
+
+    if (k < n * p + 3 * sqrt(n * p * (1 - p))) {
+        prob = exp(n * log(1 - p));
+        if (prob > minNormal) {
+            return 1 - sumRight(0, k, n, p, prob);
+        }
+        prob = dbinom(k, n, p);
+        if (prob < minNormal)
+            return 1;
+        return 1 - sumLeft(k, 0, n, p, prob);
+    }
+    prob = exp(n * log(p));
+    if (prob > minNormal)
+        return sumLeft(n, k + 1, n, p, prob);
+
+    prob = dbinom(k + 1, n, p);
+    if (prob < minNormal)
+        return prob;
+    return sumRight(k + 1, n, n, p, prob);
 }
 
 // Beta density function.
@@ -199,7 +244,7 @@ double survgamma(double g, double k) {
     if (g <= 0) return 1;
 
     double p = exp(-g);
-    if (p == 0)
+    if (p < 3e-308)
         return R::pgamma(g, k, 1, 0, 0); // right tail
 
     double s = p;
@@ -225,7 +270,7 @@ double fBetaD(double b) {
 
     double g = K * log(b) - LW;
     return dbeta(b, K + 1, L - K, LBETA) * survgamma(g, K);
-    // return dbeta(b, K + 1, L - K) * R::pgamma(g, K, 1, 0, 0);
+    // return R::dbeta(b, K + 1, L - K, 0) * R::pgamma(g, K, 1, 0, 0);
 }
 
 // fGammaD is rtp integrand Gamma PDF x Beta CDF over [0, inf).
@@ -234,8 +279,8 @@ double fGammaD(double g) {
     if (g <= 0) return 0;
 
     double b = exp((g + LW) / K);
-    return dgamma(g, K, LKF) * survbinom(K, L, b, PLIM);
-    // return dgamma(g, K, LKF) * R::pbeta(b, K + 1, L - K, 1, 0);
+    return dgamma(g, K, LKF) * survbinom(K, L, b, PCUT);
+    // return R::dgamma(g, K, 1, 0) * R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // fBetaQ is rtp integrand over Beta probabilities in [0, 1].
@@ -258,12 +303,12 @@ double fGammaQ(double p) {
 
     double g = R::qgamma(p, K, 1, 1, 0); // Inverse gamma CDF method
     double b = exp((g + LW) / K);
-    return survbinom(K, L, b);
+    return survbinom(K, L, b, PCUT);
     // return R::pbeta(b, K + 1, L - K, 1, 0);
 }
 
 // fBetaDtop approximates the location of highest point of fBetaD.
-// This is a manually fitted from hat model, quite good anyway.
+// This is a manually fitted from hat model, good enough anyway.
 // Maximum from equations has no closed form solution?
 // [[Rcpp::export]]
 double fBetaDtop() {
@@ -311,11 +356,11 @@ double rtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double rel
     return I;
 }
 
-// rtpDgammaRiema integrates fGammaD from 0 to inf by Rieman sum integral.
+// rtpDgammaRiema integrates fGammaD from 0 to inf by Riemann sum integral.
 // For k = 10 this needs < 10 integrand function evaluations.
 // [[Rcpp::export]]
 double rtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
-    const double cStep = 1.0;
+    const double cStep = 1.25;
     double h, s;
     if ((s = init(k, p, 0)) != OK) return s;
 
@@ -342,10 +387,9 @@ double rtpDgammaSimp(double k, NumericVector p, double tol = 1e-10, double steps
 // [[Rcpp::export]]
 double rtpRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     double l = p.size();
-    if (k < l / 6 || (l < 20 && k / l < 0.5))
-        return rtpDgammaRiema(k, p, tol, stepscale);
-
-    return rtpDbetaRiema(k, p, tol, stepscale);
+    if (k / l > 1.0 / 3.0)
+        return rtpDbetaRiema(k, p, tol, stepscale);
+    return rtpDgammaRiema(k, p, tol, stepscale);
 }
 
 // sidak returns the probability of getting one or
