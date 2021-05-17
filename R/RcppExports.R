@@ -13,12 +13,20 @@ init <- function(k, p, integrand = 0L) {
     .Call(`_rtp_init`, k, p, integrand)
 }
 
+hitMiss <- function(reset) {
+    .Call(`_rtp_hitMiss`, reset)
+}
+
 betaSD <- function(a, b) {
     .Call(`_rtp_betaSD`, a, b)
 }
 
-survbinom <- function(k, n, p, plim = 1) {
-    .Call(`_rtp_survbinom`, k, n, p, plim)
+betaSkewness <- function(a, b) {
+    .Call(`_rtp_betaSkewness`, a, b)
+}
+
+survbinom <- function(k, n, p, pcut) {
+    .Call(`_rtp_survbinom`, k, n, p, pcut)
 }
 
 survgamma <- function(g, k) {
@@ -63,6 +71,10 @@ rtpDgammaSimp <- function(k, p, tol = 1e-10, stepscale = 1) {
 
 rtpRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
     .Call(`_rtp_rtpRiema`, k, p, tol, stepscale)
+}
+
+quickUniSelect <- function(k, p) {
+    invisible(.Call(`_rtp_quickUniSelect`, k, p))
 }
 
 uniSel <- function(k, p) {
