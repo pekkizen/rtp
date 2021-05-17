@@ -55,7 +55,7 @@ p.rtp.dbeta.cuba <- function(K, p) {
 }
 
 # RPT p-value by Beta density and adaptive Simpson's 1/3 rule.
-p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-7, reltol = 1e-3) {
+p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-8, reltol = 1e-4) {
     rtpDbetaAsimp(K, p, abstol, reltol)
 }
 
@@ -70,7 +70,6 @@ p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
 }
 
 # RPT p-value by Gamma density and Riemann sum integral.
-# This is same as p.rtp.
 p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
     rtpDgammaRiema(K, p, tol, stepscale)
 }
@@ -88,4 +87,14 @@ p.rtp.qbeta <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
     f <- function(u) fBetaQ.R(u, lw, K, L)
 
     integrate(f, 0, 1, abs.tol = abstol, rel.tol = reltol)$value
+}
+
+beta.skewness <- function(a, b) {
+    2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b))
+}
+
+# RPT p-value by simulation.
+p.rtp.simulated <- function(K, p, rounds = 100000, seed = 0) {
+    if (seed > 0) set.seed(seed)
+    rtpSimulated(K, p, rounds)
 }

@@ -73,6 +73,10 @@ rtpRiema <- function(k, p, tol = 1e-10, stepscale = 1) {
     .Call(`_rtp_rtpRiema`, k, p, tol, stepscale)
 }
 
+rtpSimulated <- function(k, p, rounds) {
+    .Call(`_rtp_rtpSimulated`, k, p, rounds)
+}
+
 quickUniSelect <- function(k, p) {
     invisible(.Call(`_rtp_quickUniSelect`, k, p))
 }
