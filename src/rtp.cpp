@@ -186,10 +186,11 @@ inline static double dbinom(double k, double n, double p) {
     return exp(lg + k * log(p) + (n - k) * log(1 - p));
 }
 
-// Faster binomial survival / beta CDF function.
+// Faster binomial survival/ beta CDF (integers) function.
 // survbinom(K, L, b) ~ R::pbeta(b, K + 1, L - K, 1, 0).
-// Absolute difference of the functions is < 1e-12 near 1
-// and < 1e-13 elsewhere. Relative difference is always < 1e-11.
+// Absolute difference of the functions is < 3e-14 and
+// relative difference < 2e-11. For k <= 100, n <= 5000,
+// n > 1.5 x k, values > 3e-308  and pcut = 1.
 // [[Rcpp::export]]
 double survbinom(double k, double n, double p, double pcut) {
     const double minNormal = 0x1p-1022; // min normal double
@@ -414,4 +415,24 @@ static double fisher(NumericVector p) {
     for (int i = 0; i < l; i++)
         lw += log(p[i]);
     return R::pgamma(-lw, l, 1, 0, 0);
+}
+
+// rtpSimulated solves rtp p-value by simulation.
+// The idea of using random beta order statistic instead of full generation
+// of all L numbers in each round is from Vsevolozhskaya et al.
+// [[Rcpp::export]]
+double rtpSimulated(double k, NumericVector p, int rounds) {
+    double l = p.size();
+    double w = exp(rtpStatistic(k, p)); // w = p1 x p2 x .. x pk
+    double pk1, ws, less = 0;
+
+    for (int i = 1; i < rounds; i++) {
+        pk1 = R::rbeta(k + 1, l - k); // beta sampled p(k+1) order statistic
+        ws = 1;
+        for (int j = 0; j < k; j++) {
+            ws *= R::unif_rand() * pk1; // ws = u1 x u2 x ...x uk, ui ~ Unif(0, pk1)
+        }
+        if (ws < w) less++;
+    }
+    return less / rounds;
 }

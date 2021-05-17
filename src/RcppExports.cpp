@@ -226,6 +226,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rtpSimulated
+double rtpSimulated(double k, NumericVector p, int rounds);
+RcppExport SEXP _rtp_rtpSimulated(SEXP kSEXP, SEXP pSEXP, SEXP roundsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpSimulated(k, p, rounds));
+    return rcpp_result_gen;
+END_RCPP
+}
 // quickUniSelect
 void quickUniSelect(int k, NumericVector p);
 RcppExport SEXP _rtp_quickUniSelect(SEXP kSEXP, SEXP pSEXP) {
@@ -308,6 +321,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
     {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
     {"_rtp_rtpRiema", (DL_FUNC) &_rtp_rtpRiema, 4},
+    {"_rtp_rtpSimulated", (DL_FUNC) &_rtp_rtpSimulated, 3},
     {"_rtp_quickUniSelect", (DL_FUNC) &_rtp_quickUniSelect, 2},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
