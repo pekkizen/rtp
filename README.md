@@ -5,6 +5,17 @@ Methods for combining p-values.
 
 ## P-value functions
 
+| Parameters |                                     |
+|-----------|----------------------------------------|
+|p          |Vector of p-values.                      |
+|K          |Number of smallest p-values in RTP functions. |
+|tau        |Threshold p-value for TFisher methods.  |
+|stepscale  |Multiplier for default integration stepsize. |  
+|           |                                     |
+
+All C++ based functions modify vector p by changing
+order of the elements.
+
 **p.fisher(p)**  
 Standard Fisher's method using all p-values.  
 
@@ -24,8 +35,9 @@ Rank truncated product p-value by integrand gamma PDF x beta CDF or beta PDF x (
 This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code. Parameter stepscale affects the integration step size.
 E.g. stepscale = 0.5 halves the default step size and increases accuracy (which mostly is unnecessary).
 
-**p.rtp.simulated(K, p, rounds = 100000, seed = 0)**
+**p.rtp.simulated(K, p, rounds = 100000, seed = 0)**  
 Rank truncated product p-value by Monte Carlo simulation. This is a slow function and not good for actual use, but the program code in the rtp.cpp file demonstrates what rtp p-values are really measuring.
+seed is used to initialize random number generator. If 0, randomly seeded.
 
 ### Reference implementations of p.rtp
 
