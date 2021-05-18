@@ -32,14 +32,15 @@ solved by TFisher function.
 
 **p.rtp(K, p, stepscale = 1)**  
 Rank truncated product p-value by integrand gamma PDF x beta CDF or beta PDF x (1-gamma CDF) and Riemann sum integral over [0, inf) or [0, 1].
-This is a fast, reliable and accurate, enough or more,  function selected from all rtp functions in the R/C++ source code. Parameter stepscale affects the integration step size.
+The second integrand is used for  K / number of all p-values proportion greater than 1/3.
+Parameter stepscale affects the integration step size.
 E.g. stepscale = 0.5 halves the default step size and increases accuracy (which mostly is unnecessary).
 
 **p.rtp.simulated(K, p, rounds = 100000, seed = 0)**  
 Rank truncated product p-value by Monte Carlo simulation. This is a slow function and not good for actual use, but the program code in the rtp.cpp file demonstrates what rtp p-values are really measuring.
 seed is used to initialize random number generator. If 0, randomly seeded.
 
-### Reference implementations of p.rtp
+### Reference implementations of Rank Truncated Product method
 
 **p.rtp.mutoss(K, p)**  
 Rank truncated product p-value from
