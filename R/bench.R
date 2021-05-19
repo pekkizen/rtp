@@ -1,6 +1,6 @@
 
 
-# bench.pvalues(K=10, L=100)
+# bench.pvalues(K=10, L=200)
 bench.pvalues <- function(K, L, small = 1, tau = 0) {
     err <- checkPar(K, L, small)
     if (err != "") {
@@ -18,18 +18,21 @@ bench.pvalues <- function(K, L, small = 1, tau = 0) {
         p.art = p.art(K, p),
         p.tfisher.softR = p.tfisher.softR(tau, p),
         p.tfisher.soft = p.tfisher.soft(tau, p),
-        p.rtp = rtpDgammaRiema(K, p),
+        # p.rtp.dgamma.riema = rtpDgammaRiema(K, p),
+        p.rtp = rtpRiema(K, p),
+
 
         # p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
         # p.rtp.dbeta.riema = rtpDbetaRiema(K, p),
         # p.rtp.dgamma.simp = rtpDgammaSimp(K, p),
-        #  p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
+        # p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
+        fNull = baseNull(1),
         times = 500
     )
     print(res, "us", signif = 3)
 }
 
-# bench.integrands(K=5, L=100)
+# bench.integrands(K=10, L=200)
 # R adds ~1000 ns baseline cost for Rcpp functions, fNull.
 bench.integrands <- function(K, L, small = 1e-1) {
     err <- checkPar(K, L, small)
@@ -51,11 +54,11 @@ bench.integrands <- function(K, L, small = 1e-1) {
         QGamma = fGammaQ(u),
         QGammaR = fGammaQ.R(u, lw, K, L),
         DGamma = fGammaD(g),
-        DGammaR = fGammaD.R(u, lw, K, L),
         DBeta = fBetaD(u),
+        DGammaR = fGammaD.R(g, lw, K, L),
         DBetaR = fBetaD.R(u, lw, K, L),
         fNull = baseNull(u),
-        times = 10000
+        times = 5000
     )
     print(res, unit = "us", signif = 3)
 }
@@ -68,11 +71,11 @@ bench.select <- function(K, L, times = 2000) {
             # p <- sort(p, decreasing = TRUE)
             # p <- sort(p)
         },
-        uniSelect = uniSel(K, p),
+        quickUniSelect = uniSel(K, p),
         simpleSelect = simpleSel(K, p),
         nth_element = nth_element(K, p),
         sort_partial = sort(p, partial = c(1:K)),
-        sortFull = sort(p),
+        sort_full = sort(p),
         fNull = baseNull(1),
         times = times
     )

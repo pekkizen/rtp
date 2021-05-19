@@ -30,7 +30,8 @@ p.art <- function(K, p) {
 
 # p.rtp returns Rank Truncated Product p-value.
 p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    rtpRiema(K, p, tol, stepscale)
+    q <- p
+    rtpRiema(K, q, tol, stepscale)
 }
 
 # Reference integration by library cubature function pcubature.
@@ -44,13 +45,13 @@ p.rtp.dbeta.cuba <- function(K, p) {
     if (K == L) {
         return(p.fisher(p))
     }
-    e <- init(K, p, 1) # cpp
+    e <- init(K, p, 1) # Rcpp
     if (e <= 1) {
         return(e)
     }
-    top <- fBetaDtop() # cpp
+    top <- fBetaDtop() # Rcpp
     tol <- 1e-14
-    I <- cubature::pcubature(fBetaD, 0, top, tol = tol)$integral # fBetaD cpp
+    I <- cubature::pcubature(fBetaD, 0, top, tol = tol)$integral # fBetaD Rcpp
     I + cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 

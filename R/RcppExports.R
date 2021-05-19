@@ -9,16 +9,16 @@ betaCutPoint <- function(k, l) {
     .Call(`_rtp_betaCutPoint`, k, l)
 }
 
-init <- function(k, p, integrand = 0L) {
+init <- function(k, p, integrand = 1L) {
     .Call(`_rtp_init`, k, p, integrand)
-}
-
-hitMiss <- function(reset) {
-    .Call(`_rtp_hitMiss`, reset)
 }
 
 betaSD <- function(a, b) {
     .Call(`_rtp_betaSD`, a, b)
+}
+
+betaMean <- function(a, b) {
+    .Call(`_rtp_betaMean`, a, b)
 }
 
 betaSkewness <- function(a, b) {
