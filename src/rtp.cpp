@@ -76,8 +76,6 @@ static double LBETA; // log(L! / (K! * L-K-1!))
 static double LKF;   // log((K-1)!)
 static double PCUT;
 static int ERR = 0; // yet not used
-static int HIT = 0;
-static int MISS = 0;
 
 #define OK 2
 
@@ -86,8 +84,7 @@ static int MISS = 0;
 // Positive left skewness lifts the right tail off zero.
 //
 // [[Rcpp::export]]
-double
-betaCutPoint(double k, double l) {
+double betaCutPoint(double k, double l) {
     double pcut, dist;
     dist = 7 + fmax(0, 9 * betaSkewness(k + 1, l - k));
     pcut = betaMean(k + 1, l - k) + dist * betaSD(k + 1, l - k);
@@ -97,7 +94,6 @@ betaCutPoint(double k, double l) {
 // rtpStat calculates RPT method test statistic from p-value vector p.
 // U1 x U2 x ... x Un ~ e^-n (not 2^-n) for big n and Ui ~ Unif(0, 1).
 static double rtpStatistic(int k, NumericVector p) {
-    quickUniSelect(k, p);
     double lw = 0;
     for (int i = 0; i < k; i++)
         lw += log(p[i]);
@@ -105,7 +101,7 @@ static double rtpStatistic(int k, NumericVector p) {
 }
 
 // [[Rcpp::export]]
-double init(double k, NumericVector p, int integrand = 0) {
+double init(double k, NumericVector p, int integrand = 1) {
     L = p.size();
     K = k;
     ERR = 0;
@@ -113,7 +109,10 @@ double init(double k, NumericVector p, int integrand = 0) {
     if (K == 1) return sidak(p);
     if (K == L) return fisher(p);
 
-    LW = rtpStatistic(k, p);
+    NumericVector q = clone(p); // we don't want to modify p
+    quickUniSelect(K, q);
+    LW = rtpStatistic(k, q);
+
     if (integrand == 1)
         LBETA = R::lbeta(K + 1, L - K);
     else {
@@ -121,16 +120,6 @@ double init(double k, NumericVector p, int integrand = 0) {
         PCUT = betaCutPoint(K, L);
     }
     return OK;
-}
-
-// [[Rcpp::export]]
-double hitMiss(int reset) {
-    double r = (double)HIT / (HIT + MISS);
-    if (reset > 0) {
-        HIT = 0;
-        MISS = 0;
-    }
-    return r;
 }
 
 // Beta standard deviation.
@@ -147,6 +136,7 @@ inline static double betaMode(double a, double b) {
 }
 
 // betaMean(K+1, L-K) = (K+1) / (L+1).
+// [[Rcpp::export]]
 double betaMean(double a, double b) {
     return a / (a + b);
 }
@@ -163,7 +153,7 @@ inline static double sumRight(double a, double b, double n, double p, double pro
     for (double j = a + 1; j <= b; j++) {
         prob *= p / (1 - p) * (n - j + 1) / j;
         sum += prob;
-        if (prob <= sum * reltol) break;
+        if (prob < sum * reltol) break;
     }
     return sum;
 }
@@ -175,7 +165,7 @@ inline static double sumLeft(double a, double b, double n, double p, double prob
     for (double j = a; j > b; j--) {
         prob *= (1 - p) / p * j / (n - j + 1);
         sum += prob;
-        if (prob <= sum * reltol) break;
+        if (prob < sum * reltol) break;
     }
     return sum;
 }
@@ -188,9 +178,12 @@ inline static double dbinom(double k, double n, double p) {
 
 // Faster binomial survival/ beta CDF (integers) function.
 // survbinom(K, L, b) ~ R::pbeta(b, K + 1, L - K, 1, 0).
-// Absolute difference of the functions is < 3e-14 and
-// relative difference < 2e-11. For k <= 100, n <= 5000,
-// n > 1.5 x k, values > 3e-308  and pcut = 1.
+// Absolute difference of the functions is < 5e-14 and
+// relative difference < 5e-12 for k <= 100, n <= 2000,
+// n > 1.5 x k, values > 3e-308 and pcut = 1.
+// Arithmetic with subnormal doubles is avoided, because of
+// increasing rounding errors. Summing cumulative probability is
+// done from small to big values, if possible (smallest > minNormal).
 // [[Rcpp::export]]
 double survbinom(double k, double n, double p, double pcut) {
     const double minNormal = 0x1p-1022; // min normal double
@@ -199,23 +192,28 @@ double survbinom(double k, double n, double p, double pcut) {
     if (p >= pcut) return 1;
     if (p <= 0) return 0;
 
-    if (k < n * p + 3 * sqrt(n * p * (1 - p))) {
+    double mean = n * p;
+    double sd = sqrt(n * p * (1 - p));
+
+    if (k < mean + 2.5 * sd) { // keep cdf << 1
         prob = exp(n * log(1 - p));
         if (prob > minNormal) {
             return 1 - sumRight(0, k, n, p, prob);
         }
         prob = dbinom(k, n, p);
-        if (prob < minNormal)
+        if (prob < minNormal) {
             return 1;
+        }
         return 1 - sumLeft(k, 0, n, p, prob);
     }
     prob = exp(n * log(p));
-    if (prob > minNormal)
+    if (prob > minNormal) {
         return sumLeft(n, k + 1, n, p, prob);
-
+    }
     prob = dbinom(k + 1, n, p);
-    if (prob < minNormal)
+    if (prob < minNormal) {
         return prob;
+    }
     return sumRight(k + 1, n, n, p, prob);
 }
 
@@ -363,6 +361,7 @@ double rtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double rel
 double rtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
     double h, s;
+
     if ((s = init(k, p, 0)) != OK) return s;
 
     h = cStep * gammaSD(k) * stepscale;
@@ -418,21 +417,45 @@ static double fisher(NumericVector p) {
 }
 
 // rtpSimulated solves rtp p-value by simulation.
-// The idea of using random beta order statistic instead of full generation
-// of all L numbers in each round is from Vsevolozhskaya et al.
+// The idea of using random Beta order statistic instead of the laborious
+// full generation of all L numbers in each round is from Vsevolozhskaya et al.
+//
+// Here p-values are assumed indpendant and null hypotheses is, that
+// they are Uni(0, 1) distributed.
+//
+// w = p1 x ... x pk is the test statistic from the given p-values.
+//
+// The k+1'th order statistic U(k+1) is defined here as the k+1'th smallest
+// of l random Uni(0, 1) numbers. U(k+1) is disributed Beta(k+1, l-k).
+//
+// uk1 is an instance of U(k+1) drawn from Beta(k+1, l-k) distribution.
+// wr = u1 x uk1, ... uk x uk1, where ui are drawn from Uni(0, 1),
+// is a random sample product of k smallest of L Unif(0, 1) numbers.
+// wr is a random test statistic under the null hypotheses.
+//
+// The simulation generates wr products and calculates proportion
+// count(wr < w) / simulation rounds, which converges to the RTP p-value
+// P(U(1) x ... x U(k) < p1 x... x pk). This is the probability, that
+// the product of k smallest of L Uni(0, 1) numbers is less than p1 x ... x pk.
+// For k = 1 this gives P(U(1) < p1) = p1.
+//
 // [[Rcpp::export]]
 double rtpSimulated(double k, NumericVector p, int rounds) {
-    double l = p.size();
-    double w = exp(rtpStatistic(k, p)); // w = p1 x p2 x .. x pk
-    double pk1, ws, less = 0;
+    double uk1, wr, less = 0, w = 1;
+    quickUniSelect(k, p); // swaps k smallest to p[0, .. p[k-1]]
 
+    for (int j = 0; j < k; j++) {
+        w *= p[j]; // test statistic
+    }
+
+    double l = p.size();
     for (int i = 1; i < rounds; i++) {
-        pk1 = R::rbeta(k + 1, l - k); // beta sampled p(k+1) order statistic
-        ws = 1;
+        uk1 = R::rbeta(k + 1, l - k);
+        wr = 1;
         for (int j = 0; j < k; j++) {
-            ws *= R::unif_rand() * pk1; // ws = u1 x u2 x ...x uk, ui ~ Unif(0, pk1)
+            wr *= R::unif_rand() * uk1; // random test statistic
         }
-        if (ws < w) less++;
+        if (wr < w) less++;
     }
     return less / rounds;
 }

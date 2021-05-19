@@ -41,17 +41,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// hitMiss
-double hitMiss(int reset);
-RcppExport SEXP _rtp_hitMiss(SEXP resetSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type reset(resetSEXP);
-    rcpp_result_gen = Rcpp::wrap(hitMiss(reset));
-    return rcpp_result_gen;
-END_RCPP
-}
 // betaSD
 double betaSD(double a, double b);
 RcppExport SEXP _rtp_betaSD(SEXP aSEXP, SEXP bSEXP) {
@@ -61,6 +50,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type a(aSEXP);
     Rcpp::traits::input_parameter< double >::type b(bSEXP);
     rcpp_result_gen = Rcpp::wrap(betaSD(a, b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// betaMean
+double betaMean(double a, double b);
+RcppExport SEXP _rtp_betaMean(SEXP aSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(betaMean(a, b));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -306,8 +307,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_betaCutPoint", (DL_FUNC) &_rtp_betaCutPoint, 2},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
-    {"_rtp_hitMiss", (DL_FUNC) &_rtp_hitMiss, 1},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
+    {"_rtp_betaMean", (DL_FUNC) &_rtp_betaMean, 2},
     {"_rtp_betaSkewness", (DL_FUNC) &_rtp_betaSkewness, 2},
     {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 4},
     {"_rtp_survgamma", (DL_FUNC) &_rtp_survgamma, 2},

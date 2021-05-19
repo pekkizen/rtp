@@ -86,21 +86,23 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
     }
 }
 
-// selectUnif picks k smallest numbers in p and swaps
+// quickUniSelect picks k smallest numbers in p and swaps
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
-// The k'th smallest of n unif(0, 1) numbers ~Beta(k, n-k+1).
+// The k'th smallest of n unif(0, 1) numbers is distributedmBeta(k, n - k + 1).
+// [[Rcpp::export]]
 void quickUniSelect(int k, NumericVector p) {
+    const double dist = 1;
     int n = p.size();
     if (k <= 0 || k >= n) return;
 
-    if (n < 25 || k < 6 || n - k < 6) {
+    if (n <= 25 || k <= 5 || n - k <= 5) {
         select(k, 0, n - 1, p);
         return;
     }
     double SD = betaSD(k, n + 1 - k);
     double mean = betaMean(k, n + 1 - k);
-    double pivot = mean + 1 * SD; // 1 is a "parameter"
+    double pivot = mean + dist * SD;
 
     int pi, lo = 0, hi = n - 1;
 
@@ -138,6 +140,7 @@ void quickUniSelect(int k, NumericVector p) {
         lo = pi + 1;
     }
     select(k, lo, hi, p);
+    return;
 
     // Make nth element algorithm's compatible
     // selectBig(1, 0, k - 1, p); // k'th smallest to p[k-1]
@@ -147,15 +150,15 @@ void quickUniSelect(int k, NumericVector p) {
 // [[Rcpp::export]]
 int uniSel(int k, NumericVector p) {
     quickUniSelect(k, p);
-    return k;
+    return 1;
 }
 // [[Rcpp::export]]
 int simpleSel(int k, NumericVector p) {
     select(k, 0, p.size() - 1, p);
-    return k;
+    return 1;
 }
 // [[Rcpp::export]]
 int nth_element(int k, NumericVector p) {
     std::nth_element(p.begin(), p.begin() + k, p.end());
-    return k;
+    return 1;
 }
