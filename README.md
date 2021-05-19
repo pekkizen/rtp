@@ -8,9 +8,9 @@ Methods for combining p-values.
 | Parameters |                                     |
 |-----------|----------------------------------------|
 |p          |Vector of p-values.                      |
-|K          |Number of smallest p-values in RTP 
+|K          |Number of smallest p-values in RTP
 |tau        |Threshold p-value for TFisher methods.  |
-|stepscale  |Multiplier for default integration      |  
+|stepscale  |Multiplier for default integration step size,    |  
 |           |                                     |
 
 **p.fisher(p)**  
