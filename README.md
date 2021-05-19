@@ -8,13 +8,10 @@ Methods for combining p-values.
 | Parameters |                                     |
 |-----------|----------------------------------------|
 |p          |Vector of p-values.                      |
-|K          |Number of smallest p-values in RTP functions. |
+|K          |Number of smallest p-values in RTP 
 |tau        |Threshold p-value for TFisher methods.  |
-|stepscale  |Multiplier for default integration stepsize. |  
+|stepscale  |Multiplier for default integration      |  
 |           |                                     |
-
-All C++ based functions modify vector p by changing
-order of the elements.
 
 **p.fisher(p)**  
 Standard Fisher's method using all p-values.  
