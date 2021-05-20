@@ -298,12 +298,17 @@ plot.GammaDist <- function(K) {
 
 # plot.BetaDist(5, 10)
 plot.BetaDist <- function(K, L) {
+    betaSkewness <- function(a, b) {
+        2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b))
+    }
     plim <- betaCutPoint(K, L)
-    xmax <- min(1, plim + 5 * betaSD(K + 1, L - K))
-    prob <- pbeta(plim, K + 1, L - K, lower.tail = FALSE)
-    bhight <- dbeta(K / (L - 1), K + 1, L - K)
-    mean <- (K + 1) / (L + 1)
     sd <- betaSD(K + 1, L - K)
+    xmax <- min(1, plim + 5 * sd)
+    bprob <- pbeta(plim, K + 1, L - K, lower.tail = F)
+    mean <- (K + 1) / (L + 1)
+    skew <- betaSkewness(K + 1, L - K)
+    nprob <- pnorm(plim, mean, sd, lower.tail = F)
+    bhight <- dbeta(K / (L - 1), K + 1, L - K)
     nhight <- dnorm(mean, mean, sd)
     hight <- max(bhight, nhight)
 
@@ -321,19 +326,23 @@ plot.BetaDist <- function(K, L) {
             "Norm(betaMean, betaSD) PDF (blue)",
             paste(
                 " K = ", format(K, digits = 5),
-                ",  L = ", format(L, digits = 5),
-                ",  mean = ", format(mean, digits = 3)
+                ",  L = ", format(L, digits = 5)
+                # ",  mean = ", format(mean, digits = 3)
             )
         ),
         xlab = c(
             paste(
-                "Beta right tail probability from ", format(plim, digits = 2), "=",
-                format(prob, digits = 2)
+                "Beta/Norm right tail probability from ", format(plim, digits = 3), "=",
+                format(bprob, digits = 2), "/", format(nprob, digits = 2)
+            ),
+            paste(
+                "mean =", format(mean, digits = 2),
+                " SD =", format(sd, digits = 2),
+                " skewness =", format(skew, digits = 2)
             )
         ),
     )
     axis(1, at = pretty(c(0, xmax)))
-
     axis(2, at = pretty(c(0, hight)), col.axis = "darkgreen")
 
     par(new = TRUE)
@@ -343,7 +352,6 @@ plot.BetaDist <- function(K, L) {
         xlab = "", ylab = "",
         yaxt = "n", xaxt = "n", axes = FALSE,
     )
-
     par(new = TRUE)
     plot(f1,
         type = "l", lwd = 1, col = "red",
@@ -352,7 +360,6 @@ plot.BetaDist <- function(K, L) {
         yaxt = "n", xaxt = "n", axes = FALSE,
     )
     axis(4, at = c(0, 0.5, 1), col.axis = "red")
-
 
     abline(h = 1, lty = 2, col = "#615959", lwd = 0.25)
     abline(v = plim, lty = 2, col = "#615959", lwd = 0.5)

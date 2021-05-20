@@ -28,12 +28,6 @@ p.art <- function(K, p) {
     1 - pgamma(ak, shape = K + d - 1)
 }
 
-# p.rtp returns Rank Truncated Product p-value.
-p.rtp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    q <- p
-    rtpRiema(K, q, tol, stepscale)
-}
-
 # Reference integration by library cubature function pcubature.
 # The integration is divided into two parts at the approx.
 # highest point of the integrand fBetaD.
@@ -55,27 +49,6 @@ p.rtp.dbeta.cuba <- function(K, p) {
     I + cubature::pcubature(fBetaD, top, 1, tol = tol)$integral
 }
 
-# RPT p-value by Beta density and adaptive Simpson's 1/3 rule.
-p.rtp.dbeta.asimp <- function(K, p, abstol = 1e-8, reltol = 1e-4) {
-    rtpDbetaAsimp(K, p, abstol, reltol)
-}
-
-# RPT p-value by Beta density and Riemann sum integral.
-p.rtp.dbeta.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    rtpDbetaRiema(K, p, tol, stepscale)
-}
-
-# RPT p-value by Gamma density and fixed step Simpson's 1/3 rule.
-p.rtp.dgamma.simp <- function(K, p, tol = 1e-10, stepscale = 1) {
-    rtpDgammaSimp(K, p, tol, stepscale)
-}
-
-# RPT p-value by Gamma density and Riemann sum integral.
-p.rtp.dgamma.riema <- function(K, p, tol = 1e-10, stepscale = 1) {
-    rtpDgammaRiema(K, p, tol, stepscale)
-}
-
-# stat.rpt returns RPT method test statistic.
 stat.rtp <- function(K, p) {
     sum(log(sort(p, partial = c(1:K))[1:K]))
 }
@@ -86,12 +59,7 @@ p.rtp.qbeta <- function(K, p, abstol = 1e-6, reltol = 1e-3) {
     L <- length(p)
     lw <- stat.rtp(K, p)
     f <- function(u) fBetaQ.R(u, lw, K, L)
-
     integrate(f, 0, 1, abs.tol = abstol, rel.tol = reltol)$value
-}
-
-beta.skewness <- function(a, b) {
-    2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b))
 }
 
 # RPT p-value by simulation.
