@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 
 // tfisher implements R function p.tfisher in Zhang et al.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "p.tfisher")]]
 double tfisher(double lw, double L, double tau1, double tau2, double tol = 1e-16) {
     double lqTau, p, probBin, deltaP, survG;
     double prod = 0, cumP = 0;

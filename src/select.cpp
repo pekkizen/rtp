@@ -8,26 +8,35 @@ double betaMean(double a, double b);
 // of n uniform(0, 1) numbers. Functions implements what is known
 // as the Nth Element Algorith.
 
+inline static int indexOfMax(int lo, int hi, NumericVector p) {
+    int imax = lo;
+    for (int j = lo + 1; j <= hi; j++)
+        if (p[imax] < p[j]) imax = j;
+    return imax;
+}
+
+inline static int indexOfMin(int lo, int hi, NumericVector p) {
+    int imin = lo;
+    for (int j = lo + 1; j <= hi; j++)
+        if (p[imin] > p[j]) imin = j;
+    return imin;
+}
+
 // selectSmall swaps k smallest values in range p[lo], ..., p[hi]
 // to the beginning of the range: p[lo], ..., p[lo+k-1].
 // For fixed (small) k and large n this is O(n) ~ n x compare.
-static void selectSmall(int k, int lo, int hi, NumericVector p) {
+static void selectSmalls(int k, int lo, int hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
-    int imax = lo;
-    k += lo;
-    for (int j = lo + 1; j < k; j++)
-        if (p[imax] < p[j]) imax = j;
+    int lohi = lo + k - 1;
+    int imax = indexOfMax(lo, lohi, p);
     double pmax = p[imax];
 
-    for (int i = k; i <= hi; i++) {
+    for (int i = lohi + 1; i <= hi; i++) {
         if (pmax > p[i]) {
             p[imax] = p[i];
             p[i] = pmax;
-
-            imax = lo;
-            for (int j = lo + 1; j < k; j++)
-                if (p[imax] < p[j]) imax = j;
+            imax = indexOfMax(lo, lohi, p);
             pmax = p[imax];
         }
     }
@@ -35,23 +44,18 @@ static void selectSmall(int k, int lo, int hi, NumericVector p) {
 
 // selectBig swaps k biggest values in range p[lo], ..., p[hi]
 // to the end of the range: p[hi-k+1], ..., p[hi].
-static void selectBig(int k, int lo, int hi, NumericVector p) {
+static void selectBigs(int k, int lo, int hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
     int hilo = hi - k + 1;
-    int imin = hilo;
-    for (int j = hilo + 1; j <= hi; j++)
-        if (p[imin] > p[j]) imin = j;
+    int imin = indexOfMin(hilo, hi, p);
     double pmin = p[imin];
 
     for (int i = lo; i < hilo; i++) {
         if (pmin < p[i]) {
             p[imin] = p[i];
             p[i] = pmin;
-
-            imin = hilo;
-            for (int j = hilo + 1; j <= hi; j++)
-                if (p[imin] > p[j]) imin = j;
+            imin = indexOfMin(hilo, hi, p);
             pmin = p[imin];
         }
     }
@@ -60,9 +64,9 @@ static void selectBig(int k, int lo, int hi, NumericVector p) {
 static void select(int k, int lo, int hi, NumericVector p) {
     int b = hi - lo + 1 - k;
     if (b < k)
-        selectBig(b, lo, hi, p);
+        selectBigs(b, lo, hi, p);
     else
-        selectSmall(k, lo, hi, p);
+        selectSmalls(k, lo, hi, p);
 }
 
 // Hoare's quicksort partition with external pivot value.
@@ -91,6 +95,7 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
 // This is very efficient if numbers are near unif(0, 1) distributed.
 // The k'th smallest of n unif(0, 1) numbers is distributedmBeta(k, n - k + 1).
 // [[Rcpp::export]]
+
 void quickUniSelect(int k, NumericVector p) {
     const double dist = 1;
     int n = p.size();
@@ -108,16 +113,18 @@ void quickUniSelect(int k, NumericVector p) {
 
     pi = partition(0, hi, pivot, p);
 
-    if (pi <= 0 || pi >= hi) {
-        select(k, 0, hi, p);
+    if (pi <= 0 || pi >= hi) { // p is not Unif(0, 1)
+        std::nth_element(p.begin(), p.begin() + k, p.end());
         return;
     }
     int i = pi + 1;
-    if (i >= k)
+    if (i == k)
+        return;
+    if (i > k)
         hi = pi;
     else {
-        lo = i;
         k -= i;
+        lo = i;
     }
     if (abs(i - lo - k) <= 3) { // partition missed 3 or less numbers
         select(k, lo, hi, p);

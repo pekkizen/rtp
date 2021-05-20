@@ -60,13 +60,7 @@ static double fisher(NumericVector p);
 static double sidak(NumericVector p);
 double betaMean(double a, double b);
 double betaSD(double a, double b);
-double betaSkewness(double a, double b);
-
-// Benchmark baseline function
-// [[Rcpp::export]]
-double baseNull(double x) {
-    return x;
-}
+inline static double betaSkewness(double a, double b);
 
 // Global "constants" in integration
 static double K;     // rank, number of smallest
@@ -123,7 +117,7 @@ double init(double k, NumericVector p, int integrand = 1) {
 }
 
 // Beta standard deviation.
-// betaSD(K+1, L-K) ~ sqrt(K) / L, for small K/L.
+// betaSD(K+1, L-K) ~ sqrt(K+0.5) / L, for small K/L.
 // [[Rcpp::export]]
 double betaSD(double a, double b) {
     double c = a + b;
@@ -141,12 +135,11 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-// [[Rcpp::export]]
-double betaSkewness(double a, double b) {
+inline static double betaSkewness(double a, double b) {
     return 2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b));
 }
 
-// sumRight sums bin(n, p) probabilities from a to b. prob must be dbinom(a, n, p).
+// sumRight sums bin(n, p) probabilities from a to b. prob is dbinom(a, n, p).
 inline static double sumRight(double a, double b, double n, double p, double prob) {
     const double reltol = 1e-12;
     double sum = prob;
@@ -195,7 +188,7 @@ double survbinom(double k, double n, double p, double pcut) {
     double mean = n * p;
     double sd = sqrt(n * p * (1 - p));
 
-    if (k < mean + 2.5 * sd) { // keep cdf << 1
+    if (k < mean + 2.5 * sd) { // keep sum << 1
         prob = exp(n * log(1 - p));
         if (prob > minNormal) {
             return 1 - sumRight(0, k, n, p, prob);
@@ -320,7 +313,7 @@ double fBetaDtop() {
 }
 
 // rtpDbetaRiema integrates fBetaD from 0 to 1 by Riemann sum integral.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "p.rtp.dbeta.riema")]]
 double rtpDbetaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 0.75;
     double h, s, l;
@@ -335,7 +328,7 @@ double rtpDbetaRiema(double k, NumericVector p, double tol = 1e-10, double steps
 }
 
 // rtpDbetaAsimp integrates fBetaD from 0 to 1 by adaptive Simpson's 1/3 rule.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "p.rtp.dbeta.asimp")]]
 double rtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double reltol = 1e-3) {
     const double depth = 25;
     double top, fa, fm, fb, I, s;
@@ -357,7 +350,7 @@ double rtpDbetaAsimp(double k, NumericVector p, double abstol = 1e-7, double rel
 
 // rtpDgammaRiema integrates fGammaD from 0 to inf by Riemann sum integral.
 // For k = 10 this needs < 10 integrand function evaluations.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "p.rtp.dgamma.riema")]]
 double rtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     const double cStep = 1.25;
     double h, s;
@@ -366,6 +359,11 @@ double rtpDgammaRiema(double k, NumericVector p, double tol = 1e-10, double step
 
     h = cStep * gammaSD(k) * stepscale;
 
+    if (stepscale < 1 && fabs(tol - 1e-10) < 1e-15) {
+        stepscale *= stepscale;
+        tol *= stepscale * stepscale;
+        tol = fmax(1e-15, tol);
+    }
     return riemann(&fGammaD, 0, h, tol);
 }
 
@@ -384,7 +382,7 @@ double rtpDgammaSimp(double k, NumericVector p, double tol = 1e-10, double steps
 // rtpRiema uses rtpDgammaRiema for K < L / 6 and
 // rtpDbetaRiema for bigger K's. This gives good
 // all over accuracy.
-// [[Rcpp::export]]
+// [[Rcpp::export(name = "p.rtp")]]
 double rtpRiema(double k, NumericVector p, double tol = 1e-10, double stepscale = 1) {
     double l = p.size();
     if (k / l > 1.0 / 3.0)
@@ -416,6 +414,19 @@ static double fisher(NumericVector p) {
     return R::pgamma(-lw, l, 1, 0, 0);
 }
 
+// #include <stdint.h>
+// #define MWC_A1 0xff3a275c007b8ee6
+
+// /* The state must be initialized so that 0 < c < MWC_A1 - 1. */
+// static uint64_t x, c = 0x83b5b142866da9d5;
+
+// inline double randunif() {
+//     const __uint128_t t = MWC_A1 * (__uint128_t)x + c;
+//     c = t >> 64;
+//     x = t;
+//     return (x >> 11) * 0x1p-53;
+// }
+
 // rtpSimulated solves rtp p-value by simulation.
 // The idea of using random Beta order statistic instead of the laborious
 // full generation of all L numbers in each round is from Vsevolozhskaya et al.
@@ -440,9 +451,10 @@ static double fisher(NumericVector p) {
 // For k = 1 this gives P(U(1) < p1) = p1.
 //
 // [[Rcpp::export]]
-double rtpSimulated(double k, NumericVector p, int rounds) {
+double rtpSimulated(double k, NumericVector q, int rounds) {
     double uk1, wr, less = 0, w = 1;
-    quickUniSelect(k, p); // swaps k smallest to p[0, .. p[k-1]]
+    NumericVector p = clone(q);
+    quickUniSelect(k, p); // swaps k smallest p[i] to p[0, .. p[k-1]]
 
     for (int j = 0; j < k; j++) {
         w *= p[j]; // test statistic
@@ -458,4 +470,10 @@ double rtpSimulated(double k, NumericVector p, int rounds) {
         if (wr < w) less++;
     }
     return less / rounds;
+}
+
+// Benchmark baseline function
+// [[Rcpp::export]]
+double baseNull(double x) {
+    return x;
 }
