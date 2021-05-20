@@ -18,12 +18,12 @@ bench.pvalues <- function(K, L, small = 1, tau = 0) {
         p.art = p.art(K, p),
         p.tfisher.softR = p.tfisher.softR(tau, p),
         p.tfisher.soft = p.tfisher.soft(tau, p),
-        # p.rtp.dgamma.riema = rtpDgammaRiema(K, p),
-        p.rtp = rtpRiema(K, p),
+        # p.rtp.dbeta.riema = p.rtp.dbeta.riema(K, p),
+        # p.rtp.dgamma.riema = p.rtp.dgamma.riema(K, p),
 
-
+        p.rtp = p.rtp(K, p),
+        # p.rtp.simulated = p.rtp.simulated(K, p, rounds = 100000),
         # p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
-        # p.rtp.dbeta.riema = rtpDbetaRiema(K, p),
         # p.rtp.dgamma.simp = rtpDgammaSimp(K, p),
         # p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
         fNull = baseNull(1),
@@ -40,7 +40,7 @@ bench.integrands <- function(K, L, small = 1e-1) {
         return(err)
     }
     p <- c(small, runif(L - 1))
-    lw <- stat.rtp(K, p)
+    lw <- sum(log(sort(p, partial = c(1:K))[1:K]))
     init(K, p, 0)
     init(K, p, 1)
 
@@ -53,10 +53,10 @@ bench.integrands <- function(K, L, small = 1e-1) {
         QbetaR = fBetaQ.R(u, lw, K, L),
         QGamma = fGammaQ(u),
         QGammaR = fGammaQ.R(u, lw, K, L),
-        DGamma = fGammaD(g),
-        DBeta = fBetaD(u),
         DGammaR = fGammaD.R(g, lw, K, L),
         DBetaR = fBetaD.R(u, lw, K, L),
+        DGamma = fGammaD(g),
+        DBeta = fBetaD(u),
         fNull = baseNull(u),
         times = 5000
     )
