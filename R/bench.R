@@ -40,7 +40,7 @@ bench.integrands <- function(K, L, small = 1e-1) {
         return(err)
     }
     p <- c(small, runif(L - 1))
-    lw <- sum(log(sort(p, partial = c(1:K))[1:K]))
+    lw <- stat.rtp(K, p)
     init(K, p, 0)
     init(K, p, 1)
 
