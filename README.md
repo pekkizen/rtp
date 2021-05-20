@@ -7,10 +7,10 @@ Methods for combining p-values.
 
 | Parameters |                                     |
 |-----------|----------------------------------------|
-|p          |Vector of p-values.                      |
+|p          |Vector of p-values                      |
 |K          |Number of smallest p-values in RTP
-|tau        |Threshold p-value for TFisher methods.  |
-|stepscale  |Multiplier for default integration step size,    |  
+|tau        |Threshold p-value for TFisher methods  |
+|stepscale  |Multiplier for default integration step size    |  
 |           |                                     |
 
 **p.fisher(p)**  
@@ -34,7 +34,9 @@ Parameter stepscale affects the integration step size.
 E.g. stepscale = 0.5 halves the default step size and increases accuracy (which mostly is unnecessary).
 
 **p.rtp.simulated(K, p, rounds = 100000, seed = 0)**  
-Rank truncated product p-value by Monte Carlo simulation. This is a slow function and not good for actual use, but the program code in the rtp.cpp file demonstrates what rtp p-values are really measuring.
+Rank truncated product p-value by Monte Carlo simulation. This is a slow function and not good for actual use, but the program code in
+function rtpSimulated in
+the rtp.cpp file demonstrates what rtp p-values are really measuring.
 seed is used to initialize random number generator. If 0, randomly seeded.
 
 ### Reference implementations of Rank Truncated Product method
@@ -87,7 +89,7 @@ p.fisher(p)
 pvalues.methods(K = 10, L = 200, small = 1e-7)
 
 # Comparing accuracy of the rtp functions
-pvalues.rtp(K=10, L=200, small=1e-6, seed=0)
+pvalues.rtp(K=10, L=200, small=1e-8, seed=0)
 
 # The four integrand functions can be examined by
 plot.quantile.integrands(K = 10, L = 200, small = 1e-1)
