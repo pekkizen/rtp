@@ -37,7 +37,7 @@ E.g. stepscale = 0.5 halves the default step size and increases accuracy (which 
 Rank truncated product p-value by Monte Carlo simulation. This is a slow function and not good for actual use, but the program code in
 function rtpSimulated in
 the rtp.cpp file demonstrates what rtp p-values are really measuring.
-seed is used to initialize random number generator. If 0, randomly seeded.
+Parameter seed is used to initialize random number generator. If 0, randomly seeded.
 
 ### Reference implementations of Rank Truncated Product method
 
@@ -85,18 +85,19 @@ p.tfisher.soft(tau, p)
 p.tfisher.tpm(tau, p)
 p.fisher(p)
 
-# Comparing methods has also a dedicated function
+# Comparing methods has also a dedicated function.
 pvalues.methods(K = 10, L = 200, small = 1e-7)
 
-# Comparing accuracy of the rtp functions
-pvalues.rtp(K=10, L=200, small=1e-8, seed=0)
+# Comparing accuracy of the rtp functions.
+# rounds are for p.rtp.simulated.
+pvalues.rtp(K=10, L=200, small=1e-8, seed=0, rounds=100000)
 
 # The four integrand functions can be examined by
 plot.quantile.integrands(K = 10, L = 200, small = 1e-1)
 plot.BxG.integrand(K = 10, L = 200, small = 1e-3)
 plot.GxB.integrand(K = 10, L = 200, small = 1e-3)
 
-# Integrand and p-value functions benchmarks
+# Integrand and p-value functions benchmarks.
 bench.integrands(K = 10, L = 200, small = 1e-5)
 bench.pvalues(K = 10, L = 200, small = 1e-5)
 ```
