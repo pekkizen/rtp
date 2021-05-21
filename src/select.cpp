@@ -9,16 +9,16 @@ double betaMean(double a, double b);
 // of n uniform(0, 1) numbers. Functions implements what is known
 // as the Nth Element Algorith.
 
-inline static int indexOfMax(int lo, int hi, NumericVector p) {
-    int imax = lo;
-    for (int j = lo + 1; j <= hi; j++)
+inline static long indexOfMax(long lo, long hi, NumericVector p) {
+    long imax = lo;
+    for (long j = lo + 1; j <= hi; j++)
         if (p[imax] < p[j]) imax = j;
     return imax;
 }
 
-inline static int indexOfMin(int lo, int hi, NumericVector p) {
-    int imin = lo;
-    for (int j = lo + 1; j <= hi; j++)
+inline static long indexOfMin(long lo, long hi, NumericVector p) {
+    long imin = lo;
+    for (long j = lo + 1; j <= hi; j++)
         if (p[imin] > p[j]) imin = j;
     return imin;
 }
@@ -26,14 +26,14 @@ inline static int indexOfMin(int lo, int hi, NumericVector p) {
 // selectSmall swaps k smallest values in range p[lo], ..., p[hi]
 // to the beginning of the range: p[lo], ..., p[lo+k-1].
 // For fixed (small) k and large n this is O(n) ~ n x compare.
-static void selectSmalls(int k, int lo, int hi, NumericVector p) {
+static void selectSmalls(long k, long lo, long hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
-    int lohi = lo + k - 1;
-    int imax = indexOfMax(lo, lohi, p);
+    long lohi = lo + k - 1;
+    long imax = indexOfMax(lo, lohi, p);
     double pmax = p[imax];
 
-    for (int i = lohi + 1; i <= hi; i++) {
+    for (long i = lohi + 1; i <= hi; i++) {
         if (pmax > p[i]) {
             p[imax] = p[i];
             p[i] = pmax;
@@ -45,14 +45,14 @@ static void selectSmalls(int k, int lo, int hi, NumericVector p) {
 
 // selectBig swaps k biggest values in range p[lo], ..., p[hi]
 // to the end of the range: p[hi-k+1], ..., p[hi].
-static void selectBigs(int k, int lo, int hi, NumericVector p) {
+static void selectBigs(long k, long lo, long hi, NumericVector p) {
     if (k <= 0 || k >= hi - lo + 1) return;
 
-    int hilo = hi - k + 1;
-    int imin = indexOfMin(hilo, hi, p);
+    long hilo = hi - k + 1;
+    long imin = indexOfMin(hilo, hi, p);
     double pmin = p[imin];
 
-    for (int i = lo; i < hilo; i++) {
+    for (long i = lo; i < hilo; i++) {
         if (pmin < p[i]) {
             p[imin] = p[i];
             p[i] = pmin;
@@ -62,8 +62,8 @@ static void selectBigs(int k, int lo, int hi, NumericVector p) {
     }
 }
 
-static void select(int k, int lo, int hi, NumericVector p) {
-    int b = hi - lo + 1 - k;
+static void select(long k, long lo, long hi, NumericVector p) {
+    long b = hi - lo + 1 - k;
     if (b < k)
         selectBigs(b, lo, hi, p);
     else
@@ -74,8 +74,8 @@ static void select(int k, int lo, int hi, NumericVector p) {
 // partition returns index j and permutation of p for which
 // i <= j -> p[i] <= pivot  and i > j -> p[i] > pivot.
 // If j = lo, p[lo] can be > pivot for too small pivot.
-static int partition(int lo, int hi, double pivot, NumericVector p) {
-    int i = lo - 1, j = hi + 1;
+static long partition(long lo, long hi, double pivot, NumericVector p) {
+    long i = lo - 1, j = hi + 1;
 
     while (true) {
 
@@ -95,9 +95,9 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
 // The k'th smallest of n unif(0, 1) numbers is distributedmBeta(k, n - k + 1).
-void quickUniSelect(int k, NumericVector p) {
+void quickUniSelect(long k, NumericVector p) {
     const double dist = 1;
-    int n = p.size();
+    long n = p.size();
     if (k <= 0 || k >= n) return;
 
     if (n <= 25 || k <= 5 || n - k <= 5) {
@@ -108,15 +108,14 @@ void quickUniSelect(int k, NumericVector p) {
     double mean = betaMean(k, n + 1 - k);
     double pivot = mean + dist * SD;
 
-    int pi, lo = 0, hi = n - 1;
-
+    long pi, lo = 0, hi = n - 1;
     pi = partition(0, hi, pivot, p);
 
     if (pi <= 0 || pi >= hi) { // p is not Unif(0, 1)
         std::nth_element(p.begin(), p.begin() + k, p.end());
         return;
     }
-    int i = pi + 1;
+    long i = pi + 1;
     if (i == k)
         return;
     if (i > k)
@@ -154,17 +153,17 @@ void quickUniSelect(int k, NumericVector p) {
 
 // For bechmarks only
 // [[Rcpp::export]]
-int uniSel(int k, NumericVector p) {
+long uniSel(long k, NumericVector p) {
     quickUniSelect(k, p);
     return 1;
 }
 // [[Rcpp::export]]
-int simpleSel(int k, NumericVector p) {
+long simpleSel(long k, NumericVector p) {
     select(k, 0, p.size() - 1, p);
     return 1;
 }
 // [[Rcpp::export]]
-int nth_element(int k, NumericVector p) {
+long nth_element(long k, NumericVector p) {
     std::nth_element(p.begin(), p.begin() + k, p.end());
     return 1;
 }

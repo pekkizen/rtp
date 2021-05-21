@@ -49,7 +49,7 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
 */
 #include <Rcpp.h>
 using namespace Rcpp;
-#include "fundec.hpp"
+#include "fundec.h"
 
 // Global "constants" in integration
 static double K;     // rank, number of smallest
@@ -70,7 +70,9 @@ double baseNull(double x) {
 
 // betaCutPoint returns limit for which
 // 1 - pbeta(x, K+1, L-K) < ~1e-12, when x > limit.
-// Positive left skewness lifts the right tail off zero.
+// Leaning left (positive left skewness) lifts the right
+// leg/tail off the ground and we must go further right
+// to get near zero.
 //
 // [[Rcpp::export]]
 double betaCutPoint(double k, double l) {
@@ -81,9 +83,9 @@ double betaCutPoint(double k, double l) {
 }
 
 // rtpStat calculates RPT method test statistic from p-value vector p.
-static double rtpStatistic(int k, NumericVector p) {
+static double rtpStatistic(long k, NumericVector p) {
     double lw = 0;
-    for (int i = 0; i < k; i++)
+    for (long i = 0; i < k; i++)
         lw += log(p[i]);
     return lw;
 }
@@ -388,10 +390,10 @@ double rtpRiema(double k, NumericVector p, double tol = 1e-10, double stepscale 
 // more p-values = minimum observed p-value.
 // RTP for K == 1.
 double sidak(NumericVector p) {
-    int l = p.size();
+    long l = p.size();
     double pmin = p[0];
 
-    for (int i = 1; i < l; i++)
+    for (long i = 1; i < l; i++)
         if (pmin > p[i]) pmin = p[i];
 
     return R::pbinom(0, l, pmin, 0, 0); // rigth tail
@@ -401,11 +403,18 @@ double sidak(NumericVector p) {
 // Standard Fisher's method using all p-values.
 // Solved by Gamma distribution. RTP for K == L.
 double fisher(NumericVector p) {
-    int l = p.size();
+    long l = p.size();
     double lw = 0;
-    for (int i = 0; i < l; i++)
+    for (long i = 0; i < l; i++)
         lw += log(p[i]);
     return R::pgamma(-lw, l, 1, 0, 0);
+}
+
+inline static double randomBeta(double a, double b) {
+    return R::rbeta(a, b);
+}
+inline static double randomDouble() {
+    return R::unif_rand();
 }
 
 // rtpSimulated solves rtp p-value by Monte Carlo simulation.
@@ -436,23 +445,23 @@ double fisher(NumericVector p) {
 // solutions and we need numerical integration over continuos interval.
 //
 // [[Rcpp::export]]
-double rtpSimulated(double k, NumericVector q, int rounds) {
+double rtpSimulated(double k, NumericVector q, long rounds) {
     double uk1, wr, rj, l, less, w;
     NumericVector p = clone(q);
-    quickUniSelect(k, p); // swaps k smallest p[i] to p[0, .. p[k-1]].
+    quickUniSelect(k, p); // swaps k smallest p[i] to p[0], .. p[k-1]].
 
     w = 1;
-    for (int j = 0; j < k; j++)
+    for (long j = 0; j < k; j++)
         w *= p[j]; // Test statistic from p-values.
 
     l = p.size();
     less = 0;
-    for (int i = 1; i < rounds; i++) {
-        uk1 = R::rbeta(k + 1, l - k); // uk1 is a random draw from Beta(k+1, l-k).
-                                      // Simulated k+1'th smallest of l numbers.
+    for (long i = 1; i < rounds; i++) {
+        uk1 = randomBeta(k + 1, l - k); // uk1 is a random draw from Beta(k+1, l-k).
+                                        // Simulated k+1'th smallest of l numbers.
         wr = 1;
-        for (int j = 0; j < k; j++) {
-            rj = R::unif_rand() * uk1; // Simulated p(1), ... p(k).
+        for (long j = 0; j < k; j++) {
+            rj = randomDouble() * uk1; // Simulated p(1), ... p(k) ~Unif(0, uk1).
             wr *= rj;                  // Simulated random test statistic.
         }
         if (wr < w) less++;
