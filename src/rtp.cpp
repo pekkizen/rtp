@@ -73,6 +73,12 @@ static int ERR = 0; // yet not used
 
 #define OK 2
 
+// Benchmark baseline function
+// [[Rcpp::export]]
+double baseNull(double x) {
+    return x;
+}
+
 // betaCutPoint returns limit for which
 // 1 - pbeta(x, K+1, L-K) < ~1e-12, when x > limit.
 // Positive left skewness lifts the right tail off zero.
@@ -452,28 +458,23 @@ static double fisher(NumericVector p) {
 //
 // [[Rcpp::export]]
 double rtpSimulated(double k, NumericVector q, int rounds) {
-    double uk1, wr, less = 0, w = 1;
+    double uk1, wr, rj, l, less = 0, w = 1;
     NumericVector p = clone(q);
     quickUniSelect(k, p); // swaps k smallest p[i] to p[0, .. p[k-1]]
 
-    for (int j = 0; j < k; j++) {
-        w *= p[j]; // test statistic
-    }
+    for (int j = 0; j < k; j++)
+        w *= p[j]; // test statistic from p-values
 
-    double l = p.size();
+    l = p.size();
     for (int i = 1; i < rounds; i++) {
-        uk1 = R::rbeta(k + 1, l - k);
+        uk1 = R::rbeta(k + 1, l - k); // uk1 is drawn from Beta(k+1, l-k)
         wr = 1;
+
         for (int j = 0; j < k; j++) {
-            wr *= R::unif_rand() * uk1; // random test statistic
+            rj = R::unif_rand() * uk1; // "simulated p[j]"
+            wr *= rj;                  // simulated random test statistic
         }
         if (wr < w) less++;
     }
     return less / rounds;
-}
-
-// Benchmark baseline function
-// [[Rcpp::export]]
-double baseNull(double x) {
-    return x;
 }
