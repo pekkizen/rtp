@@ -152,7 +152,7 @@ void quickUniSelect(int k, NumericVector p) {
     // selectBig(1, 0, k - 1, p); // k'th smallest to p[k-1]
 }
 
-// For bechmarking only
+// For bechmarks only
 // [[Rcpp::export]]
 int uniSel(int k, NumericVector p) {
     quickUniSelect(k, p);
