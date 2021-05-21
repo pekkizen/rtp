@@ -3,6 +3,7 @@ using namespace Rcpp;
 
 double betaSD(double a, double b);
 double betaMean(double a, double b);
+// #include "fundec.hpp"
 
 // Here are functions for efficient selection of k smallest
 // of n uniform(0, 1) numbers. Functions implements what is known
@@ -94,8 +95,6 @@ static int partition(int lo, int hi, double pivot, NumericVector p) {
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
 // The k'th smallest of n unif(0, 1) numbers is distributedmBeta(k, n - k + 1).
-// [[Rcpp::export]]
-
 void quickUniSelect(int k, NumericVector p) {
     const double dist = 1;
     int n = p.size();

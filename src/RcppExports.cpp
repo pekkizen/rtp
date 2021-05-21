@@ -5,6 +5,17 @@
 
 using namespace Rcpp;
 
+// baseNull
+double baseNull(double x);
+RcppExport SEXP _rtp_baseNull(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(baseNull(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // betaCutPoint
 double betaCutPoint(double k, double l);
 RcppExport SEXP _rtp_betaCutPoint(SEXP kSEXP, SEXP lSEXP) {
@@ -217,28 +228,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// baseNull
-double baseNull(double x);
-RcppExport SEXP _rtp_baseNull(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(baseNull(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// quickUniSelect
-void quickUniSelect(int k, NumericVector p);
-RcppExport SEXP _rtp_quickUniSelect(SEXP kSEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    quickUniSelect(k, p);
-    return R_NilValue;
-END_RCPP
-}
 // uniSel
 int uniSel(int k, NumericVector p);
 RcppExport SEXP _rtp_uniSel(SEXP kSEXP, SEXP pSEXP) {
@@ -292,6 +281,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
     {"_rtp_betaCutPoint", (DL_FUNC) &_rtp_betaCutPoint, 2},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
@@ -309,8 +299,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
     {"_rtp_rtpRiema", (DL_FUNC) &_rtp_rtpRiema, 4},
     {"_rtp_rtpSimulated", (DL_FUNC) &_rtp_rtpSimulated, 3},
-    {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
-    {"_rtp_quickUniSelect", (DL_FUNC) &_rtp_quickUniSelect, 2},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},
     {"_rtp_nth_element", (DL_FUNC) &_rtp_nth_element, 2},

@@ -1,6 +1,4 @@
 
-#include <Rcpp.h>
-using namespace Rcpp;
 
 /* See referencies in the README.md.
 
@@ -49,18 +47,9 @@ https://dlmf.nist.gov/8.17#E5. Formulas 8.17.4/5.
     functions plot.BetaDist(K, L) and plot.GammaDist(K).
 
 */
-
-double riemann(double (*f)(double), double a, double h, double tol);
-double simpson(double (*f)(double), double a, double h, double tol);
-double adaSimpson(double (*f)(double), double a, double b, double fa,
-                  double fm, double fb, double Iprev, double abstol,
-                  double reltol, int depth);
-void quickUniSelect(int k, NumericVector p);
-static double fisher(NumericVector p);
-static double sidak(NumericVector p);
-double betaMean(double a, double b);
-double betaSD(double a, double b);
-inline static double betaSkewness(double a, double b);
+#include <Rcpp.h>
+using namespace Rcpp;
+#include "fundec.hpp"
 
 // Global "constants" in integration
 static double K;     // rank, number of smallest
@@ -92,7 +81,6 @@ double betaCutPoint(double k, double l) {
 }
 
 // rtpStat calculates RPT method test statistic from p-value vector p.
-// U1 x U2 x ... x Un ~ e^-n (not 2^-n) for big n and Ui ~ Unif(0, 1).
 static double rtpStatistic(int k, NumericVector p) {
     double lw = 0;
     for (int i = 0; i < k; i++)
@@ -141,7 +129,7 @@ double betaMean(double a, double b) {
     return a / (a + b);
 }
 
-inline static double betaSkewness(double a, double b) {
+inline double betaSkewness(double a, double b) {
     return 2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b));
 }
 
@@ -399,7 +387,7 @@ double rtpRiema(double k, NumericVector p, double tol = 1e-10, double stepscale 
 // sidak returns the probability of getting one or
 // more p-values = minimum observed p-value.
 // RTP for K == 1.
-static double sidak(NumericVector p) {
+double sidak(NumericVector p) {
     int l = p.size();
     double pmin = p[0];
 
@@ -412,7 +400,7 @@ static double sidak(NumericVector p) {
 
 // Standard Fisher's method using all p-values.
 // Solved by Gamma distribution. RTP for K == L.
-static double fisher(NumericVector p) {
+double fisher(NumericVector p) {
     int l = p.size();
     double lw = 0;
     for (int i = 0; i < l; i++)
@@ -420,20 +408,7 @@ static double fisher(NumericVector p) {
     return R::pgamma(-lw, l, 1, 0, 0);
 }
 
-// #include <stdint.h>
-// #define MWC_A1 0xff3a275c007b8ee6
-
-// /* The state must be initialized so that 0 < c < MWC_A1 - 1. */
-// static uint64_t x, c = 0x83b5b142866da9d5;
-
-// inline double randunif() {
-//     const __uint128_t t = MWC_A1 * (__uint128_t)x + c;
-//     c = t >> 64;
-//     x = t;
-//     return (x >> 11) * 0x1p-53;
-// }
-
-// rtpSimulated solves rtp p-value by simulation.
+// rtpSimulated solves rtp p-value by Monte Carlo simulation.
 // The idea of using random Beta order statistic instead of the laborious
 // full generation of all L numbers in each round is from Vsevolozhskaya et al.
 //
@@ -443,7 +418,7 @@ static double fisher(NumericVector p) {
 // w = p1 x ... x pk is the test statistic from the given p-values.
 //
 // The k+1'th order statistic U(k+1) is defined here as the k+1'th smallest
-// of l random Uni(0, 1) numbers. U(k+1) is disributed Beta(k+1, l-k).
+// of l random Uni(0, 1) numbers. Random variable U(k+1) is disributed Beta(k+1, l-k).
 //
 // uk1 is an instance of U(k+1) drawn from Beta(k+1, l-k) distribution.
 // wr = u1 x uk1, ... uk x uk1, where ui are drawn from Uni(0, 1),
@@ -454,27 +429,44 @@ static double fisher(NumericVector p) {
 // count(wr < w) / simulation rounds, which converges to the RTP p-value
 // P(U(1) x ... x U(k) < p1 x... x pk). This is the probability, that
 // the product of k smallest of L Uni(0, 1) numbers is less than p1 x ... x pk.
-// For k = 1 this gives P(U(1) < p1) = p1.
+//
+// For k = 1 rtp p-value is P(U(1) < p1) = 1 - (1 - p1)^l.
+// For k = l p-value can be solved by Fisher's method with
+// Chisq/Gamma distribution. For the other cases there are no closed form
+// solutions and we need numerical integration over continuos interval.
 //
 // [[Rcpp::export]]
 double rtpSimulated(double k, NumericVector q, int rounds) {
-    double uk1, wr, rj, l, less = 0, w = 1;
+    double uk1, wr, rj, l, less, w;
     NumericVector p = clone(q);
-    quickUniSelect(k, p); // swaps k smallest p[i] to p[0, .. p[k-1]]
+    quickUniSelect(k, p); // swaps k smallest p[i] to p[0, .. p[k-1]].
 
+    w = 1;
     for (int j = 0; j < k; j++)
-        w *= p[j]; // test statistic from p-values
+        w *= p[j]; // Test statistic from p-values.
 
     l = p.size();
+    less = 0;
     for (int i = 1; i < rounds; i++) {
-        uk1 = R::rbeta(k + 1, l - k); // uk1 is drawn from Beta(k+1, l-k)
+        uk1 = R::rbeta(k + 1, l - k); // uk1 is a random draw from Beta(k+1, l-k).
+                                      // Simulated k+1'th smallest of l numbers.
         wr = 1;
-
         for (int j = 0; j < k; j++) {
-            rj = R::unif_rand() * uk1; // "simulated p[j]"
-            wr *= rj;                  // simulated random test statistic
+            rj = R::unif_rand() * uk1; // Simulated p(1), ... p(k).
+            wr *= rj;                  // Simulated random test statistic.
         }
         if (wr < w) less++;
     }
     return less / rounds;
 }
+
+// #include <stdint.h>
+// #define MWC_A1 0xff3a275c007b8ee6
+// /* The state must be initialized so that 0 < c < MWC_A1 - 1. */
+// static uint64_t x, c = 0x83b5b142866da9d5;
+// inline double randunif() {
+//     const __uint128_t t = MWC_A1 * (__uint128_t)x + c;
+//     c = t >> 64;
+//     x = t;
+//     return (x >> 11) * 0x1p-53;
+// }
