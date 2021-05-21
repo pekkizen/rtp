@@ -12,6 +12,8 @@ double riemann(double (*f)(double), double a, double h, double tol) {
         fsum += fa;
         a += h;
         if (fa < fsum * tol) return fmin(1, h * fsum);
+
+        if (fa != fa) return NAN;
     }
 }
 
