@@ -23,7 +23,7 @@ checkPar <- function(K, L, small) {
 }
 
 # pvalues.rtp(K=10, L=100, small=1e-6, seed=0)
-pvalues.rtp <- function(K, L, small = 1e-1, seed = 0, stepscale = 1, rounds = 100000) {
+pvalues.rtp <- function(K, L, small = 1e-1, seed = 0, stepscale = 1, rounds = 20000) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)

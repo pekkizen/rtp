@@ -8,7 +8,7 @@ fBetaQ.R <- function(p, lw, K, L) {
     b <- qbeta(p, K + 1, L - K)
     g <- log(b) * K - lw
     1 - pgamma(g, K)
-    # pgamma(g, K, lower.tail = FALSE) # better accuracy for small p's
+    # pgamma(g, K, lower.tail = FALSE) # better accuracy for small vakues
 }
 
 # fGammaQ.R is rtp integrand over Gamma probabilities in [0, 1].
