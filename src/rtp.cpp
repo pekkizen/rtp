@@ -413,10 +413,12 @@ double fisher(NumericVector p) {
 inline static double randomBeta(double a, double b) {
     return R::rbeta(a, b);
 }
-inline static double randomDouble() {
+inline static double randomUnif() {
     return R::unif_rand();
 }
-
+inline static double randomGamma(double a, double b) {
+    return R::rgamma(a, b);
+}
 // rtpSimulated solves rtp p-value by Monte Carlo simulation.
 // The idea of using random Beta order statistic instead of the laborious
 // full generation of all L numbers in each round is from Vsevolozhskaya et al.
@@ -447,6 +449,9 @@ inline static double randomDouble() {
 // [[Rcpp::export]]
 double rtpSimulated(double k, NumericVector q, long rounds) {
     double uk1, wr, rj, l, less, w;
+    l = q.size();
+    if (k < 1 || k > l) return -1;
+
     NumericVector p = clone(q);
     quickUniSelect(k, p); // swaps k smallest p[i] to p[0], .. p[k-1]].
 
@@ -454,28 +459,25 @@ double rtpSimulated(double k, NumericVector q, long rounds) {
     for (long j = 0; j < k; j++)
         w *= p[j]; // Test statistic from p-values.
 
-    l = p.size();
     less = 0;
-    for (long i = 1; i < rounds; i++) {
-        uk1 = randomBeta(k + 1, l - k); // uk1 is a random draw from Beta(k+1, l-k).
-                                        // Simulated k+1'th smallest of l numbers.
+    for (long i = 0; i < rounds; i++) {
+        uk1 = randomBeta(k + 1, l - k); // Simulated k+1'th smallest of l numbers.
         wr = 1;
         for (long j = 0; j < k; j++) {
-            rj = randomDouble() * uk1; // Simulated p(1), ... p(k) ~Unif(0, uk1).
-            wr *= rj;                  // Simulated random test statistic.
+            rj = randomUnif() * uk1; // Simulated p(1), ... p(k) ~ Unif(0, uk1).
+            wr *= rj;                // Simulated random test statistic.
         }
         if (wr < w) less++;
     }
     return less / rounds;
 }
-
-// #include <stdint.h>
-// #define MWC_A1 0xff3a275c007b8ee6
-// /* The state must be initialized so that 0 < c < MWC_A1 - 1. */
-// static uint64_t x, c = 0x83b5b142866da9d5;
-// inline double randunif() {
-//     const __uint128_t t = MWC_A1 * (__uint128_t)x + c;
-//     c = t >> 64;
-//     x = t;
-//     return (x >> 11) * 0x1p-53;
-// }
+// If Ui ~ Unif(0,1), then -log(U1 x ... Uk) ~ Gamma(k, 1).
+// The product U1 x ... Uk can be simulated by a single
+// Gamma(K, 1) random number. The calculation of wr above is then
+// wr = pow(uk1, k) * exp(-randomGamma(k, 1)) or
+// wr = exp(k * log(uk1) - randomGamma(k, 1))
+// However few (< ~15) uniform numbers are lighter to generate
+// than one Gamma number.
+// Now we simulation with Beta and Gamma functions and it is a good
+// idea to implement the simulation by integrating over these functions.
+// See four possible integrand functions in integrands.R file.

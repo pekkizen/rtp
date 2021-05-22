@@ -216,49 +216,49 @@ BEGIN_RCPP
 END_RCPP
 }
 // rtpSimulated
-double rtpSimulated(double k, NumericVector q, int rounds);
+double rtpSimulated(double k, NumericVector q, long rounds);
 RcppExport SEXP _rtp_rtpSimulated(SEXP kSEXP, SEXP qSEXP, SEXP roundsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
-    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    Rcpp::traits::input_parameter< long >::type rounds(roundsSEXP);
     rcpp_result_gen = Rcpp::wrap(rtpSimulated(k, q, rounds));
     return rcpp_result_gen;
 END_RCPP
 }
 // uniSel
-int uniSel(int k, NumericVector p);
+long uniSel(long k, NumericVector p);
 RcppExport SEXP _rtp_uniSel(SEXP kSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< long >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(uniSel(k, p));
     return rcpp_result_gen;
 END_RCPP
 }
 // simpleSel
-int simpleSel(int k, NumericVector p);
+long simpleSel(long k, NumericVector p);
 RcppExport SEXP _rtp_simpleSel(SEXP kSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< long >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(simpleSel(k, p));
     return rcpp_result_gen;
 END_RCPP
 }
 // nth_element
-int nth_element(int k, NumericVector p);
+long nth_element(long k, NumericVector p);
 RcppExport SEXP _rtp_nth_element(SEXP kSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< long >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(nth_element(k, p));
     return rcpp_result_gen;
