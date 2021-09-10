@@ -5,6 +5,60 @@
 
 using namespace Rcpp;
 
+// rtpGarpLW
+double rtpGarpLW(double lw, double K, double L);
+RcppExport SEXP _rtp_rtpGarpLW(SEXP lwSEXP, SEXP KSEXP, SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
+    Rcpp::traits::input_parameter< double >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpGarpLW(lw, K, L));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rtpGarp
+double rtpGarp(double K, NumericVector p);
+RcppExport SEXP _rtp_rtpGarp(SEXP KSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type K(KSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpGarp(K, p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// randGarp
+NumericVector randGarp(long samplesize, double k, double l);
+RcppExport SEXP _rtp_randGarp(SEXP samplesizeSEXP, SEXP kSEXP, SEXP lSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< long >::type samplesize(samplesizeSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    rcpp_result_gen = Rcpp::wrap(randGarp(samplesize, k, l));
+    return rcpp_result_gen;
+END_RCPP
+}
+// garpError
+double garpError(double r1, double r2, int samples, double plim, double K, double L);
+RcppExport SEXP _rtp_garpError(SEXP r1SEXP, SEXP r2SEXP, SEXP samplesSEXP, SEXP plimSEXP, SEXP KSEXP, SEXP LSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type r1(r1SEXP);
+    Rcpp::traits::input_parameter< double >::type r2(r2SEXP);
+    Rcpp::traits::input_parameter< int >::type samples(samplesSEXP);
+    Rcpp::traits::input_parameter< double >::type plim(plimSEXP);
+    Rcpp::traits::input_parameter< double >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type L(LSEXP);
+    rcpp_result_gen = Rcpp::wrap(garpError(r1, r2, samples, plim, K, L));
+    return rcpp_result_gen;
+END_RCPP
+}
 // baseNull
 double baseNull(double x);
 RcppExport SEXP _rtp_baseNull(SEXP xSEXP) {
@@ -16,15 +70,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// betaCutPoint
-double betaCutPoint(double k, double l);
-RcppExport SEXP _rtp_betaCutPoint(SEXP kSEXP, SEXP lSEXP) {
+// statRTP
+double statRTP(long k, NumericVector q);
+RcppExport SEXP _rtp_statRTP(SEXP kSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type k(kSEXP);
-    Rcpp::traits::input_parameter< double >::type l(lSEXP);
-    rcpp_result_gen = Rcpp::wrap(betaCutPoint(k, l));
+    Rcpp::traits::input_parameter< long >::type k(kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(statRTP(k, q));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -53,29 +107,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// betaMean
-double betaMean(double a, double b);
-RcppExport SEXP _rtp_betaMean(SEXP aSEXP, SEXP bSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    Rcpp::traits::input_parameter< double >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(betaMean(a, b));
-    return rcpp_result_gen;
-END_RCPP
-}
 // survbinom
-double survbinom(double k, double n, double p, double pcut);
-RcppExport SEXP _rtp_survbinom(SEXP kSEXP, SEXP nSEXP, SEXP pSEXP, SEXP pcutSEXP) {
+double survbinom(double k, double n, double p);
+RcppExport SEXP _rtp_survbinom(SEXP kSEXP, SEXP nSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
     Rcpp::traits::input_parameter< double >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type pcut(pcutSEXP);
-    rcpp_result_gen = Rcpp::wrap(survbinom(k, n, p, pcut));
+    rcpp_result_gen = Rcpp::wrap(survbinom(k, n, p));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -113,28 +154,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fBetaQ
-double fBetaQ(double p);
-RcppExport SEXP _rtp_fBetaQ(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(fBetaQ(p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// fGammaQ
-double fGammaQ(double p);
-RcppExport SEXP _rtp_fGammaQ(SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(fGammaQ(p));
-    return rcpp_result_gen;
-END_RCPP
-}
 // fBetaDtop
 double fBetaDtop();
 RcppExport SEXP _rtp_fBetaDtop() {
@@ -145,9 +164,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rtpDbetaRiema
-double rtpDbetaRiema(double k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_rtpDbetaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpDbetaLW
+double rtpDbetaLW(double lw, double k, double l, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDbetaLW(SEXP lwSEXP, SEXP kSEXP, SEXP lSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpDbetaLW(lw, k, l, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rtpDbeta
+double rtpDbeta(double k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDbeta(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -155,27 +189,41 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpDbetaRiema(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpDbeta(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
 // rtpDbetaAsimp
-double rtpDbetaAsimp(double k, NumericVector p, double abstol, double reltol);
-RcppExport SEXP _rtp_rtpDbetaAsimp(SEXP kSEXP, SEXP pSEXP, SEXP abstolSEXP, SEXP reltolSEXP) {
+double rtpDbetaAsimp(double k, NumericVector p, double tol);
+RcppExport SEXP _rtp_rtpDbetaAsimp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    Rcpp::traits::input_parameter< double >::type abstol(abstolSEXP);
-    Rcpp::traits::input_parameter< double >::type reltol(reltolSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpDbetaAsimp(k, p, abstol, reltol));
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpDbetaAsimp(k, p, tol));
     return rcpp_result_gen;
 END_RCPP
 }
-// rtpDgammaRiema
-double rtpDgammaRiema(double k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_rtpDgammaRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpDgammaLW
+double rtpDgammaLW(double lw, double k, double l, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDgammaLW(SEXP lwSEXP, SEXP kSEXP, SEXP lSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpDgammaLW(lw, k, l, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rtpDgamma
+double rtpDgamma(double k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpDgamma(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -183,13 +231,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpDgammaRiema(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpDgamma(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
-// rtpDgammaSimp
-double rtpDgammaSimp(double k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_rtpDgammaSimp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpLW
+double rtpLW(double lw, double k, double l, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpLW(SEXP lwSEXP, SEXP kSEXP, SEXP lSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lw(lwSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpLW(lw, k, l, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rtp
+double rtp(double k, NumericVector p, double tol, double stepscale);
+RcppExport SEXP _rtp_rtp(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -197,34 +260,63 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpDgammaSimp(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtp(k, p, tol, stepscale));
     return rcpp_result_gen;
 END_RCPP
 }
-// rtpRiema
-double rtpRiema(double k, NumericVector p, double tol, double stepscale);
-RcppExport SEXP _rtp_rtpRiema(SEXP kSEXP, SEXP pSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+// rtpLWvec
+NumericVector rtpLWvec(NumericVector w, double k, double l, double tol, double stepscale);
+RcppExport SEXP _rtp_rtpLWvec(SEXP wSEXP, SEXP kSEXP, SEXP lSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpRiema(k, p, tol, stepscale));
+    rcpp_result_gen = Rcpp::wrap(rtpLWvec(w, k, l, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// drtp
+NumericVector drtp(NumericVector x, double k, double l, double tol, double stepscale);
+RcppExport SEXP _rtp_drtp(SEXP xSEXP, SEXP kSEXP, SEXP lSEXP, SEXP tolSEXP, SEXP stepscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< double >::type stepscale(stepscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(drtp(x, k, l, tol, stepscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rrtp
+NumericVector rrtp(long n, double k, double l);
+RcppExport SEXP _rtp_rrtp(SEXP nSEXP, SEXP kSEXP, SEXP lSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< long >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    rcpp_result_gen = Rcpp::wrap(rrtp(n, k, l));
     return rcpp_result_gen;
 END_RCPP
 }
 // rtpSimulated
-double rtpSimulated(double k, NumericVector q, long rounds);
-RcppExport SEXP _rtp_rtpSimulated(SEXP kSEXP, SEXP qSEXP, SEXP roundsSEXP) {
+double rtpSimulated(double k, NumericVector p, uint64_t samples);
+RcppExport SEXP _rtp_rtpSimulated(SEXP kSEXP, SEXP pSEXP, SEXP samplesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type k(kSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
-    Rcpp::traits::input_parameter< long >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(rtpSimulated(k, q, rounds));
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    Rcpp::traits::input_parameter< uint64_t >::type samples(samplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtpSimulated(k, p, samples));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -281,23 +373,29 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_rtp_rtpGarpLW", (DL_FUNC) &_rtp_rtpGarpLW, 3},
+    {"_rtp_rtpGarp", (DL_FUNC) &_rtp_rtpGarp, 2},
+    {"_rtp_randGarp", (DL_FUNC) &_rtp_randGarp, 3},
+    {"_rtp_garpError", (DL_FUNC) &_rtp_garpError, 6},
     {"_rtp_baseNull", (DL_FUNC) &_rtp_baseNull, 1},
-    {"_rtp_betaCutPoint", (DL_FUNC) &_rtp_betaCutPoint, 2},
+    {"_rtp_statRTP", (DL_FUNC) &_rtp_statRTP, 2},
     {"_rtp_init", (DL_FUNC) &_rtp_init, 3},
     {"_rtp_betaSD", (DL_FUNC) &_rtp_betaSD, 2},
-    {"_rtp_betaMean", (DL_FUNC) &_rtp_betaMean, 2},
-    {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 4},
+    {"_rtp_survbinom", (DL_FUNC) &_rtp_survbinom, 3},
     {"_rtp_survgamma", (DL_FUNC) &_rtp_survgamma, 2},
     {"_rtp_fBetaD", (DL_FUNC) &_rtp_fBetaD, 1},
     {"_rtp_fGammaD", (DL_FUNC) &_rtp_fGammaD, 1},
-    {"_rtp_fBetaQ", (DL_FUNC) &_rtp_fBetaQ, 1},
-    {"_rtp_fGammaQ", (DL_FUNC) &_rtp_fGammaQ, 1},
     {"_rtp_fBetaDtop", (DL_FUNC) &_rtp_fBetaDtop, 0},
-    {"_rtp_rtpDbetaRiema", (DL_FUNC) &_rtp_rtpDbetaRiema, 4},
-    {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 4},
-    {"_rtp_rtpDgammaRiema", (DL_FUNC) &_rtp_rtpDgammaRiema, 4},
-    {"_rtp_rtpDgammaSimp", (DL_FUNC) &_rtp_rtpDgammaSimp, 4},
-    {"_rtp_rtpRiema", (DL_FUNC) &_rtp_rtpRiema, 4},
+    {"_rtp_rtpDbetaLW", (DL_FUNC) &_rtp_rtpDbetaLW, 5},
+    {"_rtp_rtpDbeta", (DL_FUNC) &_rtp_rtpDbeta, 4},
+    {"_rtp_rtpDbetaAsimp", (DL_FUNC) &_rtp_rtpDbetaAsimp, 3},
+    {"_rtp_rtpDgammaLW", (DL_FUNC) &_rtp_rtpDgammaLW, 5},
+    {"_rtp_rtpDgamma", (DL_FUNC) &_rtp_rtpDgamma, 4},
+    {"_rtp_rtpLW", (DL_FUNC) &_rtp_rtpLW, 5},
+    {"_rtp_rtp", (DL_FUNC) &_rtp_rtp, 4},
+    {"_rtp_rtpLWvec", (DL_FUNC) &_rtp_rtpLWvec, 5},
+    {"_rtp_drtp", (DL_FUNC) &_rtp_drtp, 5},
+    {"_rtp_rrtp", (DL_FUNC) &_rtp_rrtp, 3},
     {"_rtp_rtpSimulated", (DL_FUNC) &_rtp_rtpSimulated, 3},
     {"_rtp_uniSel", (DL_FUNC) &_rtp_uniSel, 2},
     {"_rtp_simpleSel", (DL_FUNC) &_rtp_simpleSel, 2},

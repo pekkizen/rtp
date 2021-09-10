@@ -1,9 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-double betaSD(double a, double b);
-double betaMean(double a, double b);
-// #include "fundec.hpp"
+#include "fundec.h"
 
 // Here are functions for efficient selection of k smallest
 // of n uniform(0, 1) numbers. Functions implements what is known
@@ -91,12 +89,12 @@ static long partition(long lo, long hi, double pivot, NumericVector p) {
     }
 }
 
-// quickUniSelect picks k smallest numbers in p and swaps
+// kSelect picks k smallest numbers in p and swaps
 // them to p[0], ... , p[k-1], unordered.
 // This is very efficient if numbers are near unif(0, 1) distributed.
-// The k'th smallest of n unif(0, 1) numbers is distributedmBeta(k, n - k + 1).
-void quickUniSelect(long k, NumericVector p) {
-    const double dist = 1;
+// The k'th smallest of n unif(0, 1) numbers is distributed Beta(k, n - k + 1).
+void kSelect(long k, NumericVector p) {
+    const double sdDist = 1;
     long n = p.size();
     if (k <= 0 || k >= n) return;
 
@@ -106,7 +104,7 @@ void quickUniSelect(long k, NumericVector p) {
     }
     double SD = betaSD(k, n + 1 - k);
     double mean = betaMean(k, n + 1 - k);
-    double pivot = mean + dist * SD;
+    double pivot = mean + sdDist * SD;
 
     long pi, lo = 0, hi = n - 1;
     pi = partition(0, hi, pivot, p);
@@ -154,7 +152,7 @@ void quickUniSelect(long k, NumericVector p) {
 // For bechmarks only
 // [[Rcpp::export]]
 long uniSel(long k, NumericVector p) {
-    quickUniSelect(k, p);
+    kSelect(k, p);
     return 1;
 }
 // [[Rcpp::export]]
