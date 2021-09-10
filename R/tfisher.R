@@ -22,7 +22,7 @@ p.tfisherR <- function(lw, L, tau1, tau2) {
 p.tfisher.soft <- function(tau, p, tol = 1e-16) {
     lw <- stat.tfisher(p, tau, tau)
     L <- length(p)
-    p.tfisher(lw, L, tau, tau, tol)
+    p.tfisher(lw, L, tau, tau, tol) # Rcpp
 }
 
 # Soft thresholding TFisher method by pure R.
@@ -36,7 +36,7 @@ p.tfisher.softR <- function(tau, p) {
 p.tfisher.tpm <- function(tau, p, tol = 1e-16) {
     lw <- stat.tfisher(p, tau, 1)
     L <- length(p)
-    p.tfisher(lw, L, tau, 1, tol)
+    p.tfisher(lw, L, tau, 1, tol) # Rcpp
 }
 
 # Truncated product method by pure R.

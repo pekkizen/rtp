@@ -1,33 +1,34 @@
 
 
-# bench.pvalues(K=10, L=200)
+# bench.pvalues(K=10, L=100, times=1000)
 bench.pvalues <- function(K, L, small = 1, tau = 0, times = 200) {
     err <- checkPar(K, L, small)
     if (err != "") {
         return(err)
     }
     if (small == 1) {
-        small <- K / L * 0.01
+        small <- 1 / L * 1e-3
     }
     p <- c(small, runif(L - 1))
     if (tau == 0) tau <- K / L
+    # f <- function(u) drtp(u, K, L, tol = 1e-12, stepscale = 1)
 
     res <- microbenchmark::microbenchmark(
         p.rtp.mutoss = p.rtp.mutoss(K, p),
-        p.rtp.simulated = p.rtp.simulated(K, p, rounds = 20000),
+        # p.rtp.simulated = p.rtp.simulated(K, p, rounds = 20000),
         p.rtp.qbeta = p.rtp.qbeta(K, p),
         p.art = p.art(K, p),
         p.tfisher.softR = p.tfisher.softR(tau, p),
         p.tfisher.soft = p.tfisher.soft(tau, p),
+        p.rtp.garpR = p.rtp.garpR(K, p),
+        p.rtp.garp = p.rtp.garp(K, p),
+        p.rtp.dgamma = p.rtp.dgamma(K, p),
+        p.rtp.dbeta = p.rtp.dbeta(K, p),
+        p.rtp.dbeta.asimp = p.rtp.dbeta.asimp(K, p, tol = 1e-3),
+        p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
+        # p.fisher = p.fisher(p),
+        # p.fisherR = p.fisherR(p),
 
-        # p.rtp.dbeta.riema = p.rtp.dbeta.riema(K, p),
-        # p.rtp.dgamma.riema = p.rtp.dgamma.riema(K, p),
-
-        p.rtp = p.rtp(K, p),
-
-        # p.rtp.dbeta.asimp = rtpDbetaAsimp(K, p),
-        # p.rtp.dgamma.simp = rtpDgammaSimp(K, p),
-        # p.rtp.dbeta.cuba = p.rtp.dbeta.cuba(K, p),
         fNull = baseNull(1),
         times = times
     )
@@ -51,9 +52,7 @@ bench.integrands <- function(K, L, small = 1e-1) {
             u <- runif(1)
             g <- K * log(u) - lw
         },
-        Qbeta = fBetaQ(u),
         QbetaR = fBetaQ.R(u, lw, K, L),
-        QGamma = fGammaQ(u),
         QGammaR = fGammaQ.R(u, lw, K, L),
         DBetaR = fBetaD.R(u, lw, K, L),
         DGammaR = fGammaD.R(g, lw, K, L),
@@ -73,7 +72,7 @@ bench.select <- function(K, L, times = 2000) {
             # p <- sort(p, decreasing = TRUE)
             # p <- sort(p)
         },
-        quickUniSelect = uniSel(K, p),
+        kSelect = uniSel(K, p),
         simpleSelect = simpleSel(K, p),
         nth_element = nth_element(K, p),
         sort_partial = sort(p, partial = c(1:K)),

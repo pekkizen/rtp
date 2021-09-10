@@ -8,7 +8,7 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
     if (seed > 0) set.seed(seed)
     p <- c(small, runif(L - 1))
     lw <- stat.rtp(K, p)
-    pval <- p.rtp.dbeta.cuba(K, p)
+    pval <- p.rtp.dbeta.cuba(K, p, 1e-10)
 
     f1 <- function(u) fBetaQ.R(u, lw, K, L)
     f2 <- function(u) fGammaQ.R(u, lw, K, L)
@@ -24,20 +24,13 @@ plot.quantile.integrands <- function(K, L, small = 1e-1, seed = 0) {
             "p = ", format(pval, digits = 2)
         ),
         main = c(
-            "Integrand by inverse CDF (quantile function)",
-            "by Beta inverse (blue) and Gamma inverse (red)"
+            "Integrand by inverse Beta CDF (quantile function)"
         )
     )
     axis(1, at = c(0, 0.5, 1))
     axis(2, at = c(0, 0.5, 1))
 
-    par(new = TRUE)
-    plot(f2,
-        type = "l", col = "red",
-        xlim = c(0, 1), ylim = c(0, 1),
-        xlab = "", ylab = "",
-        axes = FALSE,
-    )
+
     abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
     abline(v = 1, lty = 1, col = "#757474", lwd = 0.25)
     abline(v = 0.5, lty = 1, col = "#757474", lwd = 0.25)
@@ -64,7 +57,7 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     xmax <- min(1.0, top + 8 * sd)
     xmin <- max(0, top - 6 * sd)
 
-    f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
+    f1 <- function(u) 1 - pgamma(K * log(u) + lw, K)
     f2 <- function(u) fBetaD.R(u, lw, K, L)
     f3 <- function(u) dbeta(u, K + 1, L - K)
 
@@ -115,68 +108,6 @@ plot.BxG.integrand <- function(K, L, small = 1e-1, seed = 0) {
     abline(v = 0, lty = 1, col = "#757474", lwd = 0.25)
 }
 
-# plotIntegrandLocation(K=10, L=100, small=1e-4, seed=0)
-plotIntegrandLocation <- function(K, L, small = 1e-1, seed = 0) {
-    err <- checkPar(K, L, small)
-    if (err != "") {
-        return(err)
-    }
-    if (seed > 0) set.seed(seed)
-    p <- c(small, runif(L - 1))
-    lw <- stat.rtp(K, p)
-    init(K, p)
-    pval <- p.rtp.dbeta.cuba(K, p)
-    iTop <- fBetaDtop()
-    bTop <- K / (L - 1)
-    bSD <- betaSD(K + 1, L - K)
-    gTop <- exp((K - 1 + lw) / K)
-    gSD <- exp((sqrt(K) + lw) / K)
-
-    xmax <- min(1.0, iTop + 6 * bSD)
-    xmin <- max(0.0, iTop - 6 * bSD)
-
-    f1 <- function(u) 1 - pgamma(K * log(u) - lw, K)
-    f2 <- function(u) fBetaD.R(u, lw, K, L)
-    f3 <- function(u) dbeta(u, K + 1, L - K)
-
-    plot.new()
-    plot(f1,
-        type = "l", font.main = 1, lwd = 1, cex.main = 1, col = "red",
-        xlim = c(xmin, xmax), yaxt = "n",
-        axis(1, at = c(xmin, xmax)),
-        xlab = "Blue and green curves are vertically not in actual size",
-        ylab = "",
-        main = c(
-            paste(
-                "Gamma survival (red), ", "Beta PDF (green), ",
-                "Beta x Gamma integrand (blue)."
-            ),
-            paste(
-                "K = ", format(K, digits = 5),
-                " L = ", format(L, digits = 5),
-                " p = ", format(pval, digits = 2)
-            )
-        )
-    )
-    abline(v = iTop, col = "blue", lty = 2, lwd = 0.5)
-    abline(v = bTop, col = "#088308", lty = 2, lwd = 0.5)
-    abline(v = gTop, col = "red", lty = 2, lwd = 0.5)
-    abline(h = 0, lty = 1, col = "gray", lwd = 1)
-    axis(2, at = c(0, 0.5, 1), col.axis = "red")
-    par(new = TRUE)
-    plot(f3,
-        type = "l", lwd = 1, xlim = c(xmin, xmax),
-        yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-        col = "#088308", axes = FALSE
-    )
-    par(new = TRUE)
-    plot(f2,
-        type = "l", lwd = 1, xlim = c(xmin, xmax),
-        yaxt = "n", xaxt = "n", xlab = "", ylab = "",
-        col = "blue", axes = FALSE
-    )
-}
-
 # plot.GxB.integrand(K=10, L=100, small=1e-4, seed=0)
 plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     err <- checkPar(K, L, small)
@@ -189,17 +120,18 @@ plot.GxB.integrand <- function(K, L, small = 1e-1, seed = 0) {
     pval <- p.rtp.dbeta.cuba(K, p) # calls init
     hight <- dgamma(K - 1, K)
 
+
     f3 <- function(g) dgamma(g, K)
     f2 <- function(g) fGammaD.R(g, lw, K, L)
     f1 <- function(g) {
-        b <- exp((g + lw) / K)
+        b <- exp((g - lw) / K)
         pbeta(b, K + 1, L - K)
     }
     bTop <- K * log(K / (L - 1)) - lw
     gTop <- K - 1
     xmax <- floor(max(bTop, gTop) + 4 * sqrt(K))
     xmin <- max(0, floor(K - 1 - 3 * sqrt(K)))
-    plim <- betaCutPoint(K, L)
+    plim <- K / L + 5 * betaSD(K, L - K + 1)
     plim <- log(plim) * K - lw
     xmax <- max(plim, xmax)
 
@@ -301,8 +233,9 @@ plot.BetaDist <- function(K, L) {
     betaSkewness <- function(a, b) {
         2 * (b - a) * sqrt(a + b + 1) / ((a + b + 2) * sqrt(a * b))
     }
-    plim <- betaCutPoint(K, L)
+
     sd <- betaSD(K + 1, L - K)
+    plim <- (K + 1) / (L + 1) + 3 * sd
     xmax <- min(1, plim + 5 * sd)
     bprob <- pbeta(plim, K + 1, L - K, lower.tail = F)
     mean <- (K + 1) / (L + 1)
@@ -315,6 +248,7 @@ plot.BetaDist <- function(K, L) {
     f1 <- function(p) pbeta(p, K + 1, L - K)
     f2 <- function(p) dbeta(p, K + 1, L - K)
     f3 <- function(p) dnorm(p, mean, sd)
+
 
     plot.new()
     plot(f2,
